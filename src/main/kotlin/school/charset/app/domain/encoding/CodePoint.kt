@@ -1,4 +1,4 @@
-package school.charset.app.domain
+package school.charset.app.domain.encoding
 
 /**
  * Unicode code point. The valid range is U+0000..U+10FFFF; values inside the
