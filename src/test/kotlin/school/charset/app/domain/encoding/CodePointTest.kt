@@ -1,4 +1,4 @@
-package school.charset.app.domain
+package school.charset.app.domain.encoding
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
