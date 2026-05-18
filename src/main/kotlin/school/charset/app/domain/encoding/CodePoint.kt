@@ -7,9 +7,7 @@ package school.charset.app.domain.encoding
  * and will be rejected by every encoder — that constraint lives in the encoders.
  */
 @JvmInline
-value class CodePoint(
-    val value: Int,
-) {
+value class CodePoint(val value: Int) {
     init {
         require(value in MIN..MAX) { "Code point out of range: 0x${value.toString(16).uppercase()}" }
     }
