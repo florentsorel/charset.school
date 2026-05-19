@@ -30,6 +30,7 @@ class EncodingServiceTest :
                 }
             }
         }
+
         "latin1" - {
             "U+0000 (NUL) -> 0x00 (low boundary)" {
                 sut.encode(CodePoint(0x00), Encoding.Latin1).toHex() shouldBe "00"
@@ -46,6 +47,75 @@ class EncodingServiceTest :
             "U+0100 (Ā) throws, first code point outside Latin-1" {
                 shouldThrow<EncodingException> {
                     sut.encode(CodePoint(0x100), Encoding.Latin1)
+                }
+            }
+        }
+
+        "windows-1252" - {
+            // Identity range — same byte as Latin-1 for 0x00..0x7F and 0xA0..0xFF
+            "U+0000 (NUL) -> 0x00 (low boundary)" {
+                sut.encode(CodePoint(0x00), Encoding.Windows1252).toHex() shouldBe "00"
+            }
+            "U+0041 (A) -> 0x41 (ASCII identity)" {
+                sut.encode(CodePoint(0x41), Encoding.Windows1252).toHex() shouldBe "41"
+            }
+            "U+00E9 (é) -> 0xE9 (Latin-1 identity)" {
+                sut.encode(CodePoint(0xE9), Encoding.Windows1252).toHex() shouldBe "E9"
+            }
+            "U+00A0 (NBSP) -> 0xA0 (above the special block)" {
+                sut.encode(CodePoint(0xA0), Encoding.Windows1252).toHex() shouldBe "A0"
+            }
+            "U+00FF (ÿ) -> 0xFF (high boundary)" {
+                sut.encode(CodePoint(0xFF), Encoding.Windows1252).toHex() shouldBe "FF"
+            }
+
+            // Special mappings in 0x80..0x9F (27 entries)
+            "U+20AC (€) -> 0x80 (the marquee Windows-1252 character)" {
+                sut.encode(CodePoint(0x20AC), Encoding.Windows1252).toHex() shouldBe "80"
+            }
+            "U+0152 (Œ) -> 0x8C" {
+                sut.encode(CodePoint(0x0152), Encoding.Windows1252).toHex() shouldBe "8C"
+            }
+            "U+0153 (œ) -> 0x9C" {
+                sut.encode(CodePoint(0x0153), Encoding.Windows1252).toHex() shouldBe "9C"
+            }
+            "U+2014 (—) -> 0x97 (em dash)" {
+                sut.encode(CodePoint(0x2014), Encoding.Windows1252).toHex() shouldBe "97"
+            }
+            "U+2122 (™) -> 0x99 (trademark)" {
+                sut.encode(CodePoint(0x2122), Encoding.Windows1252).toHex() shouldBe "99"
+            }
+
+            "U+0080 (PAD) throws - byte 0x80 maps to € (U+20AC), not U+0080" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0x0080), Encoding.Windows1252)
+                }
+            }
+            "U+0081 throws - unmapped (byte 0x81 is one of the 5 unassigned)" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0x0081), Encoding.Windows1252)
+                }
+            }
+            "U+009D throws - another unassigned byte" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0x009D), Encoding.Windows1252)
+                }
+            }
+
+            // Code points outside the Win-1252 representable set
+            "U+0100 (Ā) throws - above Latin-1, not in special mappings" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0x0100), Encoding.Windows1252)
+                }
+            }
+            "U+1F600 (😀) throws - supplementary plane never representable" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0x1F600), Encoding.Windows1252)
+                }
+            }
+            "U+D800 (first surrogate) throws" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0xD800), Encoding.Windows1252)
                 }
             }
         }
