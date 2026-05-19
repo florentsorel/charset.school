@@ -172,4 +172,78 @@ class EncodingServiceTest :
                 }
             }
         }
+
+        "utf-32 be" - {
+            "U+0000 (NUL) -> 0x00 0x00 0x00 0x00 (low boundary)" {
+                sut.encode(CodePoint(0x00), Encoding.Utf32Be).toHex() shouldBe "00 00 00 00"
+            }
+            "U+0041 (A) -> 0x00 0x00 0x00 0x41 (ASCII char in 32 bits)" {
+                sut.encode(CodePoint(0x41), Encoding.Utf32Be).toHex() shouldBe "00 00 00 41"
+            }
+            "U+00E9 (é) -> 0x00 0x00 0x00 0xE9" {
+                sut.encode(CodePoint(0xE9), Encoding.Utf32Be).toHex() shouldBe "00 00 00 E9"
+            }
+            "U+4E2D (中) -> 0x00 0x00 0x4E 0x2D" {
+                sut.encode(CodePoint(0x4E2D), Encoding.Utf32Be).toHex() shouldBe "00 00 4E 2D"
+            }
+            "U+FFFF (non-char) -> 0x00 0x00 0xFF 0xFF (BMP max)" {
+                sut.encode(CodePoint(0xFFFF), Encoding.Utf32Be).toHex() shouldBe "00 00 FF FF"
+            }
+            "U+10000 (𐀀) -> 0x00 0x01 0x00 0x00 (first supplementary)" {
+                sut.encode(CodePoint(0x10000), Encoding.Utf32Be).toHex() shouldBe "00 01 00 00"
+            }
+            "U+1F600 (😀) -> 0x00 0x01 0xF6 0x00" {
+                sut.encode(CodePoint(0x1F600), Encoding.Utf32Be).toHex() shouldBe "00 01 F6 00"
+            }
+            "U+10FFFF (non-char) -> 0x00 0x10 0xFF 0xFF (max code point)" {
+                sut.encode(CodePoint(0x10FFFF), Encoding.Utf32Be).toHex() shouldBe "00 10 FF FF"
+            }
+            "U+D800 (first surrogate) throws" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0xD800), Encoding.Utf32Be)
+                }
+            }
+            "U+DFFF (last surrogate) throws" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0xDFFF), Encoding.Utf32Be)
+                }
+            }
+        }
+
+        "utf-32 le" - {
+            "U+0000 (NUL) -> 0x00 0x00 0x00 0x00 (low boundary, palindromic)" {
+                sut.encode(CodePoint(0x00), Encoding.Utf32Le).toHex() shouldBe "00 00 00 00"
+            }
+            "U+0041 (A) -> 0x41 0x00 0x00 0x00 (bytes fully reversed vs BE)" {
+                sut.encode(CodePoint(0x41), Encoding.Utf32Le).toHex() shouldBe "41 00 00 00"
+            }
+            "U+00E9 (é) -> 0xE9 0x00 0x00 0x00" {
+                sut.encode(CodePoint(0xE9), Encoding.Utf32Le).toHex() shouldBe "E9 00 00 00"
+            }
+            "U+4E2D (中) -> 0x2D 0x4E 0x00 0x00" {
+                sut.encode(CodePoint(0x4E2D), Encoding.Utf32Le).toHex() shouldBe "2D 4E 00 00"
+            }
+            "U+FFFF (non-char) -> 0xFF 0xFF 0x00 0x00 (BMP max)" {
+                sut.encode(CodePoint(0xFFFF), Encoding.Utf32Le).toHex() shouldBe "FF FF 00 00"
+            }
+            "U+10000 (𐀀) -> 0x00 0x00 0x01 0x00 (first supplementary)" {
+                sut.encode(CodePoint(0x10000), Encoding.Utf32Le).toHex() shouldBe "00 00 01 00"
+            }
+            "U+1F600 (😀) -> 0x00 0xF6 0x01 0x00" {
+                sut.encode(CodePoint(0x1F600), Encoding.Utf32Le).toHex() shouldBe "00 F6 01 00"
+            }
+            "U+10FFFF (non-char) -> 0xFF 0xFF 0x10 0x00 (max code point)" {
+                sut.encode(CodePoint(0x10FFFF), Encoding.Utf32Le).toHex() shouldBe "FF FF 10 00"
+            }
+            "U+D800 (first surrogate) throws" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0xD800), Encoding.Utf32Le)
+                }
+            }
+            "U+DFFF (last surrogate) throws" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0xDFFF), Encoding.Utf32Le)
+                }
+            }
+        }
     })
