@@ -98,4 +98,78 @@ class EncodingServiceTest :
                 }
             }
         }
+
+        "utf-16 be" - {
+            "U+0000 (NUL) -> 0x00 0x00 (low boundary)" {
+                sut.encode(CodePoint(0x00), Encoding.Utf16Be).toHex() shouldBe "00 00"
+            }
+            "U+0041 (A) -> 0x00 0x41 (ASCII char in 16 bits)" {
+                sut.encode(CodePoint(0x41), Encoding.Utf16Be).toHex() shouldBe "00 41"
+            }
+            "U+00E9 (é) -> 0x00 0xE9" {
+                sut.encode(CodePoint(0xE9), Encoding.Utf16Be).toHex() shouldBe "00 E9"
+            }
+            "U+4E2D (中) -> 0x4E 0x2D" {
+                sut.encode(CodePoint(0x4E2D), Encoding.Utf16Be).toHex() shouldBe "4E 2D"
+            }
+            "U+FFFF (non-char) -> 0xFF 0xFF (BMP max)" {
+                sut.encode(CodePoint(0xFFFF), Encoding.Utf16Be).toHex() shouldBe "FF FF"
+            }
+            "U+10000 (𐀀) -> 0xD8 0x00 0xDC 0x00 (first supplementary, surrogate pair)" {
+                sut.encode(CodePoint(0x10000), Encoding.Utf16Be).toHex() shouldBe "D8 00 DC 00"
+            }
+            "U+1F600 (😀) -> 0xD8 0x3D 0xDE 0x00 (mockup canary)" {
+                sut.encode(CodePoint(0x1F600), Encoding.Utf16Be).toHex() shouldBe "D8 3D DE 00"
+            }
+            "U+10FFFF (non-char) -> 0xDB 0xFF 0xDF 0xFF (max code point)" {
+                sut.encode(CodePoint(0x10FFFF), Encoding.Utf16Be).toHex() shouldBe "DB FF DF FF"
+            }
+            "U+D800 (first surrogate) throws" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0xD800), Encoding.Utf16Be)
+                }
+            }
+            "U+DFFF (last surrogate) throws" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0xDFFF), Encoding.Utf16Be)
+                }
+            }
+        }
+
+        "utf-16 le" - {
+            "U+0000 (NUL) -> 0x00 0x00 (low boundary, palindromic)" {
+                sut.encode(CodePoint(0x00), Encoding.Utf16Le).toHex() shouldBe "00 00"
+            }
+            "U+0041 (A) -> 0x41 0x00 (bytes swapped vs BE)" {
+                sut.encode(CodePoint(0x41), Encoding.Utf16Le).toHex() shouldBe "41 00"
+            }
+            "U+00E9 (é) -> 0xE9 0x00" {
+                sut.encode(CodePoint(0xE9), Encoding.Utf16Le).toHex() shouldBe "E9 00"
+            }
+            "U+4E2D (中) -> 0x2D 0x4E" {
+                sut.encode(CodePoint(0x4E2D), Encoding.Utf16Le).toHex() shouldBe "2D 4E"
+            }
+            "U+FFFF (non-char) -> 0xFF 0xFF (BMP max, palindromic)" {
+                sut.encode(CodePoint(0xFFFF), Encoding.Utf16Le).toHex() shouldBe "FF FF"
+            }
+            "U+10000 (𐀀) -> 0x00 0xD8 0x00 0xDC (first supplementary, surrogate pair LE)" {
+                sut.encode(CodePoint(0x10000), Encoding.Utf16Le).toHex() shouldBe "00 D8 00 DC"
+            }
+            "U+1F600 (😀) -> 0x3D 0xD8 0x00 0xDE" {
+                sut.encode(CodePoint(0x1F600), Encoding.Utf16Le).toHex() shouldBe "3D D8 00 DE"
+            }
+            "U+10FFFF (non-char) -> 0xFF 0xDB 0xFF 0xDF (max code point)" {
+                sut.encode(CodePoint(0x10FFFF), Encoding.Utf16Le).toHex() shouldBe "FF DB FF DF"
+            }
+            "U+D800 (first surrogate) throws" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0xD800), Encoding.Utf16Le)
+                }
+            }
+            "U+DFFF (last surrogate) throws" {
+                shouldThrow<EncodingException> {
+                    sut.encode(CodePoint(0xDFFF), Encoding.Utf16Le)
+                }
+            }
+        }
     })

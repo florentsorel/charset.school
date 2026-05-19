@@ -14,4 +14,9 @@ enum class Encoding(val id: String) {
     companion object {
         fun fromId(id: String): Encoding? = entries.firstOrNull { it.id == id }
     }
+
+    enum class Endian {
+        BigEndian,
+        LittleEndian,
+    }
 }
