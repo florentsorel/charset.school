@@ -10,6 +10,15 @@ class Codec {
         Encoding.Utf32Be, Encoding.Utf32Le -> codePoint.toUtf32(encoding)
     }
 
+    fun decode(bytes: ByteArray, encoding: Encoding): CodePoint = when (encoding) {
+        Encoding.Ascii -> bytes.fromAscii()
+        Encoding.Latin1 -> bytes.fromLatin1()
+        Encoding.Windows1252 -> TODO("Not yet implemented")
+        Encoding.Utf8 -> TODO("Not yet implemented")
+        Encoding.Utf16Be, Encoding.Utf16Le -> TODO("Not yet implemented")
+        Encoding.Utf32Be, Encoding.Utf32Le -> TODO("Not yet implemented")
+    }
+
     private fun CodePoint.toAscii(): ByteArray {
         if (value !in 0x00..0x7F) {
             throw EncoderException(this, Encoding.Ascii, "value exceeds U+007F")
@@ -117,6 +126,28 @@ class Codec {
             Encoding.Endian.BigEndian -> byteArrayOf(highByte, lowByte)
             Encoding.Endian.LittleEndian -> byteArrayOf(lowByte, highByte)
         }
+    }
+
+    private fun ByteArray.fromAscii(): CodePoint {
+        if (size != 1) {
+            throw DecoderException(this, Encoding.Ascii, "expected exactly 1 byte, got $size")
+        }
+
+        val value = this[0].toInt() and 0xFF
+
+        if (value > 0x7F) {
+            throw DecoderException(this, Encoding.Ascii, "high bit set, not ASCII")
+        }
+
+        return CodePoint(value)
+    }
+
+    private fun ByteArray.fromLatin1(): CodePoint {
+        if (size != 1) {
+            throw DecoderException(this, Encoding.Latin1, "expected exactly 1 byte, got $size")
+        }
+
+        return CodePoint(this[0].toInt() and 0xFF)
     }
 
     private companion object {

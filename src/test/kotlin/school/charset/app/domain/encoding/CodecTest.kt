@@ -317,4 +317,79 @@ class CodecTest :
                 }
             }
         }
+
+        "decode" - {
+            "ascii" - {
+                "0x00 -> U+0000 (NUL, low boundary)" {
+                    sut.decode(bytes(0x00), Encoding.Ascii) shouldBe CodePoint(0x00)
+                }
+                "0x41 -> U+0041 (A)" {
+                    sut.decode(bytes(0x41), Encoding.Ascii) shouldBe CodePoint(0x41)
+                }
+                "0x7F -> U+007F (DEL, high boundary)" {
+                    sut.decode(bytes(0x7F), Encoding.Ascii) shouldBe CodePoint(0x7F)
+                }
+                "0x80 throws, high bit set, not ASCII" {
+                    val exception = shouldThrow<DecoderException> {
+                        sut.decode(bytes(0x80), Encoding.Ascii)
+                    }
+                    exception.message shouldBe "Cannot decode [80] in ascii: high bit set, not ASCII"
+                }
+                "0xE9 throws, Latin-1 byte not ASCII" {
+                    shouldThrow<DecoderException> {
+                        sut.decode(bytes(0xE9), Encoding.Ascii)
+                    }
+                }
+                "0xFF throws, high byte not ASCII" {
+                    shouldThrow<DecoderException> {
+                        sut.decode(bytes(0xFF), Encoding.Ascii)
+                    }
+                }
+                "[] throws, expected 1 byte got 0" {
+                    val exception = shouldThrow<DecoderException> {
+                        sut.decode(bytes(), Encoding.Ascii)
+                    }
+                    exception.message shouldBe "Cannot decode [] in ascii: expected exactly 1 byte, got 0"
+                }
+                "[41 42] throws, expected 1 byte got 2" {
+                    val exception = shouldThrow<DecoderException> {
+                        sut.decode(bytes(0x41, 0x42), Encoding.Ascii)
+                    }
+                    exception.message shouldBe "Cannot decode [41 42] in ascii: expected exactly 1 byte, got 2"
+                }
+            }
+
+            "latin1" - {
+                "0x41 -> U+0041 (A, ASCII)" {
+                    sut.decode(bytes(0x41), Encoding.Latin1) shouldBe CodePoint(0x41)
+                }
+                "0x7F -> U+007F (DEL, ASCII boundary)" {
+                    sut.decode(bytes(0x7F), Encoding.Latin1) shouldBe CodePoint(0x7F)
+                }
+                "0x00 -> U+0000 (NUL) (low boundary)" {
+                    sut.decode(bytes(0x00), Encoding.Latin1) shouldBe CodePoint(0x00)
+                }
+                "0x80 -> U+0080 (PAD) (first code point outside ASCII)" {
+                    sut.decode(bytes(0x80), Encoding.Latin1) shouldBe CodePoint(0x0080)
+                }
+                "0xFF -> U+00FF (ÿ) (high boundary)" {
+                    sut.decode(bytes(0xFF), Encoding.Latin1) shouldBe CodePoint(0x00FF)
+                }
+                "0xE9 -> U+00E9 (é) (canonical Latin-1 char)" {
+                    sut.decode(bytes(0xE9), Encoding.Latin1) shouldBe CodePoint(0x00E9)
+                }
+                "[41 42] throws, expected 1 byte got 2" {
+                    val exception = shouldThrow<DecoderException> {
+                        sut.decode(bytes(0x41, 0x42), Encoding.Latin1)
+                    }
+                    exception.message shouldBe "Cannot decode [41 42] in latin1: expected exactly 1 byte, got 2"
+                }
+                "[] throws, expected 1 byte got 0" {
+                    val exception = shouldThrow<DecoderException> {
+                        sut.decode(bytes(), Encoding.Latin1)
+                    }
+                    exception.message shouldBe "Cannot decode [] in latin1: expected exactly 1 byte, got 0"
+                }
+            }
+        }
     })
