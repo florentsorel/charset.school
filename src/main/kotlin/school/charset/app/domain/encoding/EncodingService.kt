@@ -7,8 +7,7 @@ class EncodingService {
         Encoding.Windows1252 -> TODO("Not yet implemented")
         Encoding.Utf8 -> codePoint.toUtf8()
         Encoding.Utf16Be, Encoding.Utf16Le -> codePoint.toUtf16(encoding)
-        Encoding.Utf32Be -> TODO("Not yet implemented")
-        Encoding.Utf32Le -> TODO("Not yet implemented")
+        Encoding.Utf32Be, Encoding.Utf32Le -> codePoint.toUtf32(encoding)
     }
 
     private fun CodePoint.toAscii(): ByteArray {
@@ -56,14 +55,14 @@ class EncodingService {
     }
 
     private fun CodePoint.toUtf16(encoding: Encoding): ByteArray {
+        if (isSurrogate) {
+            throw EncodingException(this, encoding, "surrogate not encodable standalone")
+        }
+
         val endian = when (encoding) {
             Encoding.Utf16Be -> Encoding.Endian.BigEndian
             Encoding.Utf16Le -> Encoding.Endian.LittleEndian
             else -> error("toUtf16 called with non-UTF-16 encoding: $encoding")
-        }
-
-        if (isSurrogate) {
-            throw EncodingException(this, encoding, "surrogate not encodable standalone")
         }
 
         return if (isBmp) {
@@ -73,6 +72,28 @@ class EncodingService {
             val high = 0xD800 or (offset shr 10)
             val low = 0xDC00 or (offset and 0x3FF)
             encodeCodeUnit(high, endian) + encodeCodeUnit(low, endian)
+        }
+    }
+
+    private fun CodePoint.toUtf32(encoding: Encoding): ByteArray {
+        if (isSurrogate) {
+            throw EncodingException(this, encoding, "surrogate not encodable in UTF-32")
+        }
+
+        val endian = when (encoding) {
+            Encoding.Utf32Be -> Encoding.Endian.BigEndian
+            Encoding.Utf32Le -> Encoding.Endian.LittleEndian
+            else -> error("toUtf32 called with non-UTF-32 encoding: $encoding")
+        }
+
+        val byte0 = (value shr 24).toByte()
+        val byte1 = (value shr 16).toByte()
+        val byte2 = (value shr 8).toByte()
+        val byte3 = value.toByte()
+
+        return when (endian) {
+            Encoding.Endian.BigEndian -> byteArrayOf(byte0, byte1, byte2, byte3)
+            Encoding.Endian.LittleEndian -> byteArrayOf(byte3, byte2, byte1, byte0)
         }
     }
 
