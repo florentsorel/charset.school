@@ -6,8 +6,7 @@ class EncodingService {
         Encoding.Latin1 -> codePoint.toLatin1()
         Encoding.Windows1252 -> TODO("Not yet implemented")
         Encoding.Utf8 -> codePoint.toUtf8()
-        Encoding.Utf16Be -> TODO("Not yet implemented")
-        Encoding.Utf16Le -> TODO("Not yet implemented")
+        Encoding.Utf16Be, Encoding.Utf16Le -> codePoint.toUtf16(encoding)
         Encoding.Utf32Be -> TODO("Not yet implemented")
         Encoding.Utf32Le -> TODO("Not yet implemented")
     }
@@ -53,6 +52,36 @@ class EncodingService {
                 (0x80 or ((value shr 6) and 0x3F)).toByte(),
                 (0x80 or (value and 0x3F)).toByte(),
             )
+        }
+    }
+
+    private fun CodePoint.toUtf16(encoding: Encoding): ByteArray {
+        val endian = when (encoding) {
+            Encoding.Utf16Be -> Encoding.Endian.BigEndian
+            Encoding.Utf16Le -> Encoding.Endian.LittleEndian
+            else -> error("toUtf16 called with non-UTF-16 encoding: $encoding")
+        }
+
+        if (isSurrogate) {
+            throw EncodingException(this, encoding, "surrogate not encodable standalone")
+        }
+
+        return if (isBmp) {
+            encodeCodeUnit(value, endian)
+        } else {
+            val offset = value - 0x10000
+            val high = 0xD800 or (offset shr 10)
+            val low = 0xDC00 or (offset and 0x3FF)
+            encodeCodeUnit(high, endian) + encodeCodeUnit(low, endian)
+        }
+    }
+
+    private fun encodeCodeUnit(unit: Int, endian: Encoding.Endian): ByteArray {
+        val highByte = (unit shr 8).toByte()
+        val lowByte = unit.toByte()
+        return when (endian) {
+            Encoding.Endian.BigEndian -> byteArrayOf(highByte, lowByte)
+            Encoding.Endian.LittleEndian -> byteArrayOf(lowByte, highByte)
         }
     }
 }
