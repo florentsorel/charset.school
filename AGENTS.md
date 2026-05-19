@@ -142,7 +142,7 @@ school.charset.app/
 │   │   ├── ExerciseAttemptRepository.kt
 │   │   └── Clock.kt
 │   └── service/                        # Logique métier (classes Kotlin pures)
-│       ├── EncodingService.kt
+│       ├── Codec.kt
 │       ├── ExerciseGenerator.kt
 │       ├── AnswerValidator.kt
 │       └── ProgressService.kt
