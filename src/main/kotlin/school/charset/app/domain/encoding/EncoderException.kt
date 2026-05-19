@@ -1,6 +1,6 @@
 package school.charset.app.domain.encoding
 
-class EncodingException(
+class EncoderException(
     codePoint: CodePoint,
     encoding: Encoding,
     reason: String,

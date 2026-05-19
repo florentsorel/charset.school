@@ -1,6 +1,6 @@
 package school.charset.app.domain.encoding
 
-class EncodingService {
+class Codec {
     fun encode(codePoint: CodePoint, encoding: Encoding): ByteArray = when (encoding) {
         Encoding.Ascii -> codePoint.toAscii()
         Encoding.Latin1 -> codePoint.toLatin1()
@@ -12,7 +12,7 @@ class EncodingService {
 
     private fun CodePoint.toAscii(): ByteArray {
         if (value !in 0x00..0x7F) {
-            throw EncodingException(this, Encoding.Ascii, "value exceeds U+007F")
+            throw EncoderException(this, Encoding.Ascii, "value exceeds U+007F")
         }
 
         return byteArrayOf(value.toByte())
@@ -20,7 +20,7 @@ class EncodingService {
 
     private fun CodePoint.toLatin1(): ByteArray {
         if (value !in 0x00..0x00FF) {
-            throw EncodingException(this, Encoding.Latin1, "value exceeds U+00FF")
+            throw EncoderException(this, Encoding.Latin1, "value exceeds U+00FF")
         }
 
         return byteArrayOf(value.toByte())
@@ -34,14 +34,14 @@ class EncodingService {
 
         // 27 special mappings in 0x80..0x9F + 5 unassigned bytes (0x81, 0x8D, 0x8F, 0x90, 0x9D).
         val byte = WINDOWS_1252_REVERSE[value]
-            ?: throw EncodingException(this, Encoding.Windows1252, "not representable in Windows-1252")
+            ?: throw EncoderException(this, Encoding.Windows1252, "not representable in Windows-1252")
 
         return byteArrayOf(byte)
     }
 
     private fun CodePoint.toUtf8(): ByteArray {
         if (isSurrogate) {
-            throw EncodingException(this, Encoding.Utf8, "surrogate not encodable in UTF-8")
+            throw EncoderException(this, Encoding.Utf8, "surrogate not encodable in UTF-8")
         }
 
         return when {
@@ -69,7 +69,7 @@ class EncodingService {
 
     private fun CodePoint.toUtf16(encoding: Encoding): ByteArray {
         if (isSurrogate) {
-            throw EncodingException(this, encoding, "surrogate not encodable standalone")
+            throw EncoderException(this, encoding, "surrogate not encodable standalone")
         }
 
         val endian = when (encoding) {
@@ -90,7 +90,7 @@ class EncodingService {
 
     private fun CodePoint.toUtf32(encoding: Encoding): ByteArray {
         if (isSurrogate) {
-            throw EncodingException(this, encoding, "surrogate not encodable in UTF-32")
+            throw EncoderException(this, encoding, "surrogate not encodable in UTF-32")
         }
 
         val endian = when (encoding) {
