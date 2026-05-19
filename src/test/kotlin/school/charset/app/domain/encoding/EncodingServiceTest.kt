@@ -118,7 +118,7 @@ class EncodingServiceTest :
             "U+10000 (𐀀) -> 0xD8 0x00 0xDC 0x00 (first supplementary, surrogate pair)" {
                 sut.encode(CodePoint(0x10000), Encoding.Utf16Be).toHex() shouldBe "D8 00 DC 00"
             }
-            "U+1F600 (😀) -> 0xD8 0x3D 0xDE 0x00 (mockup canary)" {
+            "U+1F600 (😀) -> 0xD8 0x3D 0xDE 0x00 (emoji surrogate pair)" {
                 sut.encode(CodePoint(0x1F600), Encoding.Utf16Be).toHex() shouldBe "D8 3D DE 00"
             }
             "U+10FFFF (non-char) -> 0xDB 0xFF 0xDF 0xFF (max code point)" {

@@ -6,8 +6,7 @@ class EncodingService {
         Encoding.Latin1 -> codePoint.toLatin1()
         Encoding.Windows1252 -> TODO("Not yet implemented")
         Encoding.Utf8 -> codePoint.toUtf8()
-        Encoding.Utf16Be -> codePoint.toUtf16(Encoding.Utf16Be)
-        Encoding.Utf16Le -> codePoint.toUtf16(Encoding.Utf16Le)
+        Encoding.Utf16Be, Encoding.Utf16Le -> codePoint.toUtf16(encoding)
         Encoding.Utf32Be -> TODO("Not yet implemented")
         Encoding.Utf32Le -> TODO("Not yet implemented")
     }
