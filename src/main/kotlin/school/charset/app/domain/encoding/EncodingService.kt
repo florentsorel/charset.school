@@ -5,7 +5,7 @@ class EncodingService {
         Encoding.Ascii -> codePoint.toAscii()
         Encoding.Latin1 -> codePoint.toLatin1()
         Encoding.Windows1252 -> TODO("Not yet implemented")
-        Encoding.Utf8 -> TODO("Not yet implemented")
+        Encoding.Utf8 -> codePoint.toUtf8()
         Encoding.Utf16Be -> TODO("Not yet implemented")
         Encoding.Utf16Le -> TODO("Not yet implemented")
         Encoding.Utf32Be -> TODO("Not yet implemented")
@@ -26,5 +26,33 @@ class EncodingService {
         }
 
         return byteArrayOf(value.toByte())
+    }
+
+    private fun CodePoint.toUtf8(): ByteArray {
+        if (isSurrogate) {
+            throw EncodingException(this, Encoding.Utf8, "surrogate not encodable in UTF-8")
+        }
+
+        return when {
+            value <= 0x7F -> byteArrayOf(value.toByte())
+
+            value <= 0x7FF -> byteArrayOf(
+                (0xC0 or (value shr 6)).toByte(),
+                (0x80 or (value and 0x3F)).toByte(),
+            )
+
+            value <= 0xFFFF -> byteArrayOf(
+                (0xE0 or (value shr 12)).toByte(),
+                (0x80 or ((value shr 6) and 0x3F)).toByte(),
+                (0x80 or (value and 0x3F)).toByte(),
+            )
+
+            else -> byteArrayOf(
+                (0xF0 or (value shr 18)).toByte(),
+                (0x80 or ((value shr 12) and 0x3F)).toByte(),
+                (0x80 or ((value shr 6) and 0x3F)).toByte(),
+                (0x80 or (value and 0x3F)).toByte(),
+            )
+        }
     }
 }
