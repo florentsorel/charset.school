@@ -29,20 +29,25 @@ d'erreur. Progression et statistiques persistées en base par utilisateur. Pas d
 - **Gradle 9** Kotlin DSL
 
 ### Frontend
-- **TanStack Start v1** (SSR + Vite + TanStack Router intégré)
-- **React 19** + **TypeScript** (strict)
-- **TanStack Query** (fetch + cache des appels API vers Spring Boot)
-- **TanStack Form** (gestion de formulaires type-safe)
-- **Tailwind CSS v4** (`@theme` dans CSS, plugin Vite officiel)
-- **shadcn/ui** (composants copiés dans `src/components/ui/`)
-- **zod** pour la validation des schémas (formulaires, parsing des réponses API)
-- **i18next** + **react-i18next** (FR + EN, FR par défaut)
-- **lucide-react** pour les icônes
+- **Nuxt 3** (Vue 3 + Vite + SSR activé, file-based routing, server routes possibles si besoin)
+- **Vue 3** Composition API avec `<script setup>` + **TypeScript** (strict)
+- **`useFetch` / `$fetch`** (built-in Nuxt) pour les appels API vers Spring Boot, avec
+  intercepteur global pour `credentials: 'include'` + injection du header `X-XSRF-TOKEN`
+- **VeeValidate + zod** pour les formulaires (validation déclarative, type-safe)
+- **Tailwind CSS v4** (`@theme` dans CSS, module `@nuxtjs/tailwindcss` ou plugin Vite)
+- **Nuxt UI v3** (composants Vue prêts à l'emploi, theming Tailwind v4 natif, accessibilité)
+- **Pinia** uniquement si nécessaire (user courant, locale, progression) — partir sans,
+  ajouter quand le besoin de state cross-vue mutable apparaît réellement
+- **zod** pour valider les schémas des réponses API (en plus de VeeValidate côté forms)
+- **`@nuxtjs/i18n`** (FR + EN, FR par défaut, détection via cookie ou `users.locale`)
+- **`lucide-vue-next`** pour les icônes
 
 ### Reverse proxy / déploiement
-- **Caddy** comme reverse proxy unique (HTTPS auto via Let's Encrypt, sert le bundle SSR
-  TanStack Start, proxy `/api/*` vers Spring Boot)
+- **Caddy** comme reverse proxy unique (HTTPS auto via Let's Encrypt, proxy de Nuxt SSR
+  Node sur :3000, proxy `/api/*` vers Spring Boot sur :8080)
 - Spring Boot tourne en JAR exécutable derrière Caddy
+- Nuxt en mode SSR (`nuxt build` puis `node .output/server/index.mjs`) pour le SEO sur
+  la landing et toutes les pages publiques
 
 ---
 
@@ -54,8 +59,10 @@ Pattern **ports & adapters léger** (pas de DDD strict, pas de CQRS).
 
 1. **Le domaine est pur Kotlin.** Pas de Spring, pas de Jackson, pas d'Exposed, pas
    d'annotation framework. Uniquement le stdlib Kotlin + kotlinx-datetime.
-2. **Le domaine ne définit que ses contrats.** Les interfaces (ports) sont dans `domain/port/`,
-   les implémentations concrètes dans `infrastructure/`.
+2. **Le domaine ne définit que ses contrats.** Les interfaces (ex. `*Repository`,
+   `Clock`) vivent dans le package de la feature concernée (`domain/exercise/`,
+   `domain/progress/`, etc., **pas** dans un dossier `port/` à part). Les
+   implémentations concrètes vivent dans `infrastructure/`.
 3. **Le wiring est explicite via `@Bean`.** Aucun composant scan sur ton code : pas de
    `@Service`, pas de `@Repository`, pas de `@Component` sur les classes domain ou infra
    non-HTTP. Les beans sont déclarés dans des classes `@Configuration` dédiées.
@@ -74,8 +81,8 @@ Pattern **ports & adapters léger** (pas de DDD strict, pas de CQRS).
 
 | Composant | Façon d'enregistrer | Pourquoi |
 |---|---|---|
-| `domain/service/*` | `@Bean` dans `DomainConfig` | Domaine pur |
-| `domain/port/*` | rien (interface) | C'est un contrat |
+| `domain/<feature>/*Service`, `*Validator`, `*Generator`, `Codec` | `@Bean` dans `DomainConfig` | Domaine pur, wiring explicite |
+| `domain/<feature>/*Repository` (interfaces) | rien (interface) | C'est un contrat |
 | `infrastructure/persistence/*` | `@Bean` dans `PersistenceConfig` | Pas d'annotation framework leakée |
 | `infrastructure/http/*Controller` | `@RestController` direct | Intrinsèquement Spring |
 | `infrastructure/security/*` | `@Bean` dans `SecurityConfig` | Centralisation du wiring sécurité |
@@ -126,43 +133,71 @@ y compris quand le projet grossit ou que d'autres personnes contribuent.
 
 ```
 school.charset.app/
-├── domain/
-│   ├── model/                          # Data classes pures
-│   │   ├── CodePoint.kt
-│   │   ├── Encoding.kt                 # sealed class Encoding (Utf8, Utf16, Latin1, ...)
-│   │   ├── ExerciseModule.kt
+├── domain/                             # Pure Kotlin, zéro dépendance framework.
+│   │                                   # Organisé par **feature/entité**, pas par couche
+│   │                                   # technique (pas de `model/` / `service/` / `port/`).
+│   │                                   # Inspiré du package `bl/` du projet widder.
+│   │
+│   ├── encoding/                       # Tout ce qui concerne les encodages
+│   │   ├── CodePoint.kt                # @JvmInline value class Int wrapper
+│   │   ├── Encoding.kt                 # enum (Ascii, Latin1, Windows1252, Utf8, Utf16Be, ...)
+│   │   ├── ByteArrayExt.kt             # extension toHex()
+│   │   ├── Codec.kt                    # encode/decode pour les 8 encodings
+│   │   ├── EncoderException.kt
+│   │   └── DecoderException.kt
+│   │
+│   ├── exercise/                       # Tout ce qui concerne les exercices et leur validation
+│   │   ├── Granularity.kt              # enum Verbose / Standard / Compact
+│   │   ├── StepType.kt                 # enum Format / Binary / BitGroups / HexBytes / CodePointEntry / Endianness
+│   │   ├── Step.kt                     # sealed class — un step par valeur de StepType
+│   │   ├── Answer.kt                   # sealed class — un Answer par type de step
+│   │   ├── ValidationResult.kt         # data class (ok, errorType?, params) — pas d'expected (anti-cheat)
+│   │   ├── ErrorType.kt                # object — identifiants stables des erreurs de validation
+│   │   ├── ParamKey.kt                 # object — noms des variables d'interpolation
+│   │   ├── Exercise.kt                 # data class (codePoint, encoding, granularity, steps)
+│   │   ├── ExerciseAttempt.kt          # data class (id, userId, moduleId, level, granularity, steps, correct, ...)
+│   │   ├── ExerciseModule.kt           # enum des modules (utf8-encode, utf8-decode, ...)
 │   │   ├── ExerciseLevel.kt
-│   │   ├── ValidationResult.kt
-│   │   ├── ModuleProgress.kt
-│   │   ├── ExerciseAttempt.kt
-│   │   └── User.kt
-│   ├── port/                           # Interfaces (contrats)
-│   │   ├── UserRepository.kt
-│   │   ├── ProgressRepository.kt
-│   │   ├── ExerciseAttemptRepository.kt
-│   │   └── Clock.kt
-│   └── service/                        # Logique métier (classes Kotlin pures)
-│       ├── Codec.kt
-│       ├── ExerciseGenerator.kt
-│       ├── AnswerValidator.kt
-│       └── ProgressService.kt
+│   │   ├── ExerciseAttemptRepository.kt  # interface (port)
+│   │   ├── ExerciseGenerator.kt        # class — produit un Exercise selon (encoding, level, granularity)
+│   │   └── AnswerValidator.kt          # class — validate(step: Step, answer: Answer) -> ValidationResult
+│   │
+│   ├── progress/                       # Tout ce qui concerne la progression utilisateur
+│   │   ├── ModuleProgress.kt           # data class (userId, moduleId, level, streak, attempts, errors, lastPlayedAt)
+│   │   ├── ProgressRepository.kt       # interface (port)
+│   │   └── ProgressService.kt          # class — record d'une tentative + mise à jour de la progression
+│   │
+│   ├── user/                           # Tout ce qui concerne les utilisateurs
+│   │   ├── User.kt                     # data class (id, email, name, locale, ...)
+│   │   └── UserRepository.kt           # interface (port)
+│   │
+│   └── time/                           # Utilitaire transverse (séparé car réutilisé partout)
+│       └── Clock.kt                    # interface (port) — implémentation côté infrastructure
+│   # Note : les constantes "stables vers le front" (ErrorType, ParamKey, plus tard
+│   # HintType, MessageType, ...) vivent **dans le package du feature qui les produit**,
+│   # pas dans un package i18n/ transverse. Cohérent avec l'archi feature-first.
 │
-├── infrastructure/
-│   ├── persistence/                    # Implémentations Exposed (sans annotation)
-│   │   ├── tables/                     # objects Exposed (UsersTable, etc.)
-│   │   ├── mappers/                    # row → domain model
-│   │   ├── ExposedUserRepository.kt
-│   │   ├── ExposedProgressRepository.kt
-│   │   └── ExposedExerciseAttemptRepository.kt
-│   ├── http/                           # Controllers + DTOs
+├── infrastructure/                     # Le seul endroit où on a un mix Spring/Exposed/Jackson.
+│   │                                   # Top-level split par couche technique (persistence, http,
+│   │                                   # security, time), puis feature-package À L'INTÉRIEUR
+│   │                                   # de chaque couche quand c'est pertinent.
+│   │
+│   ├── persistence/                    # Implémentations Exposed (sans annotation Spring)
+│   │   ├── exercise/                   # ExposedExerciseAttemptRepository + tables +
+│   │   │                               # mappers pour Step → table fille
+│   │   ├── progress/                   # ExposedProgressRepository + ModuleProgressTable
+│   │   └── user/                       # ExposedUserRepository + UsersTable
+│   │
+│   ├── http/                           # Controllers + DTOs + serializers (déjà feature-packagé)
 │   │   ├── auth/
 │   │   ├── exercise/
 │   │   ├── progress/
-│   │   ├── dto/                        # data classes pour requêtes/réponses HTTP
-│   │   └── serialization/              # serializers/deserializers Jackson custom
+│   │   ├── profile/
+│   │   └── serialization/              # serializers/deserializers Jackson custom transverses
+│   │
 │   ├── security/                       # Spring Security config + UserDetailsService
 │   └── time/
-│       └── SystemClock.kt
+│       └── SystemClock.kt              # implémentation de domain/time/Clock
 │
 ├── config/                             # Wiring Spring centralisé
 │   ├── DomainConfig.kt                 # @Bean des services domain
@@ -177,9 +212,12 @@ school.charset.app/
 
 ### Exemple — domaine pur
 
+Data class, interface (port) et service de la **même feature** vivent dans le
+**même package** (`domain/progress/`) :
+
 ```kotlin
-// domain/model/ModuleProgress.kt — aucune annotation, aucune dépendance framework
-package school.charset.app.domain.model
+// domain/progress/ModuleProgress.kt — aucune annotation, aucune dépendance framework
+package school.charset.app.domain.progress
 
 import kotlinx.datetime.Instant
 
@@ -207,8 +245,8 @@ data class ModuleProgress(
 ```
 
 ```kotlin
-// domain/port/ProgressRepository.kt — contrat pur
-package school.charset.app.domain.port
+// domain/progress/ProgressRepository.kt — contrat pur, même package que l'entité
+package school.charset.app.domain.progress
 
 interface ProgressRepository {
     fun findByUserAndModule(userId: Long, moduleId: String): ModuleProgress?
@@ -217,8 +255,10 @@ interface ProgressRepository {
 ```
 
 ```kotlin
-// domain/service/ProgressService.kt — logique métier, classe Kotlin pure
-package school.charset.app.domain.service
+// domain/progress/ProgressService.kt — logique métier, classe Kotlin pure
+package school.charset.app.domain.progress
+
+import school.charset.app.domain.time.Clock
 
 class ProgressService(
     private val progressRepository: ProgressRepository,
@@ -297,7 +337,7 @@ et plus simple à raisonner (pas de mélange entre contexte transactionnel Sprin
 
 - `jackson-module-kotlin` gère les data classes Kotlin out of the box (defaults, nullables,
   `data class`, sealed classes)
-- **Aucune annotation Jackson dans `domain/model/`**
+- **Aucune annotation Jackson dans `domain/`** (ni dans `domain/exercise/`, ni `progress/`, etc.)
 - Serializers/deserializers custom dans `infrastructure/http/serialization/`, enregistrés
   via un `SimpleModule` dans `JacksonConfig`
 - Module custom pour `kotlinx.datetime.Instant` (sérialisation ISO-8601)
@@ -412,25 +452,169 @@ CREATE TABLE module_progress (
 );
 ```
 
-### `exercise_attempts` (optionnel v1)
+### Exercices — modèle relationnel pur (Option A : table-per-type)
+
+**Choix d'archi tranché le 2026-05-20** : on stocke les attempts et leurs steps en
+**relationnel pur**, pas en JSONB. Une table parent `exercise_attempts` agrège un
+exercice complet ; une table parent `attempt_steps` agrège les micro-questions ; et
+six tables filles (une par `StepType`) stockent les données spécifiques. Type-safe
+DB-level, queries SQL natives faciles (stats par step_type), pas de JSON.
+
+Le schéma doit **rester aligné** avec les objets domain (`Step` sealed class,
+`StepType` enum, `Answer` sealed class, `Granularity` enum, `AnswerValidator`,
+`ValidationResult`) — toute évolution du domaine doit refléter une migration et
+inversement.
+
+#### Pas de CHECK constraints sur les valeurs énumérées
+
+**Choix tranché le 2026-05-20** : pas de `CHECK (... IN (...))` sur les colonnes
+correspondant à des enums Kotlin (`granularity`, `step_type`, `encoding`, etc.).
+Raisons :
+
+- L'enum Kotlin est l'unique source de vérité ; la validation se fait au mapping
+  Exposed (`enumerationByName`) — la DB n'a jamais à voir une valeur invalide
+  écrite par l'app.
+- Le coût d'évolution est asymétrique : ajouter une valeur Kotlin = 1 ligne ;
+  faire la même chose avec CHECK = `ALTER TABLE DROP CONSTRAINT ... ADD CONSTRAINT ...`
+  dans une migration Flyway. Bruit inutile.
+- L'app est le seul writer de cette DB (pas d'ETL externe ni d'admin manuelle).
+
+Les **FK** restent. Ce sont des contraintes d'intégrité référentielle, pas des
+restrictions de valeurs.
+
+#### `exercise_attempts`
 ```sql
 CREATE TABLE exercise_attempts (
-    id          BIGSERIAL PRIMARY KEY,
-    user_id     BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    module_id   VARCHAR(64)  NOT NULL,
-    level       SMALLINT     NOT NULL,
-    input       JSONB        NOT NULL,
-    expected    JSONB        NOT NULL,
-    user_answer JSONB        NOT NULL,
-    correct     BOOLEAN      NOT NULL,
-    duration_ms INT,
-    created_at  TIMESTAMP    NOT NULL DEFAULT NOW()
+    id            BIGSERIAL PRIMARY KEY,
+    user_id       BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    module_id     VARCHAR(64)  NOT NULL,
+    level         SMALLINT     NOT NULL,
+    granularity   VARCHAR(16)  NOT NULL,    -- 'verbose' | 'standard' | 'compact' (validé côté app)
+    code_point    INT          NOT NULL,    -- input du module encode (et identifiant pour le module decode)
+    encoding      VARCHAR(16)  NOT NULL,    -- 'utf-8', 'utf-16be', ... (matche Encoding.id)
+    correct       BOOLEAN      NOT NULL,    -- agrégé : tous les steps corrects
+    duration_ms   INT,
+    created_at    TIMESTAMP    NOT NULL DEFAULT NOW()
 );
+
 CREATE INDEX idx_attempts_user_module ON exercise_attempts(user_id, module_id);
 ```
 
+#### `attempt_steps` (parent — discriminateur)
+```sql
+CREATE TABLE attempt_steps (
+    id            BIGSERIAL PRIMARY KEY,
+    attempt_id    BIGINT       NOT NULL REFERENCES exercise_attempts(id) ON DELETE CASCADE,
+    position      SMALLINT     NOT NULL,
+    step_type     VARCHAR(32)  NOT NULL,     -- StepType.id : 'format','binary','bit-groups',
+                                             -- 'hex-bytes','code-point','endianness' (validé côté app)
+    correct       BOOLEAN      NOT NULL,
+    error_type    VARCHAR(64),               -- NULL si correct ; sinon clé i18n consommée par le front
+    UNIQUE (attempt_id, position)
+);
+
+CREATE INDEX idx_attempt_steps_attempt ON attempt_steps(attempt_id);
+```
+
+#### Tables filles (une par `StepType`)
+
+```sql
+-- StepType.Format
+CREATE TABLE attempt_step_format (
+    step_id      BIGINT       PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
+    choices      TEXT[]       NOT NULL,           -- redondant mais permet le replay/audit fidèle
+    expected     VARCHAR(64)  NOT NULL,
+    user_answer  VARCHAR(64)
+);
+
+-- StepType.Binary
+CREATE TABLE attempt_step_binary (
+    step_id      BIGINT       PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
+    expected     VARCHAR(64)  NOT NULL,            -- ex. "11101001"
+    bit_length   SMALLINT     NOT NULL,
+    user_answer  VARCHAR(64)
+);
+
+-- StepType.BitGroups
+CREATE TABLE attempt_step_bit_groups (
+    step_id      BIGINT       PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
+    expected     TEXT[]       NOT NULL,            -- ex. {"00011","101001"}
+    user_answer  TEXT[]
+);
+
+-- StepType.HexBytes
+CREATE TABLE attempt_step_hex_bytes (
+    step_id      BIGINT       PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
+    expected     SMALLINT[]   NOT NULL,            -- ex. {195, 169} = {0xC3, 0xA9}
+    user_answer  SMALLINT[]
+);
+
+-- StepType.CodePointEntry
+CREATE TABLE attempt_step_code_point (
+    step_id      BIGINT       PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
+    expected     INT          NOT NULL,            -- la valeur du code point (0..0x10FFFF)
+    user_answer  INT
+);
+
+-- StepType.Endianness
+CREATE TABLE attempt_step_endianness (
+    step_id      BIGINT       PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
+    expected     VARCHAR(16)  NOT NULL,        -- 'BigEndian' | 'LittleEndian' (validé côté app)
+    user_answer  VARCHAR(16)
+);
+```
+
+#### Mapping `Step` ↔ table fille
+
+| `StepType` enum | Table fille | Type Postgres natif des champs |
+|---|---|---|
+| `Format` | `attempt_step_format` | `TEXT[]`, `VARCHAR` |
+| `Binary` | `attempt_step_binary` | `VARCHAR`, `SMALLINT` |
+| `BitGroups` | `attempt_step_bit_groups` | `TEXT[]` |
+| `HexBytes` | `attempt_step_hex_bytes` | `SMALLINT[]` |
+| `CodePointEntry` | `attempt_step_code_point` | `INT` |
+| `Endianness` | `attempt_step_endianness` | `VARCHAR` (enum string) |
+
+#### Arrays Postgres natifs : choix tranché
+
+Les step types qui portent une **séquence** (`BitGroups`, `HexBytes`) utilisent les
+**arrays natifs Postgres** (`TEXT[]`, `SMALLINT[]`), pas des tables de valeurs
+séparées. Justification :
+
+- Les bits/bytes sont **toujours lus en bloc** par le validator (jamais filtrés par
+  position individuelle dans le métier)
+- Une table de valeurs par step augmenterait le nombre de tables à 12+
+- Exposed supporte les arrays via `exposed-postgresql` (`array<Short>()`, `array<String>()`)
+- Reste relationnel et typé — un `SMALLINT[]` n'est pas du JSON, il est typé,
+  queryable et indexable nativement
+
+Si un besoin d'analytics par position individuelle apparaît (ex. "à quelle position
+du bit-groups l'utilisateur se trompe le plus ?"), on pourra extraire en table dédiée
+à ce moment-là. Pas avant.
+
+#### Insert d'un attempt complet
+
+À chaque exercice soumis, le repository fait (dans une transaction Exposed) :
+
+1. `INSERT INTO exercise_attempts ...` → récupère `id` (= `attempt_id`)
+2. Pour chaque `Step` (position 0..N-1) :
+   - `INSERT INTO attempt_steps (attempt_id, position, step_type, correct, error_type)`
+     → récupère `step_id`
+   - `INSERT INTO attempt_step_<type> (step_id, ...)` selon `step.type`
+
+À la lecture (replay) : `JOIN` du parent avec les filles via `step_type` discriminator,
+ou multi-query selon ce qui est le plus simple à exprimer en Exposed.
+
 ### Tables Spring Session JDBC
 Générées via le script officiel `schema-postgresql.sql` dans une migration Flyway.
+
+### TBD — granularity dans `module_progress` ?
+
+À trancher au moment de la mise en place de la persistance : faut-il stocker la
+progression **par granularité** (verbose/standard/compact) en plus du couple
+(user_id, module_id) ? Ça permettrait des stats du genre "80% en Express, 50% en
+Pas à pas". Si oui, ajouter `granularity` à l'UNIQUE de `module_progress` ou faire
+une table séparée.
 
 ---
 
@@ -491,7 +675,8 @@ Pas de JWT.
 
 ### CSRF
 Activé. Spring émet un cookie `XSRF-TOKEN` (non HttpOnly, lisible par JS). Le frontend
-(via un interceptor TanStack Query) lit ce cookie et le renvoie en header `X-XSRF-TOKEN`.
+(via un intercepteur `$fetch` global Nuxt) lit ce cookie et le renvoie en header
+`X-XSRF-TOKEN` sur toute requête mutante (POST/PUT/PATCH/DELETE).
 
 ### CORS
 Configuré pour `credentials: include`. En prod : même domaine via Caddy = pas de CORS.
@@ -514,25 +699,126 @@ Force 12 (par défaut Spring Security = 10, on monte un peu).
 `messages_fr.properties` et `messages_en.properties` dans `src/main/resources/`.
 
 ### Frontend
-i18next + react-i18next. Namespaces : `common`, `auth`, `landing`, `exercise`, `modules`, `feedback`.
+`@nuxtjs/i18n` avec stratégie `prefix_except_default` (FR pas de préfixe, EN sous
+`/en/...`). Namespaces / fichiers locaux : `common.json`, `auth.json`, `landing.json`,
+`exercise.json`, `modules.json`, `feedback.json` dans `i18n/locales/{fr,en}/`.
 
 ### Synchronisation
 La locale courante est dans `users.locale` (DB) ou cookie `locale` (invités). Renvoyée
 dans `GET /api/auth/me`.
 
 ### Hints découplés du domaine
-`domain/service/AnswerValidator` retourne un `ValidationResult` avec `errorType` + `params` :
+
+`domain/exercise/AnswerValidator` valide **un couple (Step, Answer) à la fois**, et
+renvoie un `ValidationResult` avec `errorType` + `params` :
 
 ```kotlin
 data class ValidationResult(
     val ok: Boolean,
-    val expected: String,
     val errorType: String? = null,
     val params: Map<String, String> = emptyMap(),
 )
+
+class AnswerValidator {
+    fun validate(step: Step, answer: Answer): ValidationResult = when (step) {
+        is Step.Format         -> validateFormat(step, answer)
+        is Step.Binary         -> validateBinary(step, answer)
+        is Step.BitGroups      -> validateBitGroups(step, answer)
+        is Step.HexBytes       -> validateHexBytes(step, answer)
+        is Step.CodePointEntry -> validateCodePoint(step, answer)
+        is Step.Endianness     -> validateEndianness(step, answer)
+    }
+    // une fonction privée par type de step
+}
 ```
 
-Le frontend traduit `errorType` via i18next avec interpolation des `params`.
+### Anti-cheat — `ValidationResult` ne porte pas la valeur attendue
+
+**Choix tranché le 2026-05-20** : `ValidationResult` n'a **PAS** de champ `expected`,
+et ses `params` ne contiennent **jamais** la valeur canonique attendue lors d'un
+échec. Sinon, l'utilisateur ouvre l'onglet réseau de devtools, lit la réponse HTTP
+de `/api/exercise/validate`, et obtient la solution.
+
+Concrètement :
+
+- `params` peuvent contenir des **hints structurels** : longueur attendue
+  (`expected-length`), nombre de bytes/groupes attendus (`expected-count`),
+  position d'une erreur (`position`), bornes Unicode (`min`/`max`), liste de
+  choix d'un format (`choices` — déjà publique côté UI).
+- `params` peuvent contenir le **`got`** (la valeur saisie par l'utilisateur) —
+  c'est sa propre saisie, ce n'est pas une révélation.
+- `params` ne contiennent **JAMAIS** :
+  - les bits attendus pour un `Binary.wrong-value`
+  - les bytes attendus pour un `HexBytes.wrong-value`
+  - les groupes attendus pour un `BitGroups.wrong-value`
+  - la valeur attendue pour un `CodePoint.wrong-value`
+  - le bon choix pour un `Format.wrong-choice` ou `Endianness.wrong-choice`
+
+Cas particulier : pour `Endianness` (2 choix possibles), même renvoyer le `got` de
+l'utilisateur révèle la réponse par déduction. On renvoie donc juste l'`errorType`
+sans aucun `params` quand le choix est faux.
+
+La valeur attendue reste exclusivement **côté serveur** : elle vit dans le `Step`
+au moment de la validation, et est persistée dans `attempt_step_<type>.expected`
+pour le replay / l'audit. Elle ne traverse jamais le réseau dans une réponse
+d'erreur.
+
+### Identifiants stables — `ErrorType` et `ParamKey`, co-localisés avec leur producteur
+
+**Choix tranché le 2026-05-20** : les identifiants stables qui voyagent vers le
+front (noms d'événements métier consommés comme clés i18n, noms de variables
+d'interpolation) sont déclarés comme `const val` dans des `object` situés **dans
+le package du feature qui les produit**, et non dans un package transverse `i18n/`.
+
+Pour l'instant, c'est `domain/exercise/ErrorType.kt` et `domain/exercise/ParamKey.kt`.
+Quand `domain/auth/` produira ses propres événements d'erreur, il aura son propre
+`ErrorType.kt` dans son package. Cohérent avec l'archi feature-first.
+
+**Distinction importante** : ces constantes ne sont **pas** des traductions. Les
+traductions ("Vous avez écrit la mauvaise valeur") vivent uniquement côté front,
+dans `i18n/locales/{fr,en}/feedback.json`. Les constantes Kotlin sont des
+**identifiants stables d'événements métier** qui se trouvent être consommés
+comme clés de translation par le front.
+
+**Aucun string literal** au call site dans le code de production ni dans les tests :
+
+```kotlin
+// Mauvais (typo silencieux possible) :
+errorType = "binary.wrong-value"
+params = mapOf("expected-length" to "8")
+
+// Bon (typo = compile error) :
+errorType = ErrorType.Binary.WRONG_VALUE
+params = mapOf(ParamKey.EXPECTED_LENGTH to "8")
+```
+
+Bénéfices :
+- IDE autocomplete + "Rename" qui propage partout (validator, tests, futurs HTTP serializers)
+- Les `ErrorType.kt` / `ParamKey.kt` de chaque feature documentent l'API stable
+  produite par ce feature
+- Pas de Jackson custom à écrire — `const val String` se sérialise nativement comme une string
+- Les tests assertent sur les **mêmes** constantes que celles produites par le validator,
+  donc renommer une clé met à jour les deux côtés en une opération
+
+Convention de nommage : suffixe **`Type`** pour les catégories d'identifiants
+(ErrorType, HintType, MessageType, ...). Pour les noms d'interpolation, c'est
+**`ParamKey`** (sans suffixe Type, parce que ce ne sont pas des "types de
+messages" mais des variables).
+
+Le validator est **agnostic de l'exercice** (encoding, code point, granularity).
+Il ne sait que valider un step isolé. La composition d'un exercice (quels steps,
+dans quel ordre) est la responsabilité de `ExerciseGenerator` selon la `Granularity`
+demandée.
+
+Conventions de nommage des `errorType` :
+- préfixe = nom du step (`binary.`, `hex-bytes.`, `format.`, ...)
+- suffixe = nature de l'erreur (`wrong-value`, `too-few-bits`, `invalid-character`, ...)
+- exemples : `binary.wrong-value`, `binary.too-few-bits`, `hex-bytes.wrong-byte-count`,
+  `format.unknown-choice`
+
+Le frontend traduit `errorType` via `@nuxtjs/i18n` (`$t(errorType, params)`) avec
+interpolation des `params`. Les fichiers de traduction sont organisés par namespace
+(`feedback.json` typiquement) avec les clés en dot-notation matchant les `errorType`.
 
 ---
 
@@ -581,9 +867,9 @@ class ExposedProgressRepositoryIntegrationTest : FunSpec({
 Voir section "Sérialisation JSON" ci-dessus.
 
 ### Couverture minimale obligatoire
-- `domain/service/EncodingService` : tous les cas frontières (U+007F, U+0080, U+07FF,
-  U+0800, U+FFFF, U+10000, U+10FFFF, surrogates UTF-16)
-- `domain/service/AnswerValidator` : chaque `errorType` produit avec les bons `params`
+- `domain/encoding/Codec` : tous les cas frontières (U+007F, U+0080, U+07FF, U+0800,
+  U+FFFF, U+10000, U+10FFFF, surrogates UTF-16) — pour `encode()` ET `decode()`
+- `domain/exercise/AnswerValidator` : chaque `errorType` produit avec les bons `params`
 - `infrastructure/persistence/*` : upsert, find, contraintes uniques
 - Controllers : 401 si non auth, 403 si mauvais user, 200 si OK
 - Serializers custom : structure JSON exacte
@@ -608,7 +894,7 @@ charset.school {
     # API Spring Boot
     reverse_proxy /api/* localhost:8080
 
-    # SSR TanStack Start (Node)
+    # SSR Nuxt (Node)
     reverse_proxy localhost:3000
 
     # Headers de sécurité
@@ -649,9 +935,9 @@ Caddy gère HTTPS automatiquement via Let's Encrypt sur le domaine `charset.scho
 - Ubuntu LTS récent
 - **Caddy** (reverse proxy + HTTPS auto via Let's Encrypt)
 - **Java 25** (ou JDK 21 LTS si tu préfères stable) pour Spring Boot
-- **Node 22+** pour TanStack Start SSR
+- **Node 22+** pour Nuxt SSR
 - **Docker Compose** uniquement pour Postgres 18 (isolation simple)
-- **systemd** units pour Spring Boot et TanStack Start
+- **systemd** units pour Spring Boot et Nuxt
 
 ### Sécurité serveur (premier setup)
 - Utilisateur non-root avec clé SSH uniquement
@@ -689,11 +975,16 @@ chaudes en cache.
 
 ### Phase 1 — Fondations domain
 1. Setup projet Gradle Kotlin DSL, Spring Boot 4 starter, dépendances de base
-2. `domain/model/` + `domain/port/` (data classes et interfaces, zéro dépendance framework)
-3. `domain/service/EncodingService` avec tests Kotest complets (frontières UTF-8/16/32,
-   surrogates, BOM)
-4. `domain/service/AnswerValidator` et `ExerciseGenerator` avec tests
-5. `config/DomainConfig` pour le wiring `@Bean` des services
+2. `domain/encoding/` : `CodePoint`, `Encoding`, `Codec` (encode/decode pour les
+   8 encodings), `EncoderException`, `DecoderException`, `ByteArrayExt`. Tests Kotest
+   complets (frontières UTF-8/16/32, surrogates, BOM, overlong, sign-extension).
+3. `domain/exercise/` : `Granularity`, `StepType`, `Step` sealed class, `Answer` sealed
+   class, `ValidationResult`, `Exercise`, `ExerciseAttempt`, `ExerciseAttemptRepository`
+   (interface), `AnswerValidator`, `ExerciseGenerator`. Tests par type de step.
+4. `domain/progress/`, `domain/user/`, `domain/time/` : entités + repositories
+   (interfaces) + services au besoin.
+5. `config/DomainConfig` pour le wiring `@Bean` des services (`Codec`, `AnswerValidator`,
+   `ExerciseGenerator`, `ProgressService`).
 
 ### Phase 2 — Infrastructure DB
 6. Postgres + Flyway (autoconfig), migrations `users`, `module_progress`,
@@ -717,14 +1008,15 @@ chaudes en cache.
 18. Validation des DTOs HTTP via Bean Validation
 
 ### Phase 5 — Frontend setup
-19. `npm create @tanstack/start@latest` + TypeScript + Tailwind v4 + shadcn
-20. TanStack Query setup + client API typé (zod sur les responses)
-21. i18next setup avec namespaces FR/EN
-22. Layouts `AuthLayout` et `AppLayout`, header global
+19. `npx nuxi@latest init web` + TypeScript strict + Tailwind v4 + Nuxt UI v3
+20. Intercepteur `$fetch` global (credentials, CSRF header, parsing zod des responses)
+21. `@nuxtjs/i18n` setup avec namespaces FR/EN, FR par défaut
+22. Layouts `auth.vue` et `default.vue` dans `layouts/`, header/footer globaux
 
 ### Phase 6 — Auth UI
-23. Pages Login, Register, ForgotPassword, ResetPassword (TanStack Form + zod + shadcn)
-24. Page Profile avec sections (compte, langue, password, danger zone)
+23. Pages `login.vue`, `register.vue`, `forgot-password.vue`, `reset-password.vue`
+    (VeeValidate + zod + Nuxt UI)
+24. Page `profile.vue` avec sections (compte, langue, password, danger zone)
 
 ### Phase 7 — Exercices
 25. Composants atomiques : `BitDisplay`, `BitInput`, `HexInput`, `ByteDisplay`,
@@ -747,7 +1039,7 @@ chaudes en cache.
 
 ### Phase 9 — Déploiement
 39. Dockerfile Spring Boot
-40. Build TanStack Start en mode SSR Node
+40. Build Nuxt en mode SSR Node (`nuxt build` → `.output/server/index.mjs`)
 41. Caddyfile production
 42. Migrations en CI/CD
 43. Monitoring basique (Spring Boot Actuator + logs)
@@ -787,6 +1079,6 @@ Pour empêcher de modifier l'énoncé entre génération et validation :
 - Pas d'app mobile native — PWA éventuelle plus tard
 - Pas de paiement / premium
 - Pas de microservices ni de CQRS — monolithe Spring Boot
-- Pas de Server Components React
+- Pas de Server Components (on reste en pattern Nuxt classique SSR + client hydration)
 - Pas de cache Redis tant que pas nécessaire
 - Pas de `@ControllerAdvice` ni OpenAPI tant que le squelette n'est pas en place
