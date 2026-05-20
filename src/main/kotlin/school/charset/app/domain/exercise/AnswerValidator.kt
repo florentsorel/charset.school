@@ -206,12 +206,11 @@ class AnswerValidator {
         }
     }
 
-    private fun typeMismatch(step: Step, answer: Answer): ValidationResult =
-        ValidationResult.incorrect(
-            errorType = ErrorType.Answer.TYPE_MISMATCH,
-            params = mapOf(
-                ParamKey.EXPECTED_TYPE to step.type.id,
-                ParamKey.GOT_TYPE to answer::class.simpleName.orEmpty(),
-            ),
-        )
+    private fun typeMismatch(step: Step, answer: Answer): ValidationResult = ValidationResult.incorrect(
+        errorType = ErrorType.Answer.TYPE_MISMATCH,
+        params = mapOf(
+            ParamKey.EXPECTED_TYPE to step.type.id,
+            ParamKey.GOT_TYPE to answer::class.simpleName.orEmpty(),
+        ),
+    )
 }
