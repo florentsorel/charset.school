@@ -13,18 +13,17 @@ class AnswerValidatorTest :
 
             "correct value -> ok" {
                 sut.validate(step, Answer.BinaryValue("11101001")) shouldBe
-                    ValidationResult(ok = true)
+                    ValidationResult.correct()
             }
 
             "empty input -> binary.empty" {
                 sut.validate(step, Answer.BinaryValue("")) shouldBe
-                    ValidationResult(ok = false, errorType = ErrorType.Binary.EMPTY)
+                    ValidationResult.incorrect(errorType = ErrorType.Binary.EMPTY)
             }
 
             "non-binary character -> binary.invalid-character" {
                 sut.validate(step, Answer.BinaryValue("1110A001")) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.Binary.INVALID_CHARACTER,
                         params = mapOf(ParamKey.GOT to "1110A001"),
                     )
@@ -32,8 +31,7 @@ class AnswerValidatorTest :
 
             "shorter than expected -> binary.too-few-bits" {
                 sut.validate(step, Answer.BinaryValue("1110100")) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.Binary.TOO_FEW_BITS,
                         params = mapOf(
                             ParamKey.EXPECTED_LENGTH to "8",
@@ -44,8 +42,7 @@ class AnswerValidatorTest :
 
             "longer than expected -> binary.too-many-bits" {
                 sut.validate(step, Answer.BinaryValue("111010010")) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.Binary.TOO_MANY_BITS,
                         params = mapOf(
                             ParamKey.EXPECTED_LENGTH to "8",
@@ -56,8 +53,7 @@ class AnswerValidatorTest :
 
             "right length but wrong value -> binary.wrong-value (no expected leak)" {
                 sut.validate(step, Answer.BinaryValue("00000000")) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.Binary.WRONG_VALUE,
                         params = mapOf(ParamKey.GOT to "00000000"),
                     )
@@ -77,8 +73,7 @@ class AnswerValidatorTest :
 
             "wrong Answer type -> answer.type-mismatch" {
                 sut.validate(step, Answer.HexBytesValue(listOf(0xE9))) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.Answer.TYPE_MISMATCH,
                         params = mapOf(
                             ParamKey.EXPECTED_TYPE to "binary",
@@ -96,18 +91,17 @@ class AnswerValidatorTest :
 
             "correct choice -> ok" {
                 sut.validate(step, Answer.FormatChoice("2 bytes")) shouldBe
-                    ValidationResult(ok = true)
+                    ValidationResult.correct()
             }
 
             "empty -> format.empty" {
                 sut.validate(step, Answer.FormatChoice("")) shouldBe
-                    ValidationResult(ok = false, errorType = ErrorType.Format.EMPTY)
+                    ValidationResult.incorrect(errorType = ErrorType.Format.EMPTY)
             }
 
             "choice not in list -> format.unknown-choice" {
                 sut.validate(step, Answer.FormatChoice("5 bytes")) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.Format.UNKNOWN_CHOICE,
                         params = mapOf(
                             ParamKey.GOT to "5 bytes",
@@ -118,8 +112,7 @@ class AnswerValidatorTest :
 
             "wrong choice -> format.wrong-choice (no expected leak)" {
                 sut.validate(step, Answer.FormatChoice("3 bytes")) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.Format.WRONG_CHOICE,
                         params = mapOf(ParamKey.GOT to "3 bytes"),
                     )
@@ -137,18 +130,17 @@ class AnswerValidatorTest :
 
             "correct value -> ok" {
                 sut.validate(step, Answer.BitGroupsValue(listOf("00011", "101001"))) shouldBe
-                    ValidationResult(ok = true)
+                    ValidationResult.correct()
             }
 
             "empty -> bit-groups.empty" {
                 sut.validate(step, Answer.BitGroupsValue(emptyList())) shouldBe
-                    ValidationResult(ok = false, errorType = ErrorType.BitGroups.EMPTY)
+                    ValidationResult.incorrect(errorType = ErrorType.BitGroups.EMPTY)
             }
 
             "wrong group count (too few) -> bit-groups.wrong-group-count" {
                 sut.validate(step, Answer.BitGroupsValue(listOf("00011"))) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.BitGroups.WRONG_GROUP_COUNT,
                         params = mapOf(
                             ParamKey.EXPECTED_COUNT to "2",
@@ -162,8 +154,7 @@ class AnswerValidatorTest :
                     step,
                     Answer.BitGroupsValue(listOf("00011", "101001", "111")),
                 ) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.BitGroups.WRONG_GROUP_COUNT,
                         params = mapOf(
                             ParamKey.EXPECTED_COUNT to "2",
@@ -177,8 +168,7 @@ class AnswerValidatorTest :
                     step,
                     Answer.BitGroupsValue(listOf("00011", "10A001")),
                 ) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.BitGroups.INVALID_CHARACTER,
                         params = mapOf(ParamKey.POSITION to "1", ParamKey.GOT to "10A001"),
                     )
@@ -189,8 +179,7 @@ class AnswerValidatorTest :
                     step,
                     Answer.BitGroupsValue(listOf("0001", "101001")),
                 ) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.BitGroups.WRONG_GROUP_LENGTH,
                         params = mapOf(
                             ParamKey.POSITION to "0",
@@ -205,8 +194,7 @@ class AnswerValidatorTest :
                     step,
                     Answer.BitGroupsValue(listOf("11111", "000000")),
                 ) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.BitGroups.WRONG_VALUE,
                         params = mapOf(ParamKey.GOT to "11111 000000"),
                     )
@@ -231,12 +219,12 @@ class AnswerValidatorTest :
 
             "correct value -> ok" {
                 sut.validate(step, Answer.HexBytesValue(listOf(0xC3, 0xA9))) shouldBe
-                    ValidationResult(ok = true)
+                    ValidationResult.correct()
             }
 
             "empty -> hex-bytes.empty" {
                 sut.validate(step, Answer.HexBytesValue(emptyList())) shouldBe
-                    ValidationResult(ok = false, errorType = ErrorType.HexBytes.EMPTY)
+                    ValidationResult.incorrect(errorType = ErrorType.HexBytes.EMPTY)
             }
 
             "byte > 255 -> hex-bytes.byte-out-of-range" {
@@ -244,8 +232,7 @@ class AnswerValidatorTest :
                     step,
                     Answer.HexBytesValue(listOf(0xC3, 0x100)),
                 ) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.HexBytes.BYTE_OUT_OF_RANGE,
                         params = mapOf(ParamKey.POSITION to "1", ParamKey.GOT to "256"),
                     )
@@ -256,8 +243,7 @@ class AnswerValidatorTest :
                     step,
                     Answer.HexBytesValue(listOf(-1, 0xA9)),
                 ) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.HexBytes.BYTE_OUT_OF_RANGE,
                         params = mapOf(ParamKey.POSITION to "0", ParamKey.GOT to "-1"),
                     )
@@ -265,8 +251,7 @@ class AnswerValidatorTest :
 
             "too few bytes -> hex-bytes.too-few-bytes" {
                 sut.validate(step, Answer.HexBytesValue(listOf(0xC3))) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.HexBytes.TOO_FEW_BYTES,
                         params = mapOf(
                             ParamKey.EXPECTED_COUNT to "2",
@@ -280,8 +265,7 @@ class AnswerValidatorTest :
                     step,
                     Answer.HexBytesValue(listOf(0xC3, 0xA9, 0x00)),
                 ) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.HexBytes.TOO_MANY_BYTES,
                         params = mapOf(
                             ParamKey.EXPECTED_COUNT to "2",
@@ -295,8 +279,7 @@ class AnswerValidatorTest :
                     step,
                     Answer.HexBytesValue(listOf(0xC3, 0xAA)),
                 ) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.HexBytes.WRONG_VALUE,
                         params = mapOf(ParamKey.GOT to "C3 AA"),
                     )
@@ -316,13 +299,12 @@ class AnswerValidatorTest :
 
             "correct value -> ok" {
                 sut.validate(step, Answer.CodePointValue(0x00E9)) shouldBe
-                    ValidationResult(ok = true)
+                    ValidationResult.correct()
             }
 
             "negative -> code-point.out-of-range" {
                 sut.validate(step, Answer.CodePointValue(-1)) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.CodePoint.OUT_OF_RANGE,
                         params = mapOf(
                             ParamKey.GOT to "-1",
@@ -334,8 +316,7 @@ class AnswerValidatorTest :
 
             "above U+10FFFF -> code-point.out-of-range" {
                 sut.validate(step, Answer.CodePointValue(0x110000)) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.CodePoint.OUT_OF_RANGE,
                         params = mapOf(
                             ParamKey.GOT to "1114112",
@@ -347,8 +328,7 @@ class AnswerValidatorTest :
 
             "high surrogate -> code-point.surrogate" {
                 sut.validate(step, Answer.CodePointValue(0xD800)) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.CodePoint.SURROGATE,
                         params = mapOf(ParamKey.GOT to "U+D800"),
                     )
@@ -356,8 +336,7 @@ class AnswerValidatorTest :
 
             "low surrogate -> code-point.surrogate" {
                 sut.validate(step, Answer.CodePointValue(0xDFFF)) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.CodePoint.SURROGATE,
                         params = mapOf(ParamKey.GOT to "U+DFFF"),
                     )
@@ -365,8 +344,7 @@ class AnswerValidatorTest :
 
             "valid but wrong -> code-point.wrong-value (no expected leak)" {
                 sut.validate(step, Answer.CodePointValue(0x00EA)) shouldBe
-                    ValidationResult(
-                        ok = false,
+                    ValidationResult.incorrect(
                         errorType = ErrorType.CodePoint.WRONG_VALUE,
                         params = mapOf(ParamKey.GOT to "U+00EA"),
                     )
@@ -383,13 +361,13 @@ class AnswerValidatorTest :
 
             "correct BigEndian -> ok" {
                 sut.validate(step, Answer.EndiannessChoice(Encoding.Endian.BigEndian)) shouldBe
-                    ValidationResult(ok = true)
+                    ValidationResult.correct()
             }
 
             "correct LittleEndian (LE step) -> ok" {
                 val leStep = Step.Endianness(expected = Encoding.Endian.LittleEndian)
                 sut.validate(leStep, Answer.EndiannessChoice(Encoding.Endian.LittleEndian)) shouldBe
-                    ValidationResult(ok = true)
+                    ValidationResult.correct()
             }
 
             "wrong choice -> endianness.wrong-choice (no got/expected leak)" {
@@ -397,7 +375,7 @@ class AnswerValidatorTest :
                     step,
                     Answer.EndiannessChoice(Encoding.Endian.LittleEndian),
                 ) shouldBe
-                    ValidationResult(ok = false, errorType = ErrorType.Endianness.WRONG_CHOICE)
+                    ValidationResult.incorrect(errorType = ErrorType.Endianness.WRONG_CHOICE)
             }
 
             "wrong Answer type -> answer.type-mismatch" {

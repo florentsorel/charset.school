@@ -1,21 +1,20 @@
 package school.charset.app.domain.exercise
 
-/**
- * Result of validating a single (Step, Answer) pair.
- *
- * Anti-cheat note: this type intentionally does NOT carry the expected value.
- * Returning it to the front would let a user read the answer from the network
- * payload (devtools, etc.). The expected value lives only in the Step (server-side)
- * and is persisted directly via the repository.
- *
- * `params` may carry structural hints (length, count, position, ranges) but must
- * never contain the canonical expected value when `ok` is false.
- */
-data class ValidationResult(
+@ConsistentCopyVisibility
+data class ValidationResult private constructor(
     val ok: Boolean,
     val errorType: String? = null,
     val params: Map<String, String> = emptyMap(),
 ) {
+    init {
+        if (ok) {
+            require(errorType == null) { "Correct result must not carry an errorType" }
+            require(params.isEmpty()) { "Correct result must not carry params" }
+        } else {
+            require(errorType != null) { "Incorrect result must carry an errorType" }
+        }
+    }
+
     companion object {
         fun correct(): ValidationResult = ValidationResult(ok = true)
 
