@@ -1,13 +1,10 @@
 package school.charset.app.domain.exercise.generator
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import school.charset.app.domain.encoding.CodePoint
-import school.charset.app.domain.encoding.Encoding
-import school.charset.app.domain.exercise.ExerciseGenerationException
 import kotlin.random.Random
 
 class CodePointGeneratorTest :
@@ -18,172 +15,236 @@ class CodePointGeneratorTest :
         // throws "no mocking found" and the test fails fast.
 
         "randomAscii" - {
-            "level 1 — picks from [0x20, 0x7F) = printable ASCII" {
+            "Printable — picks from [0x20, 0x7F) = printable ASCII" {
                 val random = mockk<Random>()
                 every { random.nextInt(0x20, 0x7F) } returns 0x41
-                CodePointGenerator(random).randomAscii(level = 1) shouldBe CodePoint(0x41)
+                CodePointGenerator(random).randomAscii(AsciiLevel.Printable) shouldBe CodePoint(0x41)
             }
 
-            "level 1 — low boundary 0x20" {
+            "Printable — low boundary 0x20" {
                 val random = mockk<Random>()
                 every { random.nextInt(0x20, 0x7F) } returns 0x20
-                CodePointGenerator(random).randomAscii(level = 1) shouldBe CodePoint(0x20)
+                CodePointGenerator(random).randomAscii(AsciiLevel.Printable) shouldBe CodePoint(0x20)
             }
 
-            "level 1 — high boundary 0x7E" {
+            "Printable — high boundary 0x7E" {
                 val random = mockk<Random>()
                 every { random.nextInt(0x20, 0x7F) } returns 0x7E
-                CodePointGenerator(random).randomAscii(level = 1) shouldBe CodePoint(0x7E)
+                CodePointGenerator(random).randomAscii(AsciiLevel.Printable) shouldBe CodePoint(0x7E)
             }
 
-            "level 2 — picks from [0x00, 0x80) = full ASCII including controls" {
+            "Full — picks from [0x00, 0x80) = full ASCII including controls" {
                 val random = mockk<Random>()
                 every { random.nextInt(0x00, 0x80) } returns 0x41
-                CodePointGenerator(random).randomAscii(level = 2) shouldBe CodePoint(0x41)
+                CodePointGenerator(random).randomAscii(AsciiLevel.Full) shouldBe CodePoint(0x41)
             }
 
-            "level 2 — low boundary 0x00 (NUL)" {
+            "Full — low boundary 0x00 (NUL)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0x00, 0x80) } returns 0x00
-                CodePointGenerator(random).randomAscii(level = 2) shouldBe CodePoint(0x00)
+                CodePointGenerator(random).randomAscii(AsciiLevel.Full) shouldBe CodePoint(0x00)
             }
 
-            "level 2 — high boundary 0x7F (DEL)" {
+            "Full — high boundary 0x7F (DEL)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0x00, 0x80) } returns 0x7F
-                CodePointGenerator(random).randomAscii(level = 2) shouldBe CodePoint(0x7F)
-            }
-
-            "invalid level throws ExerciseGenerationException" {
-                val sut = CodePointGenerator(mockk())
-                val exception = shouldThrow<ExerciseGenerationException> {
-                    sut.randomAscii(level = 99)
-                }
-                exception.encoding shouldBe Encoding.Ascii
-                exception.level shouldBe 99
-                exception.message shouldBe "Cannot generate exercise for ascii level 99: level must be 1 or 2"
+                CodePointGenerator(random).randomAscii(AsciiLevel.Full) shouldBe CodePoint(0x7F)
             }
         }
 
         "randomLatin1" - {
-            "level 1 — picks from [0xA0, 0x100) = Latin-1 supplement only" {
+            "Supplement — picks from [0xA0, 0x100) = Latin-1 supplement only" {
                 val random = mockk<Random>()
                 every { random.nextInt(0xA0, 0x100) } returns 0xE9
-                CodePointGenerator(random).randomLatin1(level = 1) shouldBe CodePoint(0xE9)
+                CodePointGenerator(random).randomLatin1(Latin1Level.Supplement) shouldBe CodePoint(0xE9)
             }
 
-            "level 1 — low boundary 0xA0 (NBSP)" {
+            "Supplement — low boundary 0xA0 (NBSP)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0xA0, 0x100) } returns 0xA0
-                CodePointGenerator(random).randomLatin1(level = 1) shouldBe CodePoint(0xA0)
+                CodePointGenerator(random).randomLatin1(Latin1Level.Supplement) shouldBe CodePoint(0xA0)
             }
 
-            "level 1 — high boundary 0xFF (ÿ)" {
+            "Supplement — high boundary 0xFF (ÿ)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0xA0, 0x100) } returns 0xFF
-                CodePointGenerator(random).randomLatin1(level = 1) shouldBe CodePoint(0xFF)
+                CodePointGenerator(random).randomLatin1(Latin1Level.Supplement) shouldBe CodePoint(0xFF)
             }
 
-            "level 2 — picks from [0x00, 0x100) = full Latin-1" {
+            "Full — picks from [0x00, 0x100) = full Latin-1" {
                 val random = mockk<Random>()
                 every { random.nextInt(0x00, 0x100) } returns 0xE9
-                CodePointGenerator(random).randomLatin1(level = 2) shouldBe CodePoint(0xE9)
+                CodePointGenerator(random).randomLatin1(Latin1Level.Full) shouldBe CodePoint(0xE9)
             }
 
-            "level 2 — low boundary 0x00 (NUL)" {
+            "Full — low boundary 0x00 (NUL)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0x00, 0x100) } returns 0x00
-                CodePointGenerator(random).randomLatin1(level = 2) shouldBe CodePoint(0x00)
+                CodePointGenerator(random).randomLatin1(Latin1Level.Full) shouldBe CodePoint(0x00)
             }
 
-            "level 2 — high boundary 0xFF (ÿ)" {
+            "Full — high boundary 0xFF (ÿ)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0x00, 0x100) } returns 0xFF
-                CodePointGenerator(random).randomLatin1(level = 2) shouldBe CodePoint(0xFF)
-            }
-
-            "invalid level throws ExerciseGenerationException" {
-                val sut = CodePointGenerator(mockk())
-                val exception = shouldThrow<ExerciseGenerationException> {
-                    sut.randomLatin1(level = 99)
-                }
-                exception.encoding shouldBe Encoding.Latin1
-                exception.level shouldBe 99
-                exception.message shouldBe "Cannot generate exercise for latin1 level 99: level must be 1 or 2"
+                CodePointGenerator(random).randomLatin1(Latin1Level.Full) shouldBe CodePoint(0xFF)
             }
         }
 
         "randomWindows1252" - {
-            // Level 1 picks from the 27 special code points only.
+            // SpecialBlock picks from the 27 special code points only.
             // Indices are stable: 0 = byte 0x80 (€), ..., 26 = byte 0x9F (Ÿ).
 
-            "level 1 — index 0 picks Euro (U+20AC, byte 0x80)" {
+            "SpecialBlock — index 0 picks Euro (U+20AC, byte 0x80)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0, 27) } returns 0
-                CodePointGenerator(random).randomWindows1252(level = 1) shouldBe CodePoint(0x20AC)
+                CodePointGenerator(random).randomWindows1252(Windows1252Level.SpecialBlock) shouldBe
+                    CodePoint(0x20AC)
             }
 
-            "level 1 — index 11 picks Œ (U+0152, byte 0x8C)" {
+            "SpecialBlock — index 11 picks Œ (U+0152, byte 0x8C)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0, 27) } returns 11
-                CodePointGenerator(random).randomWindows1252(level = 1) shouldBe CodePoint(0x0152)
+                CodePointGenerator(random).randomWindows1252(Windows1252Level.SpecialBlock) shouldBe
+                    CodePoint(0x0152)
             }
 
-            "level 1 — index 26 picks Ÿ (U+0178, byte 0x9F, last special)" {
+            "SpecialBlock — index 26 picks Ÿ (U+0178, byte 0x9F, last special)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0, 27) } returns 26
-                CodePointGenerator(random).randomWindows1252(level = 1) shouldBe CodePoint(0x0178)
+                CodePointGenerator(random).randomWindows1252(Windows1252Level.SpecialBlock) shouldBe
+                    CodePoint(0x0178)
             }
 
-            // Level 2 picks from all 251 encodable code points. Layout:
+            // AllEncodable picks from all 251 encodable code points. Layout:
             // - indices 0..127     : ASCII range (U+0000..U+007F)
             // - indices 128..154   : special block (27 entries, in byte order)
             // - indices 155..250   : Latin-1 supplement (U+00A0..U+00FF)
 
-            "level 2 — index 0 picks U+0000 (NUL, start of ASCII)" {
+            "AllEncodable — index 0 picks U+0000 (NUL, start of ASCII)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0, 251) } returns 0
-                CodePointGenerator(random).randomWindows1252(level = 2) shouldBe CodePoint(0x00)
+                CodePointGenerator(random).randomWindows1252(Windows1252Level.AllEncodable) shouldBe
+                    CodePoint(0x00)
             }
 
-            "level 2 — index 127 picks U+007F (DEL, end of ASCII)" {
+            "AllEncodable — index 127 picks U+007F (DEL, end of ASCII)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0, 251) } returns 127
-                CodePointGenerator(random).randomWindows1252(level = 2) shouldBe CodePoint(0x7F)
+                CodePointGenerator(random).randomWindows1252(Windows1252Level.AllEncodable) shouldBe
+                    CodePoint(0x7F)
             }
 
-            "level 2 — index 128 picks U+20AC (Euro, first special)" {
+            "AllEncodable — index 128 picks U+20AC (Euro, first special)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0, 251) } returns 128
-                CodePointGenerator(random).randomWindows1252(level = 2) shouldBe CodePoint(0x20AC)
+                CodePointGenerator(random).randomWindows1252(Windows1252Level.AllEncodable) shouldBe
+                    CodePoint(0x20AC)
             }
 
-            "level 2 — index 154 picks U+0178 (Ÿ, last special)" {
+            "AllEncodable — index 154 picks U+0178 (Ÿ, last special)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0, 251) } returns 154
-                CodePointGenerator(random).randomWindows1252(level = 2) shouldBe CodePoint(0x0178)
+                CodePointGenerator(random).randomWindows1252(Windows1252Level.AllEncodable) shouldBe
+                    CodePoint(0x0178)
             }
 
-            "level 2 — index 155 picks U+00A0 (NBSP, start of Latin-1 supplement)" {
+            "AllEncodable — index 155 picks U+00A0 (NBSP, start of Latin-1 supplement)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0, 251) } returns 155
-                CodePointGenerator(random).randomWindows1252(level = 2) shouldBe CodePoint(0xA0)
+                CodePointGenerator(random).randomWindows1252(Windows1252Level.AllEncodable) shouldBe
+                    CodePoint(0xA0)
             }
 
-            "level 2 — index 250 picks U+00FF (ÿ, end)" {
+            "AllEncodable — index 250 picks U+00FF (ÿ, end)" {
                 val random = mockk<Random>()
                 every { random.nextInt(0, 251) } returns 250
-                CodePointGenerator(random).randomWindows1252(level = 2) shouldBe CodePoint(0xFF)
+                CodePointGenerator(random).randomWindows1252(Windows1252Level.AllEncodable) shouldBe
+                    CodePoint(0xFF)
+            }
+        }
+
+        "randomUtf8" - {
+            "OneByte — picks from [0x00, 0x80) = 1-byte UTF-8 (ASCII subset)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x00, 0x80) } returns 0x41
+                CodePointGenerator(random).randomUtf8(Utf8Level.OneByte) shouldBe CodePoint(0x41)
             }
 
-            "invalid level throws ExerciseGenerationException" {
-                val sut = CodePointGenerator(mockk())
-                val exception = shouldThrow<ExerciseGenerationException> {
-                    sut.randomWindows1252(level = 99)
-                }
-                exception.encoding shouldBe Encoding.Windows1252
-                exception.level shouldBe 99
-                exception.message shouldBe "Cannot generate exercise for windows-1252 level 99: level must be 1 or 2"
+            "OneByte — low boundary 0x00" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x00, 0x80) } returns 0x00
+                CodePointGenerator(random).randomUtf8(Utf8Level.OneByte) shouldBe CodePoint(0x00)
+            }
+
+            "OneByte — high boundary 0x7F" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x00, 0x80) } returns 0x7F
+                CodePointGenerator(random).randomUtf8(Utf8Level.OneByte) shouldBe CodePoint(0x7F)
+            }
+
+            "TwoByte — picks from [0x80, 0x800) = 2-byte UTF-8" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x80, 0x800) } returns 0xE9
+                CodePointGenerator(random).randomUtf8(Utf8Level.TwoByte) shouldBe CodePoint(0xE9)
+            }
+
+            "TwoByte — low boundary 0x80" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x80, 0x800) } returns 0x80
+                CodePointGenerator(random).randomUtf8(Utf8Level.TwoByte) shouldBe CodePoint(0x80)
+            }
+
+            "TwoByte — high boundary 0x7FF" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x80, 0x800) } returns 0x7FF
+                CodePointGenerator(random).randomUtf8(Utf8Level.TwoByte) shouldBe CodePoint(0x7FF)
+            }
+
+            // ThreeByte: 3-byte range with surrogate gap. The implementation indexes
+            // into a virtual range of 61440 non-surrogate code points:
+            // - indices 0..53247   → U+0800..U+D7FF (before surrogates)
+            // - indices 53248..61439 → U+E000..U+FFFF (after surrogates)
+
+            "ThreeByte — index 0 picks U+0800 (start of 3-byte range)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0, 61440) } returns 0
+                CodePointGenerator(random).randomUtf8(Utf8Level.ThreeByte) shouldBe CodePoint(0x0800)
+            }
+
+            "ThreeByte — index 53247 picks U+D7FF (last before surrogates)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0, 61440) } returns 53247
+                CodePointGenerator(random).randomUtf8(Utf8Level.ThreeByte) shouldBe CodePoint(0xD7FF)
+            }
+
+            "ThreeByte — index 53248 picks U+E000 (first after surrogates, skip)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0, 61440) } returns 53248
+                CodePointGenerator(random).randomUtf8(Utf8Level.ThreeByte) shouldBe CodePoint(0xE000)
+            }
+
+            "ThreeByte — index 61439 picks U+FFFF (BMP max, last of 3-byte range)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0, 61440) } returns 61439
+                CodePointGenerator(random).randomUtf8(Utf8Level.ThreeByte) shouldBe CodePoint(0xFFFF)
+            }
+
+            "FourByte — picks from [0x10000, 0x110000) = 4-byte UTF-8 (supplementary plane)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x10000, 0x110000) } returns 0x1F600
+                CodePointGenerator(random).randomUtf8(Utf8Level.FourByte) shouldBe CodePoint(0x1F600)
+            }
+
+            "FourByte — low boundary 0x10000" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x10000, 0x110000) } returns 0x10000
+                CodePointGenerator(random).randomUtf8(Utf8Level.FourByte) shouldBe CodePoint(0x10000)
+            }
+
+            "FourByte — high boundary 0x10FFFF" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x10000, 0x110000) } returns 0x10FFFF
+                CodePointGenerator(random).randomUtf8(Utf8Level.FourByte) shouldBe CodePoint(0x10FFFF)
             }
         }
     })

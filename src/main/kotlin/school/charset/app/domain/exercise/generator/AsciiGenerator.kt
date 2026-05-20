@@ -4,6 +4,7 @@ import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Exercise
+import school.charset.app.domain.exercise.ExerciseGenerationException
 import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
@@ -14,7 +15,13 @@ class AsciiGenerator(
     override val encoding = Encoding.Ascii
 
     override fun generate(level: Int, granularity: Granularity): Exercise {
-        val codePoint = codePointGenerator.randomAscii(level)
+        val asciiLevel = AsciiLevel.fromNumber(level)
+            ?: throw ExerciseGenerationException(
+                encoding = Encoding.Ascii,
+                level = level,
+                reason = "level must be one of: ${AsciiLevel.validNumbers}",
+            )
+        val codePoint = codePointGenerator.randomAscii(asciiLevel)
         val steps = codePoint.buildSteps(granularity)
         return Exercise(codePoint, Encoding.Ascii, level, granularity, steps)
     }

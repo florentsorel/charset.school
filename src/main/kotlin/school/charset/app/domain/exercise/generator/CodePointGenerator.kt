@@ -1,70 +1,92 @@
 package school.charset.app.domain.exercise.generator
 
 import school.charset.app.domain.encoding.CodePoint
-import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.encoding.Windows1252Spec
-import school.charset.app.domain.exercise.ExerciseGenerationException
 import kotlin.random.Random
 
 class CodePointGenerator(
     private val random: Random,
 ) {
-    fun randomAscii(level: Int): CodePoint {
+    fun randomAscii(level: AsciiLevel): CodePoint {
         val range = when (level) {
             // Printable ASCII: U+0020..U+007E (excludes C0 controls U+0000..U+001F
             // and DEL U+007F).
-            1 -> 0x20..0x7E
+            AsciiLevel.Printable -> 0x20..0x7E
 
             // Full ASCII: U+0000..U+007F (includes C0 controls and DEL).
-            2 -> 0x00..0x7F
-
-            else -> throw ExerciseGenerationException(
-                encoding = Encoding.Ascii,
-                level = level,
-                reason = "level must be 1 or 2",
-            )
+            AsciiLevel.Full -> 0x00..0x7F
         }
         return CodePoint(random.nextInt(range.first, range.last + 1))
     }
 
-    fun randomLatin1(level: Int): CodePoint {
+    fun randomLatin1(level: Latin1Level): CodePoint {
         val range = when (level) {
             // Printable Latin-1 supplement: U+00A0..U+00FF (excludes C1 controls
             // U+0080..U+009F). Accented letters and symbols — the range that
             // distinguishes Latin-1 from ASCII in practice.
-            1 -> 0xA0..0xFF
+            Latin1Level.Supplement -> 0xA0..0xFF
 
             // Full Latin-1: U+0000..U+00FF (includes ASCII subset and both C0
             // U+0000..U+001F and C1 U+0080..U+009F control chars).
-            2 -> 0x00..0xFF
-
-            else -> throw ExerciseGenerationException(
-                encoding = Encoding.Latin1,
-                level = level,
-                reason = "level must be 1 or 2",
-            )
+            Latin1Level.Full -> 0x00..0xFF
         }
         return CodePoint(random.nextInt(range.first, range.last + 1))
     }
 
-    fun randomWindows1252(level: Int): CodePoint {
+    fun randomWindows1252(level: Windows1252Level): CodePoint {
         val pool = when (level) {
-            // The 27 special code points (€, Œ, ™, smart quotes, etc.) - the
+            // The 27 special code points (€, Œ, ™, smart quotes, etc.) — the
             // range that distinguishes Windows-1252 from Latin-1. Forces the
             // user to engage with the Win-1252 special block.
-            1 -> Windows1252Spec.specialCodePoints
+            Windows1252Level.SpecialBlock -> Windows1252Spec.specialCodePoints
 
             // All 251 encodable code points: ASCII identity + special block +
             // Latin-1 supplement identity. Uniform distribution over the whole
             // Windows-1252 space.
-            2 -> Windows1252Spec.encodableCodePoints
-
-            else -> throw ExerciseGenerationException(
-                encoding = Encoding.Windows1252,
-                level = level,
-                reason = "level must be 1 or 2",
-            )
+            Windows1252Level.AllEncodable -> Windows1252Spec.encodableCodePoints
         }
         return CodePoint(pool[random.nextInt(0, pool.size)])
+    }
+
+    fun randomUtf8(level: Utf8Level): CodePoint {
+        val value = when (level) {
+            // 1-byte UTF-8: U+0000..U+007F (= ASCII subset, 7 data bits).
+            Utf8Level.OneByte -> random.nextInt(0x00, 0x80)
+
+            // 2-byte UTF-8: U+0080..U+07FF (Latin extensions, Greek, Cyrillic; 11 data bits).
+            Utf8Level.TwoByte -> random.nextInt(0x80, 0x800)
+
+            // 3-byte UTF-8: U+0800..U+FFFF excluding surrogates U+D800..U+DFFF
+            // (CJK, most BMP; 16 data bits). 63488 - 2048 surrogates = 61440 valid.
+            Utf8Level.ThreeByte -> {
+                val index = random.nextInt(0, NON_SURROGATE_3_BYTE_COUNT)
+                if (index < BEFORE_SURROGATES_COUNT) {
+                    THREE_BYTE_START + index
+                } else {
+                    AFTER_SURROGATES_START + (index - BEFORE_SURROGATES_COUNT)
+                }
+            }
+
+            // 4-byte UTF-8: U+10000..U+10FFFF (supplementary plane; 21 data bits).
+            Utf8Level.FourByte -> random.nextInt(0x10000, 0x110000)
+        }
+        return CodePoint(value)
+    }
+
+    private companion object {
+        // UTF-8 level 3 covers U+0800..U+FFFF (= BMP starting at 3-byte boundary)
+        // excluding the surrogate gap U+D800..U+DFFF. Constants are derived from
+        // `CodePoint` so the surrogate range has a single source of truth.
+        private const val THREE_BYTE_START = 0x800
+        private const val AFTER_SURROGATES_START = CodePoint.SURROGATE_MAX + 1
+        private const val THREE_BYTE_END_EXCLUSIVE = CodePoint.BMP_MAX + 1
+
+        // Number of valid code points BEFORE the surrogate gap in the 3-byte range.
+        private const val BEFORE_SURROGATES_COUNT = CodePoint.SURROGATE_MIN - THREE_BYTE_START
+
+        // Total count of valid (non-surrogate) code points in the 3-byte range.
+        private const val NON_SURROGATE_3_BYTE_COUNT =
+            (THREE_BYTE_END_EXCLUSIVE - THREE_BYTE_START) -
+                (AFTER_SURROGATES_START - CodePoint.SURROGATE_MIN)
     }
 }
