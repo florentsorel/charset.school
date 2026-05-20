@@ -4,6 +4,7 @@ import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Exercise
+import school.charset.app.domain.exercise.ExerciseGenerationException
 import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
@@ -14,7 +15,13 @@ class Latin1Generator(
     override val encoding = Encoding.Latin1
 
     override fun generate(level: Int, granularity: Granularity): Exercise {
-        val codePoint = codePointGenerator.randomLatin1(level)
+        val latin1Level = Latin1Level.fromNumber(level)
+            ?: throw ExerciseGenerationException(
+                encoding = Encoding.Latin1,
+                level = level,
+                reason = "level must be one of: ${Latin1Level.validNumbers}",
+            )
+        val codePoint = codePointGenerator.randomLatin1(latin1Level)
         val steps = codePoint.buildSteps(granularity)
         return Exercise(codePoint, Encoding.Latin1, level, granularity, steps)
     }

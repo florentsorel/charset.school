@@ -1,5 +1,6 @@
 package school.charset.app.domain.exercise.generator
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -9,6 +10,7 @@ import io.mockk.mockk
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
+import school.charset.app.domain.exercise.ExerciseGenerationException
 import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
@@ -18,7 +20,8 @@ class AsciiGeneratorTest :
 
         fun newSut(codePoint: CodePoint, level: Int = 1): AsciiGenerator {
             val codePointGenerator = mockk<CodePointGenerator>()
-            every { codePointGenerator.randomAscii(level) } returns codePoint
+            val asciiLevel = AsciiLevel.fromNumber(level)!!
+            every { codePointGenerator.randomAscii(asciiLevel) } returns codePoint
             return AsciiGenerator(codec, codePointGenerator)
         }
 
@@ -69,5 +72,15 @@ class AsciiGeneratorTest :
 
             exercise.steps shouldHaveSize 1
             exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x41)
+        }
+
+        "invalid level throws ExerciseGenerationException" {
+            val sut = AsciiGenerator(codec, mockk())
+            val exception = shouldThrow<ExerciseGenerationException> {
+                sut.generate(level = 99, Granularity.Verbose)
+            }
+            exception.encoding shouldBe Encoding.Ascii
+            exception.level shouldBe 99
+            exception.message shouldBe "Cannot generate exercise for ascii level 99: level must be one of: 1, 2"
         }
     })

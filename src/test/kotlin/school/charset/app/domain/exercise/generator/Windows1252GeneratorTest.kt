@@ -1,5 +1,6 @@
 package school.charset.app.domain.exercise.generator
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -9,6 +10,7 @@ import io.mockk.mockk
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
+import school.charset.app.domain.exercise.ExerciseGenerationException
 import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
@@ -18,7 +20,8 @@ class Windows1252GeneratorTest :
 
         fun newSut(codePoint: CodePoint, level: Int = 1): Windows1252Generator {
             val codePointGenerator = mockk<CodePointGenerator>()
-            every { codePointGenerator.randomWindows1252(level) } returns codePoint
+            val windows1252Level = Windows1252Level.fromNumber(level)!!
+            every { codePointGenerator.randomWindows1252(windows1252Level) } returns codePoint
             return Windows1252Generator(codec, codePointGenerator)
         }
 
@@ -96,5 +99,15 @@ class Windows1252GeneratorTest :
 
             exercise.steps shouldHaveSize 1
             exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x80)
+        }
+
+        "invalid level throws ExerciseGenerationException" {
+            val sut = Windows1252Generator(codec, mockk())
+            val exception = shouldThrow<ExerciseGenerationException> {
+                sut.generate(level = 99, Granularity.Verbose)
+            }
+            exception.encoding shouldBe Encoding.Windows1252
+            exception.level shouldBe 99
+            exception.message shouldBe "Cannot generate exercise for windows-1252 level 99: level must be one of: 1, 2"
         }
     })

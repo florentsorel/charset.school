@@ -4,6 +4,7 @@ import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Exercise
+import school.charset.app.domain.exercise.ExerciseGenerationException
 import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
@@ -14,7 +15,13 @@ class Windows1252Generator(
     override val encoding = Encoding.Windows1252
 
     override fun generate(level: Int, granularity: Granularity): Exercise {
-        val codePoint = codePointGenerator.randomWindows1252(level)
+        val windows1252Level = Windows1252Level.fromNumber(level)
+            ?: throw ExerciseGenerationException(
+                encoding = Encoding.Windows1252,
+                level = level,
+                reason = "level must be one of: ${Windows1252Level.validNumbers}",
+            )
+        val codePoint = codePointGenerator.randomWindows1252(windows1252Level)
         val steps = codePoint.buildSteps(granularity)
         return Exercise(codePoint, Encoding.Windows1252, level, granularity, steps)
     }

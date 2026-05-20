@@ -1,5 +1,6 @@
 package school.charset.app.domain.exercise.generator
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -9,6 +10,7 @@ import io.mockk.mockk
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
+import school.charset.app.domain.exercise.ExerciseGenerationException
 import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
@@ -18,7 +20,8 @@ class Latin1GeneratorTest :
 
         fun newSut(codePoint: CodePoint, level: Int = 1): Latin1Generator {
             val codePointGenerator = mockk<CodePointGenerator>()
-            every { codePointGenerator.randomLatin1(level) } returns codePoint
+            val latin1Level = Latin1Level.fromNumber(level)!!
+            every { codePointGenerator.randomLatin1(latin1Level) } returns codePoint
             return Latin1Generator(codec, codePointGenerator)
         }
 
@@ -81,5 +84,15 @@ class Latin1GeneratorTest :
 
             exercise.steps shouldHaveSize 1
             exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0xE9)
+        }
+
+        "invalid level throws ExerciseGenerationException" {
+            val sut = Latin1Generator(codec, mockk())
+            val exception = shouldThrow<ExerciseGenerationException> {
+                sut.generate(level = 99, Granularity.Verbose)
+            }
+            exception.encoding shouldBe Encoding.Latin1
+            exception.level shouldBe 99
+            exception.message shouldBe "Cannot generate exercise for latin1 level 99: level must be one of: 1, 2"
         }
     })
