@@ -1,4 +1,4 @@
-package school.charset.app.domain.exercise
+package school.charset.app.domain.exercise.generator
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
@@ -8,6 +8,9 @@ import io.mockk.mockk
 import io.mockk.verify
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Encoding
+import school.charset.app.domain.exercise.Exercise
+import school.charset.app.domain.exercise.ExerciseGenerationException
+import school.charset.app.domain.exercise.Granularity
 
 class ExerciseGeneratorTest :
     FreeSpec({

@@ -1,7 +1,9 @@
-package school.charset.app.domain.exercise
+package school.charset.app.domain.exercise.generator
 
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Encoding
+import school.charset.app.domain.encoding.Windows1252Spec
+import school.charset.app.domain.exercise.ExerciseGenerationException
 import kotlin.random.Random
 
 class CodePointGenerator(
@@ -43,5 +45,26 @@ class CodePointGenerator(
             )
         }
         return CodePoint(random.nextInt(range.first, range.last + 1))
+    }
+
+    fun randomWindows1252(level: Int): CodePoint {
+        val pool = when (level) {
+            // The 27 special code points (€, Œ, ™, smart quotes, etc.) - the
+            // range that distinguishes Windows-1252 from Latin-1. Forces the
+            // user to engage with the Win-1252 special block.
+            1 -> Windows1252Spec.specialCodePoints
+
+            // All 251 encodable code points: ASCII identity + special block +
+            // Latin-1 supplement identity. Uniform distribution over the whole
+            // Windows-1252 space.
+            2 -> Windows1252Spec.encodableCodePoints
+
+            else -> throw ExerciseGenerationException(
+                encoding = Encoding.Windows1252,
+                level = level,
+                reason = "level must be 1 or 2",
+            )
+        }
+        return CodePoint(pool[random.nextInt(0, pool.size)])
     }
 }

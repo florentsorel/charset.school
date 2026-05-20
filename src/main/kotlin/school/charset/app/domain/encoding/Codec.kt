@@ -42,7 +42,7 @@ class Codec {
         }
 
         // 27 special mappings in 0x80..0x9F + 5 unassigned bytes (0x81, 0x8D, 0x8F, 0x90, 0x9D).
-        val byte = WINDOWS_1252_REVERSE[value]
+        val byte = Windows1252Spec.codePointToByte[value]
             ?: throw EncoderException(this, Encoding.Windows1252, "not representable in Windows-1252")
 
         return byteArrayOf(byte)
@@ -164,7 +164,7 @@ class Codec {
             return CodePoint(value)
         }
 
-        val codePoint = WINDOWS_1252_FORWARD[this[0]]
+        val codePoint = Windows1252Spec.byteToCodePoint[this[0]]
             ?: throw DecoderException(this, Encoding.Windows1252, "byte 0x${"%02X".format(value)} is unassigned in Windows-1252")
 
         return CodePoint(codePoint)
@@ -354,42 +354,5 @@ class Codec {
             Encoding.Endian.BigEndian -> (first shl 8) or second
             Encoding.Endian.LittleEndian -> (second shl 8) or first
         }
-    }
-
-    private companion object {
-        // Reverse map: Unicode code point -> Windows-1252 byte in 0x80..0x9F.
-        // Bytes 0x81, 0x8D, 0x8F, 0x90, 0x9D have no Unicode mapping in Windows-1252.
-        private val WINDOWS_1252_REVERSE: Map<Int, Byte> = mapOf(
-            0x20AC to 0x80.toByte(), // € - Euro Sign
-            0x201A to 0x82.toByte(), // ‚ - Single Low-9 Quotation Mark
-            0x0192 to 0x83.toByte(), // ƒ - Latin Small Letter F with Hook
-            0x201E to 0x84.toByte(), // „ - Double Low-9 Quotation Mark
-            0x2026 to 0x85.toByte(), // … - Horizontal Ellipsis
-            0x2020 to 0x86.toByte(), // † - Dagger
-            0x2021 to 0x87.toByte(), // ‡ - Double Dagger
-            0x02C6 to 0x88.toByte(), // ˆ - Modifier Letter Circumflex Accent
-            0x2030 to 0x89.toByte(), // ‰ - Per Mille Sign
-            0x0160 to 0x8A.toByte(), // Š - Latin Capital Letter S with Caron
-            0x2039 to 0x8B.toByte(), // ‹ - Single Left-Pointing Angle Quotation Mark
-            0x0152 to 0x8C.toByte(), // Œ - Latin Capital Ligature OE
-            0x017D to 0x8E.toByte(), // Ž - Latin Capital Letter Z with Caron
-            0x2018 to 0x91.toByte(), // ' - Left Single Quotation Mark
-            0x2019 to 0x92.toByte(), // ' - Right Single Quotation Mark
-            0x201C to 0x93.toByte(), // " - Left Double Quotation Mark
-            0x201D to 0x94.toByte(), // " - Right Double Quotation Mark
-            0x2022 to 0x95.toByte(), // • - Bullet
-            0x2013 to 0x96.toByte(), // – - En Dash
-            0x2014 to 0x97.toByte(), // — - Em Dash
-            0x02DC to 0x98.toByte(), // ˜ - Small Tilde
-            0x2122 to 0x99.toByte(), // ™ - Trade Mark Sign
-            0x0161 to 0x9A.toByte(), // š - Latin Small Letter S with Caron
-            0x203A to 0x9B.toByte(), // › - Single Right-Pointing Angle Quotation Mark
-            0x0153 to 0x9C.toByte(), // œ - Latin Small Ligature OE
-            0x017E to 0x9E.toByte(), // ž - Latin Small Letter Z with Caron
-            0x0178 to 0x9F.toByte(), // Ÿ - Latin Capital Letter Y with Diaeresis
-        )
-
-        private val WINDOWS_1252_FORWARD: Map<Byte, Int> =
-            WINDOWS_1252_REVERSE.entries.associate { (cp, b) -> b to cp }
     }
 }

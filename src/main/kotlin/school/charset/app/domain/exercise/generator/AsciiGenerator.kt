@@ -1,8 +1,11 @@
-package school.charset.app.domain.exercise
+package school.charset.app.domain.exercise.generator
 
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
+import school.charset.app.domain.exercise.Exercise
+import school.charset.app.domain.exercise.Granularity
+import school.charset.app.domain.exercise.Step
 
 class AsciiGenerator(
     private val codec: Codec,

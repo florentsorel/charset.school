@@ -1,4 +1,4 @@
-package school.charset.app.domain.exercise
+package school.charset.app.domain.exercise.generator
 
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -9,6 +9,8 @@ import io.mockk.mockk
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
+import school.charset.app.domain.exercise.Granularity
+import school.charset.app.domain.exercise.Step
 
 class Latin1GeneratorTest :
     FreeSpec({
