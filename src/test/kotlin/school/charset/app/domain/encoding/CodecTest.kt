@@ -391,5 +391,86 @@ class CodecTest :
                     exception.message shouldBe "Cannot decode [] in latin1: expected exactly 1 byte, got 0"
                 }
             }
+
+            "windows-1252" - {
+                "0x00 -> U+0000 (NUL, low boundary)" {
+                    sut.decode(bytes(0x00), Encoding.Windows1252) shouldBe CodePoint(0x0000)
+                }
+                "0x41 -> U+0041 (A, ASCII identity)" {
+                    sut.decode(bytes(0x41), Encoding.Windows1252) shouldBe CodePoint(0x0041)
+                }
+                "0x7F -> U+007F (DEL, last identity-ASCII byte)" {
+                    sut.decode(bytes(0x7F), Encoding.Windows1252) shouldBe CodePoint(0x007F)
+                }
+
+                "0xA0 -> U+00A0 (NBSP, first byte above the special block)" {
+                    sut.decode(bytes(0xA0), Encoding.Windows1252) shouldBe CodePoint(0x00A0)
+                }
+                "0xE9 -> U+00E9 (é, Latin-1 identity)" {
+                    sut.decode(bytes(0xE9), Encoding.Windows1252) shouldBe CodePoint(0x00E9)
+                }
+                "0xFF -> U+00FF (ÿ, high boundary)" {
+                    sut.decode(bytes(0xFF), Encoding.Windows1252) shouldBe CodePoint(0x00FF)
+                }
+
+                // Special mappings in 0x80..0x9F
+                "0x80 -> U+20AC (€, marquee character)" {
+                    sut.decode(bytes(0x80), Encoding.Windows1252) shouldBe CodePoint(0x20AC)
+                }
+                "0x8C -> U+0152 (Œ)" {
+                    sut.decode(bytes(0x8C), Encoding.Windows1252) shouldBe CodePoint(0x0152)
+                }
+                "0x97 -> U+2014 (—, em dash)" {
+                    sut.decode(bytes(0x97), Encoding.Windows1252) shouldBe CodePoint(0x2014)
+                }
+                "0x99 -> U+2122 (™)" {
+                    sut.decode(bytes(0x99), Encoding.Windows1252) shouldBe CodePoint(0x2122)
+                }
+                "0x9C -> U+0153 (œ)" {
+                    sut.decode(bytes(0x9C), Encoding.Windows1252) shouldBe CodePoint(0x0153)
+                }
+
+                // Unassigned bytes - the 5 holes in 0x80..0x9F
+                "0x81 throws, unassigned byte" {
+                    val exception = shouldThrow<DecoderException> {
+                        sut.decode(bytes(0x81), Encoding.Windows1252)
+                    }
+                    exception.message shouldBe "Cannot decode [81] in windows-1252: byte 0x81 is unassigned in Windows-1252"
+                }
+                "0x8D throws, unassigned byte" {
+                    shouldThrow<DecoderException> {
+                        sut.decode(bytes(0x8D), Encoding.Windows1252)
+                    }
+                }
+                "0x8F throws, unassigned byte" {
+                    shouldThrow<DecoderException> {
+                        sut.decode(bytes(0x8F), Encoding.Windows1252)
+                    }
+                }
+                "0x90 throws, unassigned byte" {
+                    shouldThrow<DecoderException> {
+                        sut.decode(bytes(0x90), Encoding.Windows1252)
+                    }
+                }
+                "0x9D throws, unassigned byte" {
+                    shouldThrow<DecoderException> {
+                        sut.decode(bytes(0x9D), Encoding.Windows1252)
+                    }
+                }
+
+                // Size errors
+                "[41 42] throws, expected 1 byte got 2" {
+                    val exception = shouldThrow<DecoderException> {
+                        sut.decode(bytes(0x41, 0x42), Encoding.Windows1252)
+                    }
+                    exception.message shouldBe "Cannot decode [41 42] in windows-1252: expected exactly 1 byte, got 2"
+                }
+                "[] throws, expected 1 byte got 0" {
+                    val exception = shouldThrow<DecoderException> {
+                        sut.decode(bytes(), Encoding.Windows1252)
+                    }
+                    exception.message shouldBe "Cannot decode [] in windows-1252: expected exactly 1 byte, got 0"
+                }
+            }
         }
     })

@@ -13,7 +13,7 @@ class Codec {
     fun decode(bytes: ByteArray, encoding: Encoding): CodePoint = when (encoding) {
         Encoding.Ascii -> bytes.fromAscii()
         Encoding.Latin1 -> bytes.fromLatin1()
-        Encoding.Windows1252 -> TODO("Not yet implemented")
+        Encoding.Windows1252 -> bytes.fromWindows1252()
         Encoding.Utf8 -> TODO("Not yet implemented")
         Encoding.Utf16Be, Encoding.Utf16Le -> TODO("Not yet implemented")
         Encoding.Utf32Be, Encoding.Utf32Le -> TODO("Not yet implemented")
@@ -133,6 +133,7 @@ class Codec {
             throw DecoderException(this, Encoding.Ascii, "expected exactly 1 byte, got $size")
         }
 
+        // Unsigned value
         val value = this[0].toInt() and 0xFF
 
         if (value > 0x7F) {
@@ -148,6 +149,25 @@ class Codec {
         }
 
         return CodePoint(this[0].toInt() and 0xFF)
+    }
+
+    private fun ByteArray.fromWindows1252(): CodePoint {
+        if (size != 1) {
+            throw DecoderException(this, Encoding.Windows1252, "expected exactly 1 byte, got $size")
+        }
+
+        // Unsigned value
+        val value = this[0].toInt() and 0xFF
+
+        // Identity ranges
+        if (value <= 0x7F || value in 0xA0..0xFF) {
+            return CodePoint(value)
+        }
+
+        val codePoint = WINDOWS_1252_FORWARD[this[0]]
+            ?: throw DecoderException(this, Encoding.Windows1252, "byte 0x${"%02X".format(value)} is unassigned in Windows-1252")
+
+        return CodePoint(codePoint)
     }
 
     private companion object {
@@ -182,5 +202,8 @@ class Codec {
             0x017E to 0x9E.toByte(), // ž - Latin Small Letter Z with Caron
             0x0178 to 0x9F.toByte(), // Ÿ - Latin Capital Letter Y with Diaeresis
         )
+
+        private val WINDOWS_1252_FORWARD: Map<Byte, Int> =
+            WINDOWS_1252_REVERSE.entries.associate { (cp, b) -> b to cp }
     }
 }
