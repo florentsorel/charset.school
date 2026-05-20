@@ -15,32 +15,32 @@ class AnswerValidator {
 
         // Pedagogical order: alphabet first, then length, then value.
         return when {
-            answer.bits.isEmpty() -> ValidationResult.incorrect("binary.empty")
+            answer.bits.isEmpty() -> ValidationResult.incorrect(ErrorType.Binary.EMPTY)
 
             answer.bits.any { it != '0' && it != '1' } -> ValidationResult.incorrect(
-                errorType = "binary.invalid-character",
-                params = mapOf("got" to answer.bits),
+                errorType = ErrorType.Binary.INVALID_CHARACTER,
+                params = mapOf(ParamKey.GOT to answer.bits),
             )
 
             answer.bits.length < step.length -> ValidationResult.incorrect(
-                errorType = "binary.too-few-bits",
+                errorType = ErrorType.Binary.TOO_FEW_BITS,
                 params = mapOf(
-                    "expected-length" to step.length.toString(),
-                    "got-length" to answer.bits.length.toString(),
+                    ParamKey.EXPECTED_LENGTH to step.length.toString(),
+                    ParamKey.GOT_LENGTH to answer.bits.length.toString(),
                 ),
             )
 
             answer.bits.length > step.length -> ValidationResult.incorrect(
-                errorType = "binary.too-many-bits",
+                errorType = ErrorType.Binary.TOO_MANY_BITS,
                 params = mapOf(
-                    "expected-length" to step.length.toString(),
-                    "got-length" to answer.bits.length.toString(),
+                    ParamKey.EXPECTED_LENGTH to step.length.toString(),
+                    ParamKey.GOT_LENGTH to answer.bits.length.toString(),
                 ),
             )
 
             answer.bits != step.expected -> ValidationResult.incorrect(
-                errorType = "binary.wrong-value",
-                params = mapOf("got" to answer.bits),
+                errorType = ErrorType.Binary.WRONG_VALUE,
+                params = mapOf(ParamKey.GOT to answer.bits),
             )
 
             else -> ValidationResult.correct()
@@ -51,20 +51,20 @@ class AnswerValidator {
         if (answer !is Answer.FormatChoice) return typeMismatch(step, answer)
 
         return when {
-            answer.value.isEmpty() -> ValidationResult.incorrect("format.empty")
+            answer.value.isEmpty() -> ValidationResult.incorrect(ErrorType.Format.EMPTY)
 
             // The choices list is public (already shown in the UI) — safe to echo back.
             answer.value !in step.choices -> ValidationResult.incorrect(
-                errorType = "format.unknown-choice",
+                errorType = ErrorType.Format.UNKNOWN_CHOICE,
                 params = mapOf(
-                    "got" to answer.value,
-                    "choices" to step.choices.joinToString(", "),
+                    ParamKey.GOT to answer.value,
+                    ParamKey.CHOICES to step.choices.joinToString(", "),
                 ),
             )
 
             answer.value != step.expected -> ValidationResult.incorrect(
-                errorType = "format.wrong-choice",
-                params = mapOf("got" to answer.value),
+                errorType = ErrorType.Format.WRONG_CHOICE,
+                params = mapOf(ParamKey.GOT to answer.value),
             )
 
             else -> ValidationResult.correct()
@@ -75,15 +75,15 @@ class AnswerValidator {
         if (answer !is Answer.BitGroupsValue) return typeMismatch(step, answer)
 
         if (answer.groups.isEmpty()) {
-            return ValidationResult.incorrect("bit-groups.empty")
+            return ValidationResult.incorrect(ErrorType.BitGroups.EMPTY)
         }
 
         if (answer.groups.size != step.expected.size) {
             return ValidationResult.incorrect(
-                errorType = "bit-groups.wrong-group-count",
+                errorType = ErrorType.BitGroups.WRONG_GROUP_COUNT,
                 params = mapOf(
-                    "expected-count" to step.expected.size.toString(),
-                    "got-count" to answer.groups.size.toString(),
+                    ParamKey.EXPECTED_COUNT to step.expected.size.toString(),
+                    ParamKey.GOT_COUNT to answer.groups.size.toString(),
                 ),
             )
         }
@@ -93,17 +93,17 @@ class AnswerValidator {
             val expectedLength = step.expected[index].length
             if (group.any { it != '0' && it != '1' }) {
                 return ValidationResult.incorrect(
-                    errorType = "bit-groups.invalid-character",
-                    params = mapOf("position" to index.toString(), "got" to group),
+                    errorType = ErrorType.BitGroups.INVALID_CHARACTER,
+                    params = mapOf(ParamKey.POSITION to index.toString(), ParamKey.GOT to group),
                 )
             }
             if (group.length != expectedLength) {
                 return ValidationResult.incorrect(
-                    errorType = "bit-groups.wrong-group-length",
+                    errorType = ErrorType.BitGroups.WRONG_GROUP_LENGTH,
                     params = mapOf(
-                        "position" to index.toString(),
-                        "expected-length" to expectedLength.toString(),
-                        "got-length" to group.length.toString(),
+                        ParamKey.POSITION to index.toString(),
+                        ParamKey.EXPECTED_LENGTH to expectedLength.toString(),
+                        ParamKey.GOT_LENGTH to group.length.toString(),
                     ),
                 )
             }
@@ -111,8 +111,8 @@ class AnswerValidator {
 
         return if (answer.groups != step.expected) {
             ValidationResult.incorrect(
-                errorType = "bit-groups.wrong-value",
-                params = mapOf("got" to answer.groups.joinToString(" ")),
+                errorType = ErrorType.BitGroups.WRONG_VALUE,
+                params = mapOf(ParamKey.GOT to answer.groups.joinToString(" ")),
             )
         } else {
             ValidationResult.correct()
@@ -123,41 +123,43 @@ class AnswerValidator {
         if (answer !is Answer.HexBytesValue) return typeMismatch(step, answer)
 
         if (answer.bytes.isEmpty()) {
-            return ValidationResult.incorrect("hex-bytes.empty")
+            return ValidationResult.incorrect(ErrorType.HexBytes.EMPTY)
         }
 
         // Any byte must fit in an octet: 0..255 unsigned.
         val invalidIndex = answer.bytes.indexOfFirst { it !in 0..0xFF }
         if (invalidIndex >= 0) {
             return ValidationResult.incorrect(
-                errorType = "hex-bytes.byte-out-of-range",
+                errorType = ErrorType.HexBytes.BYTE_OUT_OF_RANGE,
                 params = mapOf(
-                    "position" to invalidIndex.toString(),
-                    "got" to answer.bytes[invalidIndex].toString(),
+                    ParamKey.POSITION to invalidIndex.toString(),
+                    ParamKey.GOT to answer.bytes[invalidIndex].toString(),
                 ),
             )
         }
 
         return when {
             answer.bytes.size < step.expected.size -> ValidationResult.incorrect(
-                errorType = "hex-bytes.too-few-bytes",
+                errorType = ErrorType.HexBytes.TOO_FEW_BYTES,
                 params = mapOf(
-                    "expected-count" to step.expected.size.toString(),
-                    "got-count" to answer.bytes.size.toString(),
+                    ParamKey.EXPECTED_COUNT to step.expected.size.toString(),
+                    ParamKey.GOT_COUNT to answer.bytes.size.toString(),
                 ),
             )
 
             answer.bytes.size > step.expected.size -> ValidationResult.incorrect(
-                errorType = "hex-bytes.too-many-bytes",
+                errorType = ErrorType.HexBytes.TOO_MANY_BYTES,
                 params = mapOf(
-                    "expected-count" to step.expected.size.toString(),
-                    "got-count" to answer.bytes.size.toString(),
+                    ParamKey.EXPECTED_COUNT to step.expected.size.toString(),
+                    ParamKey.GOT_COUNT to answer.bytes.size.toString(),
                 ),
             )
 
             answer.bytes != step.expected -> ValidationResult.incorrect(
-                errorType = "hex-bytes.wrong-value",
-                params = mapOf("got" to answer.bytes.joinToString(" ") { "%02X".format(it) }),
+                errorType = ErrorType.HexBytes.WRONG_VALUE,
+                params = mapOf(
+                    ParamKey.GOT to answer.bytes.joinToString(" ") { "%02X".format(it) },
+                ),
             )
 
             else -> ValidationResult.correct()
@@ -170,22 +172,22 @@ class AnswerValidator {
         return when {
             // Unicode range is public info, not the answer — safe to echo bounds.
             answer.value !in 0..0x10FFFF -> ValidationResult.incorrect(
-                errorType = "code-point.out-of-range",
+                errorType = ErrorType.CodePoint.OUT_OF_RANGE,
                 params = mapOf(
-                    "got" to answer.value.toString(),
-                    "min" to "0",
-                    "max" to "0x10FFFF",
+                    ParamKey.GOT to answer.value.toString(),
+                    ParamKey.MIN to "0",
+                    ParamKey.MAX to "0x10FFFF",
                 ),
             )
 
             answer.value in 0xD800..0xDFFF -> ValidationResult.incorrect(
-                errorType = "code-point.surrogate",
-                params = mapOf("got" to "U+%04X".format(answer.value)),
+                errorType = ErrorType.CodePoint.SURROGATE,
+                params = mapOf(ParamKey.GOT to "U+%04X".format(answer.value)),
             )
 
             answer.value != step.expected -> ValidationResult.incorrect(
-                errorType = "code-point.wrong-value",
-                params = mapOf("got" to "U+%04X".format(answer.value)),
+                errorType = ErrorType.CodePoint.WRONG_VALUE,
+                params = mapOf(ParamKey.GOT to "U+%04X".format(answer.value)),
             )
 
             else -> ValidationResult.correct()
@@ -198,7 +200,7 @@ class AnswerValidator {
         // With only two possible values, revealing "got" implicitly reveals the answer.
         // The errorType alone is the feedback — no params needed.
         return if (answer.value != step.expected) {
-            ValidationResult.incorrect("endianness.wrong-choice")
+            ValidationResult.incorrect(ErrorType.Endianness.WRONG_CHOICE)
         } else {
             ValidationResult.correct()
         }
@@ -206,10 +208,10 @@ class AnswerValidator {
 
     private fun typeMismatch(step: Step, answer: Answer): ValidationResult =
         ValidationResult.incorrect(
-            errorType = "answer.type-mismatch",
+            errorType = ErrorType.Answer.TYPE_MISMATCH,
             params = mapOf(
-                "expected-type" to step.type.id,
-                "got-type" to answer::class.simpleName.orEmpty(),
+                ParamKey.EXPECTED_TYPE to step.type.id,
+                ParamKey.GOT_TYPE to answer::class.simpleName.orEmpty(),
             ),
         )
 }

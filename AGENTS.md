@@ -151,7 +151,9 @@ school.charset.app/
 │   │   ├── StepType.kt                 # enum Format / Binary / BitGroups / HexBytes / CodePointEntry / Endianness
 │   │   ├── Step.kt                     # sealed class — un step par valeur de StepType
 │   │   ├── Answer.kt                   # sealed class — un Answer par type de step
-│   │   ├── ValidationResult.kt         # data class (ok, expected, errorType?, params)
+│   │   ├── ValidationResult.kt         # data class (ok, errorType?, params) — pas d'expected (anti-cheat)
+│   │   ├── ErrorType.kt                # object — identifiants stables des erreurs de validation
+│   │   ├── ParamKey.kt                 # object — noms des variables d'interpolation
 │   │   ├── Exercise.kt                 # data class (codePoint, encoding, granularity, steps)
 │   │   ├── ExerciseAttempt.kt          # data class (id, userId, moduleId, level, granularity, steps, correct, ...)
 │   │   ├── ExerciseModule.kt           # enum des modules (utf8-encode, utf8-decode, ...)
@@ -171,6 +173,9 @@ school.charset.app/
 │   │
 │   └── time/                           # Utilitaire transverse (séparé car réutilisé partout)
 │       └── Clock.kt                    # interface (port) — implémentation côté infrastructure
+│   # Note : les constantes "stables vers le front" (ErrorType, ParamKey, plus tard
+│   # HintType, MessageType, ...) vivent **dans le package du feature qui les produit**,
+│   # pas dans un package i18n/ transverse. Cohérent avec l'archi feature-first.
 │
 ├── infrastructure/                     # Le seul endroit où on a un mix Spring/Exposed/Jackson.
 │   │                                   # Top-level split par couche technique (persistence, http,
@@ -757,6 +762,48 @@ La valeur attendue reste exclusivement **côté serveur** : elle vit dans le `St
 au moment de la validation, et est persistée dans `attempt_step_<type>.expected`
 pour le replay / l'audit. Elle ne traverse jamais le réseau dans une réponse
 d'erreur.
+
+### Identifiants stables — `ErrorType` et `ParamKey`, co-localisés avec leur producteur
+
+**Choix tranché le 2026-05-20** : les identifiants stables qui voyagent vers le
+front (noms d'événements métier consommés comme clés i18n, noms de variables
+d'interpolation) sont déclarés comme `const val` dans des `object` situés **dans
+le package du feature qui les produit**, et non dans un package transverse `i18n/`.
+
+Pour l'instant, c'est `domain/exercise/ErrorType.kt` et `domain/exercise/ParamKey.kt`.
+Quand `domain/auth/` produira ses propres événements d'erreur, il aura son propre
+`ErrorType.kt` dans son package. Cohérent avec l'archi feature-first.
+
+**Distinction importante** : ces constantes ne sont **pas** des traductions. Les
+traductions ("Vous avez écrit la mauvaise valeur") vivent uniquement côté front,
+dans `i18n/locales/{fr,en}/feedback.json`. Les constantes Kotlin sont des
+**identifiants stables d'événements métier** qui se trouvent être consommés
+comme clés de translation par le front.
+
+**Aucun string literal** au call site dans le code de production ni dans les tests :
+
+```kotlin
+// Mauvais (typo silencieux possible) :
+errorType = "binary.wrong-value"
+params = mapOf("expected-length" to "8")
+
+// Bon (typo = compile error) :
+errorType = ErrorType.Binary.WRONG_VALUE
+params = mapOf(ParamKey.EXPECTED_LENGTH to "8")
+```
+
+Bénéfices :
+- IDE autocomplete + "Rename" qui propage partout (validator, tests, futurs HTTP serializers)
+- Les `ErrorType.kt` / `ParamKey.kt` de chaque feature documentent l'API stable
+  produite par ce feature
+- Pas de Jackson custom à écrire — `const val String` se sérialise nativement comme une string
+- Les tests assertent sur les **mêmes** constantes que celles produites par le validator,
+  donc renommer une clé met à jour les deux côtés en une opération
+
+Convention de nommage : suffixe **`Type`** pour les catégories d'identifiants
+(ErrorType, HintType, MessageType, ...). Pour les noms d'interpolation, c'est
+**`ParamKey`** (sans suffixe Type, parce que ce ne sont pas des "types de
+messages" mais des variables).
 
 Le validator est **agnostic de l'exercice** (encoding, code point, granularity).
 Il ne sait que valider un step isolé. La composition d'un exercice (quels steps,
