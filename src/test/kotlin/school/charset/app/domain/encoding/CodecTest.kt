@@ -52,7 +52,7 @@ class CodecTest :
             }
 
             "windows-1252" - {
-                // Identity range — same byte as Latin-1 for 0x00..0x7F and 0xA0..0xFF
+                // Identity range - same byte as Latin-1 for 0x00..0x7F and 0xA0..0xFF
                 "U+0000 (NUL) -> 0x00 (low boundary)" {
                     sut.encode(CodePoint(0x00), Encoding.Windows1252).toHex() shouldBe "00"
                 }
@@ -694,7 +694,7 @@ class CodecTest :
             }
 
             "utf-16 le" - {
-                // BMP — bytes swapped vs BE
+                // BMP - bytes swapped vs BE
                 "[00 00] -> U+0000 (NUL, palindromic)" {
                     sut.decode(bytes(0x00, 0x00), Encoding.Utf16Le) shouldBe CodePoint(0x0000)
                 }
@@ -750,7 +750,7 @@ class CodecTest :
             }
 
             "utf-32 be" - {
-                // Success — every 4-byte BE value mapping a code point
+                // Success - every 4-byte BE value mapping a code point
                 "[00 00 00 00] -> U+0000 (NUL, low boundary)" {
                     sut.decode(bytes(0x00, 0x00, 0x00, 0x00), Encoding.Utf32Be) shouldBe CodePoint(0x0000)
                 }
@@ -826,7 +826,7 @@ class CodecTest :
             }
 
             "utf-32 le" - {
-                // Success — bytes fully reversed vs BE
+                // Success - bytes fully reversed vs BE
                 "[00 00 00 00] -> U+0000 (NUL, palindromic)" {
                     sut.decode(bytes(0x00, 0x00, 0x00, 0x00), Encoding.Utf32Le) shouldBe CodePoint(0x0000)
                 }

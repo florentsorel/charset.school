@@ -22,7 +22,7 @@ class CodePointGenerator(
     fun randomLatin1(level: Latin1Level): CodePoint {
         val range = when (level) {
             // Printable Latin-1 supplement: U+00A0..U+00FF (excludes C1 controls
-            // U+0080..U+009F). Accented letters and symbols — the range that
+            // U+0080..U+009F). Accented letters and symbols - the range that
             // distinguishes Latin-1 from ASCII in practice.
             Latin1Level.Supplement -> 0xA0..0xFF
 
@@ -85,7 +85,7 @@ class CodePointGenerator(
 
     /**
      * Picks a non-surrogate BMP code point: U+0000..U+FFFF excluding U+D800..U+DFFF.
-     * Shared between UTF-16 BMP level and UTF-32 BMP level — same range, same skip.
+     * Shared between UTF-16 BMP level and UTF-32 BMP level - same range, same skip.
      */
     private fun randomBmpCodePoint(): CodePoint {
         val index = random.nextInt(0, NON_SURROGATE_BMP_COUNT)
