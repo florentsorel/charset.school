@@ -5,6 +5,8 @@ import io.kotest.matchers.shouldBe
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration
+import org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
@@ -15,6 +17,7 @@ import school.charset.app.config.DataSourceConfig
 import javax.sql.DataSource
 
 @SpringBootTest(classes = [DataSourceConfig::class])
+@ImportAutoConfiguration(FlywayAutoConfiguration::class)
 @Testcontainers
 class DatabaseConnectionTest(
     private val dataSource: DataSource,
@@ -52,5 +55,23 @@ class DatabaseConnectionTest(
             }
         }
         result shouldBe 1
+    }
+
+    @Test
+    fun `Flyway has run the users migration on startup`() {
+        val usersTableExists = transaction(database) {
+            exec(
+                """
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_schema = 'public' AND table_name = 'users'
+                ) AS present
+                """.trimIndent(),
+            ) { rs ->
+                rs.next()
+                rs.getBoolean("present")
+            }
+        }
+        usersTableExists shouldBe true
     }
 }
