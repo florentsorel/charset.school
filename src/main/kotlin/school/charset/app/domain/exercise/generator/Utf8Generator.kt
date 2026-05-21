@@ -5,6 +5,7 @@ import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Exercise
 import school.charset.app.domain.exercise.ExerciseGenerationException
+import school.charset.app.domain.exercise.FormatChoice
 import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
@@ -85,6 +86,13 @@ class Utf8Generator(
     }
 
     private companion object {
-        private val FORMAT_CHOICES = listOf("1 byte", "2 bytes", "3 bytes", "4 bytes")
+        // Indexed [0..3] = [ONE_BYTE..FOUR_BYTES] so `FORMAT_CHOICES[byteCount - 1]`
+        // returns the matching label.
+        private val FORMAT_CHOICES = listOf(
+            FormatChoice.ONE_BYTE,
+            FormatChoice.TWO_BYTES,
+            FormatChoice.THREE_BYTES,
+            FormatChoice.FOUR_BYTES,
+        )
     }
 }

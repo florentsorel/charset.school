@@ -154,13 +154,14 @@ school.charset.app/
 │   │   ├── ValidationResult.kt         # data class (ok, errorType?, params) — pas d'expected (anti-cheat)
 │   │   ├── ErrorType.kt                # object — identifiants stables des erreurs de validation
 │   │   ├── ParamKey.kt                 # object — noms des variables d'interpolation
+│   │   ├── FormatChoice.kt             # object — identifiants stables des choix Step.Format (byte-count.*)
 │   │   ├── Exercise.kt                 # data class (codePoint, encoding, granularity, steps)
 │   │   ├── ExerciseAttempt.kt          # data class (id, userId, moduleId, level, granularity, steps, correct, ...)
 │   │   ├── ExerciseModule.kt           # enum des modules (utf8-encode, utf8-decode, ...)
 │   │   ├── ExerciseLevel.kt
 │   │   ├── ExerciseAttemptRepository.kt  # interface (port)
-│   │   ├── ExerciseGenerator.kt        # class — produit un Exercise selon (encoding, level, granularity)
-│   │   └── AnswerValidator.kt          # class — validate(step: Step, answer: Answer) -> ValidationResult
+│   │   ├── AnswerValidator.kt          # class — validate(step: Step, answer: Answer) -> ValidationResult
+│   │   └── generator/                  # ExerciseGenerator + per-encoding generators (see "Generators" section)
 │   │
 │   ├── progress/                       # Tout ce qui concerne la progression utilisateur
 │   │   ├── ModuleProgress.kt           # data class (userId, moduleId, level, streak, attempts, errors, lastPlayedAt)
@@ -763,6 +764,42 @@ au moment de la validation, et est persistée dans `attempt_step_<type>.expected
 pour le replay / l'audit. Elle ne traverse jamais le réseau dans une réponse
 d'erreur.
 
+### Anti-cheat — `Step.expected` à stripper au HTTP layer
+
+**Note pour la Phase 4 (HTTP layer)** : `Step.*` carries `expected` server-side
+(le validator en a besoin pour comparer à la réponse de l'utilisateur). Mais ce
+champ ne doit **JAMAIS** apparaître dans la réponse JSON envoyée au front quand
+le serveur retourne l'exercice initial via `POST /api/exercise/generate`.
+
+Sinon : l'utilisateur ouvre devtools, lit `step.expected` dans la réponse, et a
+la solution avant de répondre.
+
+**Solution prévue** : custom Jackson serializer par sous-type de `Step` dans
+`infrastructure/http/serialization/`. Chaque serializer écrit uniquement les
+champs nécessaires au front pour rendre l'input widget — et **omet `expected`**.
+
+| `Step` sous-type | Champs gardés dans le JSON sortant |
+|---|---|
+| `Step.Binary` | `type`, `length` (pour rendre N input boxes) |
+| `Step.Format` | `type`, `choices` (pour rendre les radio buttons) |
+| `Step.HexBytes` | `type`, `byteCount = expected.size` (pour rendre N hex boxes) |
+| `Step.BitGroups` | `type`, `groupLengths = expected.map { it.length }` (sizes des groupes) |
+| `Step.CodePointEntry` | `type` (rien d'autre nécessaire) |
+| `Step.Endianness` | `type` (les 2 valeurs sont connues du front) |
+
+**Defense in depth — la DB est la vraie source de vérité** : même si le serializer
+leakait `expected` par bug, la validation côté serveur reste sûre parce qu'elle
+lit `expected` depuis Postgres (`attempt_step_<type>.expected` row chargée via
+`attemptId`), **pas** depuis ce que l'utilisateur envoie. L'attaquant ne peut pas
+manipuler la valeur attendue.
+
+Flow complet :
+1. `POST /api/exercise/generate` → server génère, persiste l'attempt + ses steps
+   en DB avec `expected`, retourne l'exercise **sans** `expected`
+2. `POST /api/exercise/validate { attemptId, stepIndex, answer }` → server load
+   `attempt_step_<type>` row depuis DB, lit `expected`, compare à `answer`
+3. Réponse `ValidationResult` (déjà sans `expected` par construction)
+
 ### Identifiants stables — `ErrorType` et `ParamKey`, co-localisés avec leur producteur
 
 **Choix tranché le 2026-05-20** : les identifiants stables qui voyagent vers le
@@ -770,9 +807,11 @@ front (noms d'événements métier consommés comme clés i18n, noms de variable
 d'interpolation) sont déclarés comme `const val` dans des `object` situés **dans
 le package du feature qui les produit**, et non dans un package transverse `i18n/`.
 
-Pour l'instant, c'est `domain/exercise/ErrorType.kt` et `domain/exercise/ParamKey.kt`.
-Quand `domain/auth/` produira ses propres événements d'erreur, il aura son propre
-`ErrorType.kt` dans son package. Cohérent avec l'archi feature-first.
+Pour l'instant : `domain/exercise/ErrorType.kt`, `domain/exercise/ParamKey.kt`, et
+`domain/exercise/FormatChoice.kt` (identifiants des choix d'un `Step.Format`, ex.
+`format-choice.byte-count.2` pour "2 bytes"). Quand `domain/auth/` produira ses
+propres événements d'erreur, il aura son propre `ErrorType.kt` dans son package.
+Cohérent avec l'archi feature-first.
 
 **Distinction importante** : ces constantes ne sont **pas** des traductions. Les
 traductions ("Vous avez écrit la mauvaise valeur") vivent uniquement côté front,

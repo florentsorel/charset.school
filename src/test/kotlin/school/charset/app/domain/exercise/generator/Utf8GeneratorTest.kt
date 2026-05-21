@@ -11,13 +11,19 @@ import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.ExerciseGenerationException
+import school.charset.app.domain.exercise.FormatChoice
 import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
 class Utf8GeneratorTest :
     FreeSpec({
         val codec = Codec()
-        val formatChoices = listOf("1 byte", "2 bytes", "3 bytes", "4 bytes")
+        val formatChoices = listOf(
+            FormatChoice.ONE_BYTE,
+            FormatChoice.TWO_BYTES,
+            FormatChoice.THREE_BYTES,
+            FormatChoice.FOUR_BYTES,
+        )
 
         fun newSut(codePoint: CodePoint, level: Int): Utf8Generator {
             val codePointGenerator = mockk<CodePointGenerator>()
@@ -45,7 +51,7 @@ class Utf8GeneratorTest :
                 val hex = exercise.steps[2].shouldBeInstanceOf<Step.HexBytes>()
 
                 format.choices shouldBe formatChoices
-                format.expected shouldBe "1 byte"
+                format.expected shouldBe FormatChoice.ONE_BYTE
                 binary.length shouldBe 7
                 binary.expected shouldBe "1000001"
                 hex.expected shouldBe listOf(0x41)
@@ -79,7 +85,7 @@ class Utf8GeneratorTest :
                 val bitGroups = exercise.steps[2].shouldBeInstanceOf<Step.BitGroups>()
                 val hex = exercise.steps[3].shouldBeInstanceOf<Step.HexBytes>()
 
-                format.expected shouldBe "2 bytes"
+                format.expected shouldBe FormatChoice.TWO_BYTES
                 binary.length shouldBe 11
                 binary.expected shouldBe "00011101001"
                 bitGroups.expected shouldBe listOf("00011", "101001")
@@ -176,7 +182,7 @@ class Utf8GeneratorTest :
                 val sut = newSut(CodePoint(0x41), level = 1)
                 val exercise = sut.generate(level = 1, Granularity.Standard)
                 exercise.steps shouldHaveSize 2
-                exercise.steps[0].shouldBeInstanceOf<Step.Format>().expected shouldBe "1 byte"
+                exercise.steps[0].shouldBeInstanceOf<Step.Format>().expected shouldBe FormatChoice.ONE_BYTE
                 exercise.steps[1].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x41)
             }
 
@@ -184,7 +190,7 @@ class Utf8GeneratorTest :
                 val sut = newSut(CodePoint(0x1F600), level = 4)
                 val exercise = sut.generate(level = 4, Granularity.Standard)
                 exercise.steps shouldHaveSize 2
-                exercise.steps[0].shouldBeInstanceOf<Step.Format>().expected shouldBe "4 bytes"
+                exercise.steps[0].shouldBeInstanceOf<Step.Format>().expected shouldBe FormatChoice.FOUR_BYTES
                 exercise.steps[1].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0xF0, 0x9F, 0x98, 0x80)
             }
         }

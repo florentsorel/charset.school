@@ -247,4 +247,100 @@ class CodePointGeneratorTest :
                 CodePointGenerator(random).randomUtf8(Utf8Level.FourByte) shouldBe CodePoint(0x10FFFF)
             }
         }
+
+        "randomUtf16" - {
+            // Bmp: 63488 non-surrogate code points indexed virtually:
+            // - indices 0..55295    → U+0000..U+D7FF (before surrogates)
+            // - indices 55296..63487 → U+E000..U+FFFF (after surrogates)
+
+            "Bmp — index 0 picks U+0000 (NUL, start of BMP)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0, 63488) } returns 0
+                CodePointGenerator(random).randomUtf16(Utf16Level.Bmp) shouldBe CodePoint(0x0000)
+            }
+
+            "Bmp — index 55295 picks U+D7FF (last before surrogates)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0, 63488) } returns 55295
+                CodePointGenerator(random).randomUtf16(Utf16Level.Bmp) shouldBe CodePoint(0xD7FF)
+            }
+
+            "Bmp — index 55296 picks U+E000 (first after surrogates, skip)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0, 63488) } returns 55296
+                CodePointGenerator(random).randomUtf16(Utf16Level.Bmp) shouldBe CodePoint(0xE000)
+            }
+
+            "Bmp — index 63487 picks U+FFFF (BMP max)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0, 63488) } returns 63487
+                CodePointGenerator(random).randomUtf16(Utf16Level.Bmp) shouldBe CodePoint(0xFFFF)
+            }
+
+            "Supplementary — picks from [0x10000, 0x110000) = supplementary plane" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x10000, 0x110000) } returns 0x1F600
+                CodePointGenerator(random).randomUtf16(Utf16Level.Supplementary) shouldBe CodePoint(0x1F600)
+            }
+
+            "Supplementary — low boundary 0x10000" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x10000, 0x110000) } returns 0x10000
+                CodePointGenerator(random).randomUtf16(Utf16Level.Supplementary) shouldBe CodePoint(0x10000)
+            }
+
+            "Supplementary — high boundary 0x10FFFF" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x10000, 0x110000) } returns 0x10FFFF
+                CodePointGenerator(random).randomUtf16(Utf16Level.Supplementary) shouldBe CodePoint(0x10FFFF)
+            }
+        }
+
+        "randomUtf32" - {
+            // Same backing logic as randomUtf16 (Bmp picks from non-surrogate BMP,
+            // Supplementary picks from 0x10000..0x10FFFF). Tests below verify the
+            // delegation rather than the underlying math (covered by randomUtf16 tests).
+
+            "Bmp — index 0 picks U+0000 (start of BMP)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0, 63488) } returns 0
+                CodePointGenerator(random).randomUtf32(Utf32Level.Bmp) shouldBe CodePoint(0x0000)
+            }
+
+            "Bmp — index 55295 picks U+D7FF (last before surrogates)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0, 63488) } returns 55295
+                CodePointGenerator(random).randomUtf32(Utf32Level.Bmp) shouldBe CodePoint(0xD7FF)
+            }
+
+            "Bmp — index 55296 picks U+E000 (first after surrogates, skip)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0, 63488) } returns 55296
+                CodePointGenerator(random).randomUtf32(Utf32Level.Bmp) shouldBe CodePoint(0xE000)
+            }
+
+            "Bmp — index 63487 picks U+FFFF (BMP max)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0, 63488) } returns 63487
+                CodePointGenerator(random).randomUtf32(Utf32Level.Bmp) shouldBe CodePoint(0xFFFF)
+            }
+
+            "Supplementary — picks from [0x10000, 0x110000)" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x10000, 0x110000) } returns 0x1F600
+                CodePointGenerator(random).randomUtf32(Utf32Level.Supplementary) shouldBe CodePoint(0x1F600)
+            }
+
+            "Supplementary — low boundary 0x10000" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x10000, 0x110000) } returns 0x10000
+                CodePointGenerator(random).randomUtf32(Utf32Level.Supplementary) shouldBe CodePoint(0x10000)
+            }
+
+            "Supplementary — high boundary 0x10FFFF" {
+                val random = mockk<Random>()
+                every { random.nextInt(0x10000, 0x110000) } returns 0x10FFFF
+                CodePointGenerator(random).randomUtf32(Utf32Level.Supplementary) shouldBe CodePoint(0x10FFFF)
+            }
+        }
     })
