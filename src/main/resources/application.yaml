@@ -1,3 +1,15 @@
 spring:
   application:
     name: charset.school
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+app:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${APP_DB_URL:jdbc:postgresql://localhost:5432/charset}
+    username: ${APP_DB_USERNAME:charset}
+    password: ${APP_DB_PASSWORD:charset}
