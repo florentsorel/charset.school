@@ -17,14 +17,14 @@ import school.charset.app.domain.exercise.Granularity
  * BE/LE), the same class is parameterized at construction with the target
  * `Encoding` - two instances are registered.
  *
- * `generateDecode` defaults to `TODO()` so each encoding can opt in to decode
- * support when ready, without forcing all 8 generators to implement it
- * simultaneously.
+ * Both `generateEncode` and `generateDecode` are abstract: every per-encoding
+ * generator must support both directions. This is enforced at compile time
+ * rather than relying on a runtime `TODO()` default.
  */
 interface EncodingExerciseGenerator {
     val encoding: Encoding
 
     fun generateEncode(level: Int, granularity: Granularity): Exercise.Encode
 
-    fun generateDecode(level: Int, granularity: Granularity): Exercise.Decode = TODO("decode exercise generation not yet implemented for $encoding")
+    fun generateDecode(level: Int, granularity: Granularity): Exercise.Decode
 }

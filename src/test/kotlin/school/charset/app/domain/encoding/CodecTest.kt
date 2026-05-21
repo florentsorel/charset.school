@@ -79,7 +79,7 @@ class CodecTest :
                 "U+0153 (œ) -> 0x9C" {
                     sut.encode(CodePoint(0x0153), Encoding.Windows1252).toHex() shouldBe "9C"
                 }
-                "U+2014 (-) -> 0x97 (em dash)" {
+                "U+2014 (—) -> 0x97 (em dash)" {
                     sut.encode(CodePoint(0x2014), Encoding.Windows1252).toHex() shouldBe "97"
                 }
                 "U+2122 (™) -> 0x99 (trademark)" {
@@ -420,7 +420,7 @@ class CodecTest :
                 "0x8C -> U+0152 (Œ)" {
                     sut.decode(bytes(0x8C), Encoding.Windows1252) shouldBe CodePoint(0x0152)
                 }
-                "0x97 -> U+2014 (-, em dash)" {
+                "0x97 -> U+2014 (—, em dash)" {
                     sut.decode(bytes(0x97), Encoding.Windows1252) shouldBe CodePoint(0x2014)
                 }
                 "0x99 -> U+2122 (™)" {

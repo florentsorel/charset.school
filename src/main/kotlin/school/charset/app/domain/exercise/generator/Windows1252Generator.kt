@@ -3,7 +3,6 @@ package school.charset.app.domain.exercise.generator
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
-import school.charset.app.domain.encoding.Windows1252Spec
 import school.charset.app.domain.exercise.Exercise
 import school.charset.app.domain.exercise.ExerciseGenerationException
 import school.charset.app.domain.exercise.Granularity
@@ -59,14 +58,11 @@ class Windows1252Generator(
     private fun ByteArray.buildDecodeSteps(granularity: Granularity): List<Step> {
         // Windows-1252 decode is identity on 0x00..0x7F and 0xA0..0xFF, with a
         // table lookup for 0x80..0x9F (the 27 special chars: €, Œ, ™, etc.).
-        // Codec.decode does the right thing; we derive the binary from the byte.
+        // Delegate to Codec.decode so unassigned bytes (0x81, 0x8D, 0x8F, 0x90,
+        // 0x9D) raise a proper DecoderException instead of a NPE.
         val byte = this[0].toInt() and 0xFF
         val binary = byte.toString(2).padStart(8, '0')
-        val codePoint = if (byte <= 0x7F || byte >= 0xA0) {
-            byte
-        } else {
-            Windows1252Spec.byteToCodePoint[this[0]]!!
-        }
+        val codePoint = codec.decode(this, Encoding.Windows1252).value
 
         return when (granularity) {
             Granularity.Verbose -> listOf(

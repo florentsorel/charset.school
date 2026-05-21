@@ -72,9 +72,11 @@ class Utf8Generator(
     }
 
     private fun ByteArray.buildDecodeSteps(granularity: Granularity): List<Step> {
-        // Decode flow (mirror of encode): inspect the leading byte to determine
-        // byte count, strip the markers per byte to recover data bits, combine
-        // into a single binary, and that combined binary IS the code point value.
+        // Decode flow: delegate to Codec.decode for the actual code point and
+        // derive the pedagogical artefacts (bit groups, combined binary) from
+        // it. Conceptually this mirrors the encode flow (inspect leading byte
+        // for byte count, strip markers per byte, combine into the code point's
+        // binary), but the math is done in Codec.decode rather than here.
         val byteCount = size
         val codePoint = codec.decode(this, Encoding.Utf8).value
         val dataBits = dataBitsForByteCount(byteCount)
