@@ -35,7 +35,7 @@ class CodePointGenerator(
 
     fun randomWindows1252(level: Windows1252Level): CodePoint {
         val pool = when (level) {
-            // The 27 special code points (€, Œ, ™, smart quotes, etc.) — the
+            // The 27 special code points (€, Œ, ™, smart quotes, etc.) - the
             // range that distinguishes Windows-1252 from Latin-1. Forces the
             // user to engage with the Win-1252 special block.
             Windows1252Level.SpecialBlock -> Windows1252Spec.specialCodePoints
@@ -46,6 +46,16 @@ class CodePointGenerator(
             Windows1252Level.AllEncodable -> Windows1252Spec.encodableCodePoints
         }
         return CodePoint(pool[random.nextInt(0, pool.size)])
+    }
+
+    fun randomUtf16(level: Utf16Level): CodePoint = when (level) {
+        Utf16Level.Bmp -> randomBmpCodePoint()
+        Utf16Level.Supplementary -> randomSupplementaryCodePoint()
+    }
+
+    fun randomUtf32(level: Utf32Level): CodePoint = when (level) {
+        Utf32Level.Bmp -> randomBmpCodePoint()
+        Utf32Level.Supplementary -> randomSupplementaryCodePoint()
     }
 
     fun randomUtf8(level: Utf8Level): CodePoint {
@@ -73,6 +83,26 @@ class CodePointGenerator(
         return CodePoint(value)
     }
 
+    /**
+     * Picks a non-surrogate BMP code point: U+0000..U+FFFF excluding U+D800..U+DFFF.
+     * Shared between UTF-16 BMP level and UTF-32 BMP level — same range, same skip.
+     */
+    private fun randomBmpCodePoint(): CodePoint {
+        val index = random.nextInt(0, NON_SURROGATE_BMP_COUNT)
+        val value = if (index < CodePoint.SURROGATE_MIN) {
+            index
+        } else {
+            AFTER_SURROGATES_START + (index - CodePoint.SURROGATE_MIN)
+        }
+        return CodePoint(value)
+    }
+
+    /**
+     * Picks a supplementary-plane code point: U+10000..U+10FFFF.
+     * Shared between UTF-16 Supplementary level and UTF-32 Supplementary level.
+     */
+    private fun randomSupplementaryCodePoint(): CodePoint = CodePoint(random.nextInt(0x10000, 0x110000))
+
     private companion object {
         // UTF-8 level 3 covers U+0800..U+FFFF (= BMP starting at 3-byte boundary)
         // excluding the surrogate gap U+D800..U+DFFF. Constants are derived from
@@ -88,5 +118,11 @@ class CodePointGenerator(
         private const val NON_SURROGATE_3_BYTE_COUNT =
             (THREE_BYTE_END_EXCLUSIVE - THREE_BYTE_START) -
                 (AFTER_SURROGATES_START - CodePoint.SURROGATE_MIN)
+
+        // BMP range count excluding surrogates, used for UTF-16 BMP level.
+        // 65536 (full BMP) - 2048 (surrogates) = 63488 valid code points.
+        private const val NON_SURROGATE_BMP_COUNT =
+            (CodePoint.BMP_MAX + 1) -
+                (CodePoint.SURROGATE_MAX - CodePoint.SURROGATE_MIN + 1)
     }
 }
