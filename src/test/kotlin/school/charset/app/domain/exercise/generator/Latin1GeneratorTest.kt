@@ -22,18 +22,18 @@ class Latin1GeneratorTest :
             val codePointGenerator = mockk<CodePointGenerator>()
             val latin1Level = Latin1Level.fromNumber(level)!!
             every { codePointGenerator.randomLatin1(latin1Level) } returns codePoint
-            return Latin1Generator(codec, codePointGenerator)
+            return Latin1Generator(codec, codePointGenerator, mockk())
         }
 
         "encoding is Latin1" {
-            val sut = Latin1Generator(codec, mockk())
+            val sut = Latin1Generator(codec, mockk(), mockk())
             sut.encoding shouldBe Encoding.Latin1
         }
 
         "verbose builds [Binary(8), HexBytes(1)] with consistent values for U+00E9 (é)" {
             val sut = newSut(CodePoint(0xE9))
 
-            val exercise = sut.generate(level = 1, Granularity.Verbose)
+            val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
 
             exercise.encoding shouldBe Encoding.Latin1
             exercise.level shouldBe 1
@@ -51,28 +51,28 @@ class Latin1GeneratorTest :
 
         "verbose at Latin-1 supplement low boundary U+00A0 produces 10100000" {
             val sut = newSut(CodePoint(0xA0))
-            val exercise = sut.generate(level = 1, Granularity.Verbose)
+            val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
             val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
             binary.expected shouldBe "10100000"
         }
 
         "verbose at high boundary U+00FF (ÿ) produces 11111111" {
             val sut = newSut(CodePoint(0xFF))
-            val exercise = sut.generate(level = 1, Granularity.Verbose)
+            val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
             val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
             binary.expected shouldBe "11111111"
         }
 
         "verbose at low boundary U+0000 produces 00000000 (level 2)" {
             val sut = newSut(CodePoint(0x00), level = 2)
-            val exercise = sut.generate(level = 2, Granularity.Verbose)
+            val exercise = sut.generateEncode(level = 2, Granularity.Verbose)
             val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
             binary.expected shouldBe "00000000"
         }
 
         "standard builds [HexBytes(1)] only" {
             val sut = newSut(CodePoint(0xE9))
-            val exercise = sut.generate(level = 1, Granularity.Standard)
+            val exercise = sut.generateEncode(level = 1, Granularity.Standard)
 
             exercise.steps shouldHaveSize 1
             exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0xE9)
@@ -80,19 +80,74 @@ class Latin1GeneratorTest :
 
         "compact builds [HexBytes(1)] only" {
             val sut = newSut(CodePoint(0xE9))
-            val exercise = sut.generate(level = 1, Granularity.Compact)
+            val exercise = sut.generateEncode(level = 1, Granularity.Compact)
 
             exercise.steps shouldHaveSize 1
             exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0xE9)
         }
 
-        "invalid level throws ExerciseGenerationException" {
-            val sut = Latin1Generator(codec, mockk())
+        "invalid level (encode) throws ExerciseGenerationException" {
+            val sut = Latin1Generator(codec, mockk(), mockk())
             val exception = shouldThrow<ExerciseGenerationException> {
-                sut.generate(level = 99, Granularity.Verbose)
+                sut.generateEncode(level = 99, Granularity.Verbose)
             }
             exception.encoding shouldBe Encoding.Latin1
             exception.level shouldBe 99
             exception.message shouldBe "Cannot generate exercise for latin1 level 99: level must be one of: 1, 2"
+        }
+
+        "generateDecode" - {
+            fun newDecodeSut(bytes: ByteArray, level: Int = 1): Latin1Generator {
+                val bag = mockk<ByteArrayGenerator>()
+                val latin1Level = Latin1Level.fromNumber(level)!!
+                every { bag.randomLatin1(latin1Level) } returns bytes
+                return Latin1Generator(codec, mockk(), bag)
+            }
+
+            "verbose [0xE9] (é) -> Binary(8)=11101001, CodePointEntry=0xE9" {
+                val sut = newDecodeSut(byteArrayOf(0xE9.toByte()))
+                val exercise = sut.generateDecode(level = 1, Granularity.Verbose)
+
+                exercise.encoding shouldBe Encoding.Latin1
+                exercise.bytes shouldBe byteArrayOf(0xE9.toByte())
+                exercise.steps shouldHaveSize 2
+                exercise.steps[0].shouldBeInstanceOf<Step.Binary>().expected shouldBe "11101001"
+                exercise.steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0xE9
+            }
+
+            "verbose [0x00] (NUL, low boundary) -> CodePointEntry=0x00 (level 2)" {
+                val sut = newDecodeSut(byteArrayOf(0x00), level = 2)
+                val exercise = sut.generateDecode(level = 2, Granularity.Verbose)
+                exercise.steps[0].shouldBeInstanceOf<Step.Binary>().expected shouldBe "00000000"
+                exercise.steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x00
+            }
+
+            "verbose [0xFF] (ÿ, high boundary) -> CodePointEntry=0xFF" {
+                val sut = newDecodeSut(byteArrayOf(0xFF.toByte()))
+                val exercise = sut.generateDecode(level = 1, Granularity.Verbose)
+                exercise.steps[0].shouldBeInstanceOf<Step.Binary>().expected shouldBe "11111111"
+                exercise.steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0xFF
+            }
+
+            "standard builds [CodePointEntry] only" {
+                val sut = newDecodeSut(byteArrayOf(0xE9.toByte()))
+                val exercise = sut.generateDecode(level = 1, Granularity.Standard)
+                exercise.steps shouldHaveSize 1
+                exercise.steps[0].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0xE9
+            }
+
+            "compact builds [CodePointEntry] only" {
+                val sut = newDecodeSut(byteArrayOf(0xE9.toByte()))
+                val exercise = sut.generateDecode(level = 1, Granularity.Compact)
+                exercise.steps shouldHaveSize 1
+                exercise.steps[0].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0xE9
+            }
+
+            "invalid level throws ExerciseGenerationException" {
+                val sut = Latin1Generator(codec, mockk(), mockk())
+                shouldThrow<ExerciseGenerationException> {
+                    sut.generateDecode(level = 99, Granularity.Verbose)
+                }
+            }
         }
     })

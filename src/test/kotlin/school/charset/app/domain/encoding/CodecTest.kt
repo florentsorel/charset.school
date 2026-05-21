@@ -52,7 +52,7 @@ class CodecTest :
             }
 
             "windows-1252" - {
-                // Identity range — same byte as Latin-1 for 0x00..0x7F and 0xA0..0xFF
+                // Identity range - same byte as Latin-1 for 0x00..0x7F and 0xA0..0xFF
                 "U+0000 (NUL) -> 0x00 (low boundary)" {
                     sut.encode(CodePoint(0x00), Encoding.Windows1252).toHex() shouldBe "00"
                 }
@@ -79,7 +79,7 @@ class CodecTest :
                 "U+0153 (œ) -> 0x9C" {
                     sut.encode(CodePoint(0x0153), Encoding.Windows1252).toHex() shouldBe "9C"
                 }
-                "U+2014 (—) -> 0x97 (em dash)" {
+                "U+2014 (-) -> 0x97 (em dash)" {
                     sut.encode(CodePoint(0x2014), Encoding.Windows1252).toHex() shouldBe "97"
                 }
                 "U+2122 (™) -> 0x99 (trademark)" {
@@ -420,7 +420,7 @@ class CodecTest :
                 "0x8C -> U+0152 (Œ)" {
                     sut.decode(bytes(0x8C), Encoding.Windows1252) shouldBe CodePoint(0x0152)
                 }
-                "0x97 -> U+2014 (—, em dash)" {
+                "0x97 -> U+2014 (-, em dash)" {
                     sut.decode(bytes(0x97), Encoding.Windows1252) shouldBe CodePoint(0x2014)
                 }
                 "0x99 -> U+2122 (™)" {
@@ -694,7 +694,7 @@ class CodecTest :
             }
 
             "utf-16 le" - {
-                // BMP — bytes swapped vs BE
+                // BMP - bytes swapped vs BE
                 "[00 00] -> U+0000 (NUL, palindromic)" {
                     sut.decode(bytes(0x00, 0x00), Encoding.Utf16Le) shouldBe CodePoint(0x0000)
                 }
@@ -750,7 +750,7 @@ class CodecTest :
             }
 
             "utf-32 be" - {
-                // Success — every 4-byte BE value mapping a code point
+                // Success - every 4-byte BE value mapping a code point
                 "[00 00 00 00] -> U+0000 (NUL, low boundary)" {
                     sut.decode(bytes(0x00, 0x00, 0x00, 0x00), Encoding.Utf32Be) shouldBe CodePoint(0x0000)
                 }
@@ -826,7 +826,7 @@ class CodecTest :
             }
 
             "utf-32 le" - {
-                // Success — bytes fully reversed vs BE
+                // Success - bytes fully reversed vs BE
                 "[00 00 00 00] -> U+0000 (NUL, palindromic)" {
                     sut.decode(bytes(0x00, 0x00, 0x00, 0x00), Encoding.Utf32Le) shouldBe CodePoint(0x0000)
                 }

@@ -12,38 +12,47 @@ import school.charset.app.domain.exercise.Step
 class Utf8Generator(
     private val codec: Codec,
     private val codePointGenerator: CodePointGenerator,
+    private val byteArrayGenerator: ByteArrayGenerator,
 ) : EncodingExerciseGenerator {
     override val encoding = Encoding.Utf8
 
-    override fun generate(level: Int, granularity: Granularity): Exercise {
-        val utf8Level = Utf8Level.fromNumber(level)
-            ?: throw ExerciseGenerationException(
-                encoding = Encoding.Utf8,
-                level = level,
-                reason = "level must be one of: ${Utf8Level.validNumbers}",
-            )
+    override fun generateEncode(level: Int, granularity: Granularity): Exercise.Encode {
+        val utf8Level = parseLevel(level)
         val codePoint = codePointGenerator.randomUtf8(utf8Level)
-        val steps = codePoint.buildSteps(granularity)
-        return Exercise(codePoint, Encoding.Utf8, level, granularity, steps)
+        val steps = codePoint.buildEncodeSteps(granularity)
+        return Exercise.Encode(codePoint, Encoding.Utf8, level, granularity, steps)
     }
 
-    private fun CodePoint.buildSteps(granularity: Granularity): List<Step> {
+    override fun generateDecode(level: Int, granularity: Granularity): Exercise.Decode {
+        val utf8Level = parseLevel(level)
+        val bytes = byteArrayGenerator.randomUtf8(utf8Level)
+        val steps = bytes.buildDecodeSteps(granularity)
+        return Exercise.Decode(bytes, Encoding.Utf8, level, granularity, steps)
+    }
+
+    private fun parseLevel(level: Int): Utf8Level = Utf8Level.fromNumber(level)
+        ?: throw ExerciseGenerationException(
+            encoding = Encoding.Utf8,
+            level = level,
+            reason = "level must be one of: ${Utf8Level.validNumbers}",
+        )
+
+    private fun CodePoint.buildEncodeSteps(granularity: Granularity): List<Step> {
         val bytes = codec.encode(this, Encoding.Utf8)
         val byteCount = bytes.size
         val hexBytes = bytes.map { it.toInt() and 0xFF }
-        val choices = FORMAT_CHOICES
-        val byteCountLabel = choices[byteCount - 1]
-        val formatStep = Step.Format(choices = choices, expected = byteCountLabel)
+        val byteCountLabel = FORMAT_CHOICES[byteCount - 1]
+        val formatStep = Step.Format(choices = FORMAT_CHOICES, expected = byteCountLabel)
         val hexStep = Step.HexBytes(expected = hexBytes)
 
         return when (granularity) {
-            Granularity.Verbose -> verboseSteps(byteCount, formatStep, hexStep)
+            Granularity.Verbose -> verboseEncodeSteps(byteCount, formatStep, hexStep)
             Granularity.Standard -> listOf(formatStep, hexStep)
             Granularity.Compact -> listOf(hexStep)
         }
     }
 
-    private fun CodePoint.verboseSteps(
+    private fun CodePoint.verboseEncodeSteps(
         byteCount: Int,
         formatStep: Step.Format,
         hexStep: Step.HexBytes,
@@ -59,6 +68,44 @@ class Utf8Generator(
         } else {
             val bitGroupsStep = Step.BitGroups(expected = splitBits(binary, byteCount))
             listOf(formatStep, binaryStep, bitGroupsStep, hexStep)
+        }
+    }
+
+    private fun ByteArray.buildDecodeSteps(granularity: Granularity): List<Step> {
+        // Decode flow (mirror of encode): inspect the leading byte to determine
+        // byte count, strip the markers per byte to recover data bits, combine
+        // into a single binary, and that combined binary IS the code point value.
+        val byteCount = size
+        val codePoint = codec.decode(this, Encoding.Utf8).value
+        val dataBits = dataBitsForByteCount(byteCount)
+        val combinedBinary = codePoint.toString(2).padStart(dataBits, '0')
+        val byteCountLabel = FORMAT_CHOICES[byteCount - 1]
+        val formatStep = Step.Format(choices = FORMAT_CHOICES, expected = byteCountLabel)
+        val codePointStep = Step.CodePointEntry(expected = codePoint)
+
+        return when (granularity) {
+            Granularity.Verbose -> verboseDecodeSteps(byteCount, combinedBinary, dataBits, formatStep, codePointStep)
+            Granularity.Standard -> listOf(formatStep, codePointStep)
+            Granularity.Compact -> listOf(codePointStep)
+        }
+    }
+
+    private fun verboseDecodeSteps(
+        byteCount: Int,
+        combinedBinary: String,
+        dataBits: Int,
+        formatStep: Step.Format,
+        codePointStep: Step.CodePointEntry,
+    ): List<Step> {
+        val binaryStep = Step.Binary(expected = combinedBinary, length = dataBits)
+        return if (byteCount == 1) {
+            // Single-byte UTF-8: the data bits ARE the binary, no markers to strip.
+            listOf(formatStep, binaryStep, codePointStep)
+        } else {
+            // Multi-byte: BitGroups shows the data bits per byte (after stripping
+            // the 110/1110/11110 and 10 markers). Same shape as encode BitGroups.
+            val bitGroupsStep = Step.BitGroups(expected = splitBits(combinedBinary, byteCount))
+            listOf(formatStep, bitGroupsStep, binaryStep, codePointStep)
         }
     }
 

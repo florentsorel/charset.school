@@ -44,7 +44,7 @@ object Windows1252Spec {
         0x201D to 0x94.toByte(), // " - Right Double Quotation Mark
         0x2022 to 0x95.toByte(), // • - Bullet
         0x2013 to 0x96.toByte(), // – - En Dash
-        0x2014 to 0x97.toByte(), // — - Em Dash
+        0x2014 to 0x97.toByte(), // - - Em Dash
         0x02DC to 0x98.toByte(), // ˜ - Small Tilde
         0x2122 to 0x99.toByte(), // ™ - Trade Mark Sign
         0x0161 to 0x9A.toByte(), // š - Latin Small Letter S with Caron

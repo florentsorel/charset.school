@@ -800,6 +800,36 @@ Flow complet :
    `attempt_step_<type>` row depuis DB, lit `expected`, compare à `answer`
 3. Réponse `ValidationResult` (déjà sans `expected` par construction)
 
+### Exceptions techniques vs `errorType` i18n
+
+Deux chemins d'erreur distincts, à ne pas confondre :
+
+| Type d'erreur | Mécanisme | Audience | Traduit ? |
+|---|---|---|---|
+| **Invariant de domaine violé** (`init { require(...) }`, `error()`, `IllegalArgumentException`, `IllegalStateException`) | exception qui bubble up jusqu'au global handler → HTTP 500 + log | **Dev** qui debug une stack trace | ❌ Non — message technique en anglais |
+| **Validation business échouée** (réponse utilisateur incorrecte) | `ValidationResult.errorType` → HTTP 200 + body JSON | **End user** via le front | ✅ Oui — clé i18n traduite |
+
+Exemples concrets :
+
+```kotlin
+// Invariant — un Step.Binary mal construit (bug de générateur ou de mapper DB).
+// L'utilisateur ne voit JAMAIS ce message. Dev seul.
+init {
+    require(length > 0) { "Binary step length must be positive, got $length" }
+}
+
+// Validation — la réponse de l'user est mauvaise. L'user voit le message traduit.
+return ValidationResult.incorrect(
+    errorType = ErrorType.Binary.WRONG_VALUE,
+    params = mapOf(ParamKey.GOT to answer.bits),
+)
+```
+
+Règle : si un code path peut produire l'erreur uniquement à cause d'un **bug dans le
+code**, c'est une exception technique anglais. Si l'erreur peut être produite par
+une **action légitime de l'user** (saisir une mauvaise valeur), c'est un
+`errorType` traduit.
+
 ### Identifiants stables — `ErrorType` et `ParamKey`, co-localisés avec leur producteur
 
 **Choix tranché le 2026-05-20** : les identifiants stables qui voyagent vers le

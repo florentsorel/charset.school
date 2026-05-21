@@ -18,69 +18,139 @@ class AsciiGeneratorTest :
     FreeSpec({
         val codec = Codec()
 
-        fun newSut(codePoint: CodePoint, level: Int = 1): AsciiGenerator {
+        fun newEncodeSut(codePoint: CodePoint, level: Int = 1): AsciiGenerator {
             val codePointGenerator = mockk<CodePointGenerator>()
             val asciiLevel = AsciiLevel.fromNumber(level)!!
             every { codePointGenerator.randomAscii(asciiLevel) } returns codePoint
-            return AsciiGenerator(codec, codePointGenerator)
+            return AsciiGenerator(codec, codePointGenerator, mockk())
         }
 
-        "verbose builds [Binary(8), HexBytes(1)] with consistent values" {
-            val sut = newSut(CodePoint(0x41))
-
-            val exercise = sut.generate(level = 1, Granularity.Verbose)
-
-            exercise.encoding shouldBe Encoding.Ascii
-            exercise.level shouldBe 1
-            exercise.granularity shouldBe Granularity.Verbose
-            exercise.codePoint shouldBe CodePoint(0x41)
-            exercise.steps shouldHaveSize 2
-
-            val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
-            val hex = exercise.steps[1].shouldBeInstanceOf<Step.HexBytes>()
-
-            binary.length shouldBe 8
-            binary.expected shouldBe "01000001"
-            hex.expected shouldBe listOf(0x41)
+        fun newDecodeSut(bytes: ByteArray, level: Int = 1): AsciiGenerator {
+            val byteArrayGenerator = mockk<ByteArrayGenerator>()
+            val asciiLevel = AsciiLevel.fromNumber(level)!!
+            every { byteArrayGenerator.randomAscii(asciiLevel) } returns bytes
+            return AsciiGenerator(codec, mockk(), byteArrayGenerator)
         }
 
-        "verbose at low boundary U+0000 produces 00000000" {
-            val sut = newSut(CodePoint(0x00), level = 2)
-            val exercise = sut.generate(level = 2, Granularity.Verbose)
-            val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
-            binary.expected shouldBe "00000000"
-        }
+        "generateEncode" - {
+            "verbose builds [Binary(8), HexBytes(1)] with consistent values" {
+                val sut = newEncodeSut(CodePoint(0x41))
 
-        "verbose at high boundary U+007F produces 01111111" {
-            val sut = newSut(CodePoint(0x7F), level = 2)
-            val exercise = sut.generate(level = 2, Granularity.Verbose)
-            val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
-            binary.expected shouldBe "01111111"
-        }
+                val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
 
-        "standard builds [HexBytes(1)] only" {
-            val sut = newSut(CodePoint(0x41))
-            val exercise = sut.generate(level = 1, Granularity.Standard)
+                exercise.encoding shouldBe Encoding.Ascii
+                exercise.level shouldBe 1
+                exercise.granularity shouldBe Granularity.Verbose
+                exercise.codePoint shouldBe CodePoint(0x41)
+                exercise.steps shouldHaveSize 2
 
-            exercise.steps shouldHaveSize 1
-            exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x41)
-        }
+                val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
+                val hex = exercise.steps[1].shouldBeInstanceOf<Step.HexBytes>()
 
-        "compact builds [HexBytes(1)] only" {
-            val sut = newSut(CodePoint(0x41))
-            val exercise = sut.generate(level = 1, Granularity.Compact)
-
-            exercise.steps shouldHaveSize 1
-            exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x41)
-        }
-
-        "invalid level throws ExerciseGenerationException" {
-            val sut = AsciiGenerator(codec, mockk())
-            val exception = shouldThrow<ExerciseGenerationException> {
-                sut.generate(level = 99, Granularity.Verbose)
+                binary.length shouldBe 8
+                binary.expected shouldBe "01000001"
+                hex.expected shouldBe listOf(0x41)
             }
-            exception.encoding shouldBe Encoding.Ascii
-            exception.level shouldBe 99
-            exception.message shouldBe "Cannot generate exercise for ascii level 99: level must be one of: 1, 2"
+
+            "verbose at low boundary U+0000 produces 00000000" {
+                val sut = newEncodeSut(CodePoint(0x00), level = 2)
+                val exercise = sut.generateEncode(level = 2, Granularity.Verbose)
+                val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
+                binary.expected shouldBe "00000000"
+            }
+
+            "verbose at high boundary U+007F produces 01111111" {
+                val sut = newEncodeSut(CodePoint(0x7F), level = 2)
+                val exercise = sut.generateEncode(level = 2, Granularity.Verbose)
+                val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
+                binary.expected shouldBe "01111111"
+            }
+
+            "standard builds [HexBytes(1)] only" {
+                val sut = newEncodeSut(CodePoint(0x41))
+                val exercise = sut.generateEncode(level = 1, Granularity.Standard)
+
+                exercise.steps shouldHaveSize 1
+                exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x41)
+            }
+
+            "compact builds [HexBytes(1)] only" {
+                val sut = newEncodeSut(CodePoint(0x41))
+                val exercise = sut.generateEncode(level = 1, Granularity.Compact)
+
+                exercise.steps shouldHaveSize 1
+                exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x41)
+            }
+
+            "invalid level throws ExerciseGenerationException" {
+                val sut = AsciiGenerator(codec, mockk(), mockk())
+                val exception = shouldThrow<ExerciseGenerationException> {
+                    sut.generateEncode(level = 99, Granularity.Verbose)
+                }
+                exception.encoding shouldBe Encoding.Ascii
+                exception.level shouldBe 99
+                exception.message shouldBe "Cannot generate exercise for ascii level 99: level must be one of: 1, 2"
+            }
+        }
+
+        "generateDecode" - {
+            "verbose builds [Binary(8), CodePointEntry] with consistent values" {
+                // Input bytes [0x41] -> decode to U+0041 (A)
+                val sut = newDecodeSut(byteArrayOf(0x41))
+
+                val exercise = sut.generateDecode(level = 1, Granularity.Verbose)
+
+                exercise.encoding shouldBe Encoding.Ascii
+                exercise.level shouldBe 1
+                exercise.granularity shouldBe Granularity.Verbose
+                exercise.bytes shouldBe byteArrayOf(0x41)
+                exercise.steps shouldHaveSize 2
+
+                val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
+                val cpEntry = exercise.steps[1].shouldBeInstanceOf<Step.CodePointEntry>()
+
+                binary.length shouldBe 8
+                binary.expected shouldBe "01000001"
+                cpEntry.expected shouldBe 0x41
+            }
+
+            "verbose at low boundary [0x00] -> U+0000 (NUL)" {
+                val sut = newDecodeSut(byteArrayOf(0x00), level = 2)
+                val exercise = sut.generateDecode(level = 2, Granularity.Verbose)
+                exercise.steps[0].shouldBeInstanceOf<Step.Binary>().expected shouldBe "00000000"
+                exercise.steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x00
+            }
+
+            "verbose at high boundary [0x7F] -> U+007F (DEL)" {
+                val sut = newDecodeSut(byteArrayOf(0x7F), level = 2)
+                val exercise = sut.generateDecode(level = 2, Granularity.Verbose)
+                exercise.steps[0].shouldBeInstanceOf<Step.Binary>().expected shouldBe "01111111"
+                exercise.steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x7F
+            }
+
+            "standard builds [CodePointEntry] only" {
+                val sut = newDecodeSut(byteArrayOf(0x41))
+                val exercise = sut.generateDecode(level = 1, Granularity.Standard)
+
+                exercise.steps shouldHaveSize 1
+                exercise.steps[0].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x41
+            }
+
+            "compact builds [CodePointEntry] only" {
+                val sut = newDecodeSut(byteArrayOf(0x41))
+                val exercise = sut.generateDecode(level = 1, Granularity.Compact)
+
+                exercise.steps shouldHaveSize 1
+                exercise.steps[0].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x41
+            }
+
+            "invalid level throws ExerciseGenerationException" {
+                val sut = AsciiGenerator(codec, mockk(), mockk())
+                val exception = shouldThrow<ExerciseGenerationException> {
+                    sut.generateDecode(level = 99, Granularity.Verbose)
+                }
+                exception.encoding shouldBe Encoding.Ascii
+                exception.level shouldBe 99
+            }
         }
     })

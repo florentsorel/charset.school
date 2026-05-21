@@ -53,7 +53,7 @@ class AnswerValidator {
         return when {
             answer.value.isEmpty() -> ValidationResult.incorrect(ErrorType.Format.EMPTY)
 
-            // The choices list is public (already shown in the UI) — safe to echo back.
+            // The choices list is public (already shown in the UI) - safe to echo back.
             answer.value !in step.choices -> ValidationResult.incorrect(
                 errorType = ErrorType.Format.UNKNOWN_CHOICE,
                 params = mapOf(
@@ -88,7 +88,7 @@ class AnswerValidator {
             )
         }
 
-        // Per-group: alphabet first, then length (structural hints — no expected value leak).
+        // Per-group: alphabet first, then length (structural hints - no expected value leak).
         for ((index, group) in answer.groups.withIndex()) {
             val expectedLength = step.expected[index].length
             if (group.any { it != '0' && it != '1' }) {
@@ -170,7 +170,7 @@ class AnswerValidator {
         if (answer !is Answer.CodePointValue) return typeMismatch(step, answer)
 
         return when {
-            // Unicode range is public info, not the answer — safe to echo bounds.
+            // Unicode range is public info, not the answer - safe to echo bounds.
             answer.value !in 0..0x10FFFF -> ValidationResult.incorrect(
                 errorType = ErrorType.CodePoint.OUT_OF_RANGE,
                 params = mapOf(
@@ -198,7 +198,7 @@ class AnswerValidator {
         if (answer !is Answer.EndiannessChoice) return typeMismatch(step, answer)
 
         // With only two possible values, revealing "got" implicitly reveals the answer.
-        // The errorType alone is the feedback — no params needed.
+        // The errorType alone is the feedback - no params needed.
         return if (answer.value != step.expected) {
             ValidationResult.incorrect(ErrorType.Endianness.WRONG_CHOICE)
         } else {

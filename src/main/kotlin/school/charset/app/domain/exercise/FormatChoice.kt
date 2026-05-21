@@ -14,7 +14,7 @@ package school.charset.app.domain.exercise
  */
 object FormatChoice {
     // Byte count choices used by UTF-8 (1-4 bytes), UTF-16 (2 or 4 bytes),
-    // and UTF-32 (always 4 bytes — others are pedagogical "decoys").
+    // and UTF-32 (always 4 bytes - others are pedagogical "decoys").
     const val ONE_BYTE = "format-choice.byte-count.1"
     const val TWO_BYTES = "format-choice.byte-count.2"
     const val THREE_BYTES = "format-choice.byte-count.3"

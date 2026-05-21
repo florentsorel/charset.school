@@ -5,6 +5,14 @@ import school.charset.app.domain.exercise.Exercise
 import school.charset.app.domain.exercise.ExerciseGenerationException
 import school.charset.app.domain.exercise.Granularity
 
+/**
+ * Thin dispatcher: routes `generateEncode` / `generateDecode` calls to the
+ * matching per-encoding generator. Built from a `Set<EncodingExerciseGenerator>`
+ * collected at wiring time (via Spring `@Bean` auto-wiring of the Set).
+ *
+ * Adding a new encoding means: implement `EncodingExerciseGenerator` and register
+ * the new class as a `@Bean`. No edit to this class is ever needed.
+ */
 class ExerciseGenerator(
     generators: Set<EncodingExerciseGenerator>,
 ) {
@@ -17,17 +25,31 @@ class ExerciseGenerator(
         }
     }
 
-    fun generate(
+    fun generateEncode(
         encoding: Encoding,
         level: Int,
         granularity: Granularity,
-    ): Exercise {
+    ): Exercise.Encode {
         val generator = byEncoding[encoding]
             ?: throw ExerciseGenerationException(
                 encoding = encoding,
                 level = level,
                 reason = "no generator registered for this encoding",
             )
-        return generator.generate(level, granularity)
+        return generator.generateEncode(level, granularity)
+    }
+
+    fun generateDecode(
+        encoding: Encoding,
+        level: Int,
+        granularity: Granularity,
+    ): Exercise.Decode {
+        val generator = byEncoding[encoding]
+            ?: throw ExerciseGenerationException(
+                encoding = encoding,
+                level = level,
+                reason = "no generator registered for this encoding",
+            )
+        return generator.generateDecode(level, granularity)
     }
 }

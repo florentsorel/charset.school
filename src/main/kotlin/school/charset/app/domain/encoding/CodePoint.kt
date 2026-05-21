@@ -4,7 +4,7 @@ package school.charset.app.domain.encoding
  * Unicode code point. The valid range is U+0000..U+10FFFF; values inside the
  * surrogate range U+D800..U+DFFF are still legal `CodePoint`s (they exist in
  * the Unicode standard as reserved values), but they are not valid characters
- * and will be rejected by every encoder — that constraint lives in the encoders.
+ * and will be rejected by every encoder - that constraint lives in the encoders.
  */
 @JvmInline
 value class CodePoint(val value: Int) {
