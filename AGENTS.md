@@ -16,15 +16,24 @@ d'erreur. Progression et statistiques persistées en base par utilisateur. Pas d
 - **Spring Web** (REST controllers)
 - **Spring Security** (auth session-based, cookie HttpOnly, bcrypt)
 - **Spring Session JDBC** (sessions persistées en Postgres)
-- **Exposed** (DSL fluide) avec **exposed-kotlin-datetime** pour le mapping
-  `kotlinx.datetime.*` ↔ colonnes
-- **Postgres 18** + **Flyway** pour les migrations (SQL pur, autoconfig Spring Boot)
+- **Exposed** v1.3+ (DSL fluide) avec **exposed-kotlin-datetime** pour le mapping
+  `kotlin.time.Instant` ↔ colonnes Postgres `TIMESTAMP`
+- **Postgres 18** + **Flyway** pour les migrations (SQL pur, autoconfig Spring Boot) +
+  `flyway-database-postgresql` en `runtimeOnly` (requis en Flyway 11.x pour le support Postgres)
 - **Bean Validation** (Hibernate Validator) pour la validation des inputs côté HTTP
-- **kotlinx-datetime** pour les types temporels en domaine ; conversions aux frontières
-  via un module Jackson custom (sérialisation API) et le mapping Exposed (DB)
+- **`kotlin.time.Instant`** (stdlib Kotlin 2.x) pour les timestamps en domaine. `kotlinx.datetime.Instant`
+  est un typealias déprécié vers stdlib — on importe directement `kotlin.time.*`. ISO-8601
+  sur la wire via `Instant.toString()`
 - **Jackson 3** + `jackson-module-kotlin` (sérialisation JSON sans pollution du domaine)
-- **Testcontainers** (Postgres) avec `@ServiceConnection` Spring Boot
-- **Kotest** (FunSpec) pour les tests
+- **Testcontainers** (Postgres) — démarré en `companion object` via `@Container` + injecté
+  dans Spring via `@DynamicPropertySource`
+- **Tests d'intégration** : JUnit 5 direct (`@Test` `org.junit.jupiter.api`) — nécessaire pour
+  `@SpringBootTest` + extensions Testcontainers
+- **Tests unitaires** : **Kotest** spec BDD-style :
+  - `FunSpec` pour des tests plats (1-N cas indépendants — ex. `UserSerializerTest`)
+  - `FreeSpec` quand on a un groupement par méthode (ex. service avec plusieurs méthodes
+    ayant chacune leurs cas — `"methodName" - { "case description" { ... } }`)
+  - **Pas d'`AnnotationSpec`** — autant utiliser JUnit directement si on veut `@Test fun`
 - **MockK** pour les mocks Kotlin idiomatiques
 - **Gradle 9** Kotlin DSL
 
@@ -58,7 +67,8 @@ Pattern **ports & adapters léger** (pas de DDD strict, pas de CQRS).
 ### Principes
 
 1. **Le domaine est pur Kotlin.** Pas de Spring, pas de Jackson, pas d'Exposed, pas
-   d'annotation framework. Uniquement le stdlib Kotlin + kotlinx-datetime.
+   d'annotation framework. Uniquement le stdlib Kotlin (incluant `kotlin.time.*` pour
+   les timestamps et le clock).
 2. **Le domaine ne définit que ses contrats.** Les interfaces (ex. `*Repository`,
    `Clock`) vivent dans le package de la feature concernée (`domain/exercise/`,
    `domain/progress/`, etc., **pas** dans un dossier `port/` à part). Les
@@ -81,14 +91,14 @@ Pattern **ports & adapters léger** (pas de DDD strict, pas de CQRS).
 
 | Composant | Façon d'enregistrer | Pourquoi |
 |---|---|---|
-| `domain/<feature>/*Service`, `*Validator`, `*Generator`, `Codec` | `@Bean` dans `DomainConfig` | Domaine pur, wiring explicite |
+| `domain/<feature>/*Service`, `*Validator`, `*Generator`, `Codec`, `*Hasher` | `@Bean` dans le **`<Feature>Config`** correspondant (ex. `AuthConfig` héberge `authService` + `passwordHasher`) | Cohérent avec l'archi feature-first |
 | `domain/<feature>/*Repository` (interfaces) | rien (interface) | C'est un contrat |
-| `infrastructure/repository/<feature>/*` | `@Bean` dans `<Feature>RepositoryConfig` (un par feature) | Cohérent avec l'archi feature-first |
+| `infrastructure/repository/<feature>/*` + `infrastructure/http/<feature>/serde/*` | `@Bean` dans le même **`<Feature>Config`** (regroupe repo + serializers + autres beans liés à l'entité, façon nbog) | Cohérent — tout ce qui touche à `User` vit dans `UserConfig`, etc. |
 | `Database` Exposed + `DataSource` | `@Bean` dans `DatabaseConfig` | Plomberie partagée par tous les repos, pas spécifique à un feature |
 | `infrastructure/http/*Controller` | `@RestController` direct | Intrinsèquement Spring |
 | `infrastructure/security/*` | `@Bean` dans `SecurityConfig` | Centralisation du wiring sécurité |
-| `kotlin.time.Clock` (stdlib) | `@Bean clock(): Clock = Clock.System` dans `ApplicationConfiguration` | Pas d'abstraction custom — MockK mocke directement `Clock`. `Clock.System` n'est qu'une instance, le port est déjà dans la stdlib |
-| `infrastructure/http/serialization/*` | `@Bean` Module Jackson dans `JacksonConfig` | Centralisé |
+| `kotlin.time.Clock` (stdlib) | `@Bean clock(): Clock = Clock.System` dans `ApplicationConfig` (+ `@PostConstruct setTz("UTC")`) | Pas d'abstraction custom — MockK mocke directement `Clock`. `Clock.System` n'est qu'une instance, le port est déjà dans la stdlib |
+| `JacksonModule` (un par feature) | `@Bean userJacksonModule()` dans `UserConfig`, idem `ExerciseConfig`, etc. Spring Boot collecte **tous** les beans `JacksonModule` et les enregistre sur l'ObjectMapper auto-configuré | Pattern marker bean — pas de registre central à maintenir |
 | `config/*Config` | `@Configuration` | C'est leur rôle |
 | `DataSource` | Autoconfig Spring Boot via `application.yml` | Pas de raison de réinventer |
 | Flyway | Autoconfig Spring Boot | Idem |
@@ -201,15 +211,14 @@ school.charset.app/
 │   │
 │   └── security/                       # Spring Security config + UserDetailsService
 │
-├── config/                             # Wiring Spring centralisé
-│   ├── ApplicationConfig.kt     # @Bean Clock (= Clock.System) + @PostConstruct setTz(UTC)
-│   ├── DomainConfig.kt                 # @Bean des services domain
-│   ├── DatabaseConfig.kt               # @Bean DataSource + @Bean Database Exposed
-│   ├── UserRepositoryConfig.kt         # @Bean userRepository
-│   ├── ProgressRepositoryConfig.kt     # @Bean progressRepository
-│   ├── ExerciseRepositoryConfig.kt     # @Bean exerciseAttemptRepository
-│   ├── JacksonConfig.kt                # ObjectMapper + modules custom
-│   ├── SecurityConfig.kt               # SecurityFilterChain, UserDetailsService, etc.
+├── config/                             # Wiring Spring centralisé, **per-entity**
+│   ├── ApplicationConfig.kt            # @Bean Clock (= Clock.System) + @PostConstruct setTz(UTC)
+│   ├── DatabaseConfig.kt               # @Bean DataSource + @Bean Database Exposed (plomberie)
+│   ├── SecurityConfig.kt               # SecurityFilterChain, UserDetailsService, AuthenticationManager, RememberMeServices, etc.
+│   ├── AuthConfig.kt                   # @Bean authService + passwordHasher (feature auth)
+│   ├── UserConfig.kt                   # @Bean userRepository + userJacksonModule (feature user)
+│   ├── ProgressConfig.kt               # @Bean progressRepository + progressService + progressJacksonModule (Phase 4)
+│   ├── ExerciseConfig.kt               # @Bean exerciseAttemptRepository + exerciseGenerator + exerciseJacksonModule (Phase 4)
 │   └── WebConfig.kt                    # CORS, MessageSource, etc.
 │
 └── CharsetApplication.kt               # @SpringBootApplication (scan limité à config/, http/)
@@ -224,7 +233,7 @@ Data class, interface (port) et service de la **même feature** vivent dans le
 // domain/progress/ModuleProgress.kt — aucune annotation, aucune dépendance framework
 package school.charset.app.domain.progress
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 data class ModuleProgress(
     val userId: Long,
@@ -263,7 +272,7 @@ interface ProgressRepository {
 // domain/progress/ProgressService.kt — logique métier, classe Kotlin pure
 package school.charset.app.domain.progress
 
-import school.charset.app.domain.time.Clock
+import kotlin.time.Clock
 
 class ProgressService(
     private val progressRepository: ProgressRepository,
@@ -280,9 +289,12 @@ class ProgressService(
 ### Exemple — wiring Spring
 
 ```kotlin
-// config/DomainConfig.kt
+// config/ProgressConfig.kt (Phase 5) — service domain + repo regroupés par entité
 @Configuration
-class DomainConfig {
+class ProgressConfig {
+    @Bean
+    fun progressRepository(): ProgressRepository = ExposedProgressRepository()
+
     @Bean
     fun progressService(
         progressRepository: ProgressRepository,
@@ -290,10 +302,9 @@ class DomainConfig {
     ): ProgressService = ProgressService(progressRepository, clock)
 
     @Bean
-    fun answerValidator(): AnswerValidator = AnswerValidator()
-
-    @Bean
-    fun exerciseGenerator(clock: Clock): ExerciseGenerator = ExerciseGenerator(clock)
+    fun progressJacksonModule(): JacksonModule = SimpleModule().apply {
+        addSerializer(ProgressSerializer())
+    }
 }
 
 // config/DatabaseConfig.kt — plomberie partagée par tous les repos
@@ -318,32 +329,49 @@ class DatabaseConfig {
         )
 }
 
-// config/UserRepositoryConfig.kt — un fichier par feature
+// config/UserConfig.kt — un fichier par entité, regroupe TOUT ce qui touche à User
 @Configuration
-class UserRepositoryConfig {
+class UserConfig {
     @Bean
     fun userRepository(clock: Clock): UserRepository = ExposedUserRepository(clock)
+
+    @Bean
+    fun userJacksonModule(): JacksonModule = SimpleModule().apply {
+        addSerializer(UserSerializer())
+    }
 }
 
-// config/ProgressRepositoryConfig.kt
+// config/AuthConfig.kt — un fichier pour la feature auth (entity-agnostic)
 @Configuration
-class ProgressRepositoryConfig {
+class AuthConfig {
     @Bean
-    fun progressRepository(database: Database): ProgressRepository =
-        ExposedProgressRepository(database)
+    fun passwordHasher(passwordEncoder: PasswordEncoder): PasswordHasher =
+        BCryptPasswordHasher(passwordEncoder)
+
+    @Bean
+    fun authService(userRepository: UserRepository, passwordHasher: PasswordHasher): AuthService =
+        AuthService(userRepository, passwordHasher)
 }
 
-// config/ExerciseRepositoryConfig.kt
+// config/ExerciseConfig.kt (Phase 4) — repo + générateurs + serializer Step
 @Configuration
-class ExerciseRepositoryConfig {
+class ExerciseConfig {
     @Bean
-    fun exerciseAttemptRepository(database: Database): ExerciseAttemptRepository =
-        ExposedExerciseAttemptRepository(database)
+    fun exerciseAttemptRepository(): ExerciseAttemptRepository =
+        ExposedExerciseAttemptRepository()
+
+    @Bean
+    fun exerciseGenerator(clock: Clock): ExerciseGenerator = ExerciseGenerator(clock)
+
+    @Bean
+    fun exerciseJacksonModule(): JacksonModule = SimpleModule().apply {
+        addSerializer(StepSerializer())  // strip `expected` anti-cheat
+    }
 }
 
 // config/ApplicationConfig.kt — bean Clock (stdlib) + TZ forcé en UTC
 @Configuration
-class ApplicationConfiguration {
+class ApplicationConfig {
 
     @PostConstruct
     fun setTz() {
@@ -386,85 +414,79 @@ dans chaque repo, le constructeur reste minimal (juste les vraies dépendances m
 
 ### Stratégie
 
-- `jackson-module-kotlin` gère les data classes Kotlin out of the box (defaults, nullables,
-  `data class`, sealed classes)
-- **Aucune annotation Jackson dans `domain/`** (ni dans `domain/exercise/`, ni `progress/`, etc.)
-- Serializers/deserializers custom dans `infrastructure/http/serialization/`, enregistrés
-  via un `SimpleModule` dans `JacksonConfig`
-- Module custom pour `kotlinx.datetime.Instant` (sérialisation ISO-8601)
+- `jackson-module-kotlin` gère les data classes Kotlin out of the box pour les **DTOs HTTP**
+  (data classes dans `infrastructure/http/<feature>/`) — pas besoin de serializer custom
+- Pour les **entités domain** qu'on retourne directement depuis un controller (`User`, `Step`...),
+  on écrit un **`ValueSerializer<T>` Jackson 3 custom** dans `infrastructure/http/<feature>/serde/`.
+  Pas de DTO intermédiaire, pas d'annotation Jackson sur le domaine, et **anti-leak par
+  construction** — un champ non écrit ne peut pas leaker
+- **Aucune annotation Jackson dans `domain/`** (ni dans `domain/exercise/`, ni `user/`, etc.)
+- Les modules Jackson sont enregistrés **per-entité** via un `@Bean JacksonModule` dans
+  le `<Feature>Config` correspondant. Spring Boot collecte tous les beans `JacksonModule`
+  et les enregistre automatiquement sur l'ObjectMapper global
 
 ### Exemple
 
 ```kotlin
-// infrastructure/http/serialization/ModuleProgressSerializer.kt
-package school.charset.app.infrastructure.http.serialization
+// infrastructure/http/auth/serde/UserSerializer.kt — Jackson 3 ValueSerializer
+package school.charset.app.infrastructure.http.auth.serde
 
-class ModuleProgressSerializer : JsonSerializer<ModuleProgress>() {
-    override fun serialize(value: ModuleProgress, gen: JsonGenerator, sp: SerializerProvider) {
+class UserSerializer : ValueSerializer<User>() {
+    override fun serialize(user: User, gen: JsonGenerator, ctx: SerializationContext) {
         gen.writeStartObject()
-        gen.writeStringField("moduleId", value.moduleId)
-        gen.writeNumberField("level", value.level)
-        gen.writeNumberField("streak", value.streak)
-        gen.writeNumberField("attempts", value.attempts)
-        gen.writeNumberField("errors", value.errors)
-        value.lastPlayedAt?.let { gen.writeStringField("lastPlayedAt", it.toString()) }
+        gen.writeNumberProperty("id", user.id)
+        gen.writeStringProperty("email", user.email)
+        gen.writeStringProperty("name", user.name)
+        gen.writeStringProperty("locale", user.locale)
+        gen.writeStringProperty("createdAt", user.createdAt.toString())
+        // passwordHash et updatedAt **jamais** écrits → anti-leak by construction
         gen.writeEndObject()
     }
+
+    override fun handledType(): Class<User> = User::class.java
 }
 
-// config/JacksonConfig.kt
+// config/UserConfig.kt — bean JacksonModule co-localisé avec le userRepository
 @Configuration
-class JacksonConfig {
+class UserConfig {
+    @Bean
+    fun userRepository(clock: Clock): UserRepository = ExposedUserRepository(clock)
 
     @Bean
-    fun domainSerializationModule(): Module = SimpleModule().apply {
-        addSerializer(ModuleProgress::class.java, ModuleProgressSerializer())
-        // autres custom serializers
+    fun userJacksonModule(): JacksonModule = SimpleModule().apply {
+        addSerializer(UserSerializer())
     }
-
-    @Bean
-    fun kotlinxDatetimeModule(): Module = SimpleModule().apply {
-        addSerializer(Instant::class.java, InstantSerializer())
-        addDeserializer(Instant::class.java, InstantDeserializer())
-    }
-
-    @Bean
-    fun jacksonObjectMapperBuilderCustomizer(): Jackson2ObjectMapperBuilderCustomizer =
-        Jackson2ObjectMapperBuilderCustomizer { builder ->
-            builder.modulesToInstall(
-                kotlinModule(),
-                domainSerializationModule(),
-                kotlinxDatetimeModule(),
-            )
-            builder.featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-        }
 }
 ```
 
+Spring Boot trouve `userJacksonModule` (bean de type `JacksonModule`) et l'enregistre sur
+l'ObjectMapper auto-configuré. Quand un `@RestController` retourne `ResponseEntity<User>`,
+Jackson invoque automatiquement `UserSerializer`.
+
 ### Tests des serializers
 
-Tests unitaires purs, sans Spring :
+Tests unitaires purs, sans Spring. Convention :
+- **Kotest `FunSpec`** pour des tests plats (1-N cas indépendants)
+- **Kotest `FreeSpec`** quand on a besoin de nesting (un service avec plusieurs méthodes)
+- Helper de test partagé `ObjectMapperTestUtils.withSerializer(serializer)` dans `src/test/.../test/`
+- Comparaison JSON par **tree-match** (`mapper.readTree(...) shouldBe mapper.readTree(...)`)
+  pour ignorer whitespace/ordre. Test 2 valide l'anti-leak en passant des valeurs sensibles
+  distinctives et asseratant que le tree complet correspond à la shape attendue.
 
 ```kotlin
-class ModuleProgressSerializerTest : FunSpec({
-    val mapper = jacksonObjectMapper().apply {
-        registerModule(SimpleModule().addSerializer(
-            ModuleProgress::class.java,
-            ModuleProgressSerializer(),
-        ))
+class UserSerializerTest : FunSpec({
+    val mapper = JsonMapper().withSerializer(UserSerializer())
+
+    fun aUser(/* defaults */): User = ...
+
+    fun User.serializeAndAssert(expectedJson: String) {
+        val actual = mapper.writeValueAsString(this)
+        mapper.readTree(actual) shouldBe mapper.readTree(expectedJson)
     }
 
-    test("serializes all fields") {
-        val progress = ModuleProgress(1L, "utf8-encode", 3, 5, 50, 12, null)
-        val json = mapper.writeValueAsString(progress)
-        json shouldContain """"moduleId":"utf8-encode""""
-        json shouldContain """"level":3"""
-    }
-
-    test("omits lastPlayedAt when null") {
-        val progress = ModuleProgress(1L, "utf8-encode", 1, 0, 0, 0, null)
-        val json = mapper.writeValueAsString(progress)
-        json shouldNotContain "lastPlayedAt"
+    test("serializes id, email, name, locale and createdAt") { ... }
+    test("never exposes passwordHash or updatedAt") {
+        // passe un passwordHash distinctif puis assert que le JSON ne le contient pas
     }
 })
 ```
@@ -824,9 +846,12 @@ le serveur retourne l'exercice initial via `POST /api/exercise/generate`.
 Sinon : l'utilisateur ouvre devtools, lit `step.expected` dans la réponse, et a
 la solution avant de répondre.
 
-**Solution prévue** : custom Jackson serializer par sous-type de `Step` dans
-`infrastructure/http/serialization/`. Chaque serializer écrit uniquement les
-champs nécessaires au front pour rendre l'input widget — et **omet `expected`**.
+**Solution prévue** : custom Jackson `ValueSerializer<Step>` (sealed class → un serializer
+qui dispatche sur le sous-type, ou un par sous-type) dans
+`infrastructure/http/exercise/serde/` (per-feature, à côté des controllers exercise).
+Le ou les serializers sont enregistrés via `@Bean exerciseJacksonModule()` dans
+`ExerciseConfig`. Chaque serializer écrit uniquement les champs nécessaires au front
+pour rendre l'input widget — et **omet `expected`**.
 
 | `Step` sous-type | Champs gardés dans le JSON sortant |
 |---|---|
@@ -967,20 +992,48 @@ class ProgressServiceTest : FunSpec({
 
 ### Tests d'intégration ciblés (Testcontainers)
 
-Tu peux n'importer que la config nécessaire pour gagner en vitesse :
+JUnit 5 direct (pas Kotest spec — pour rester compatible avec les extensions Spring/Testcontainers).
+Tu peux n'importer que les configs nécessaires pour gagner en vitesse :
 
 ```kotlin
-@SpringBootTest(classes = [DatabaseConfig::class, ProgressRepositoryConfig::class])
+@SpringBootTest(
+    classes = [DatabaseConfig::class, UserConfig::class, ApplicationConfigTest::class],
+)
+@ImportAutoConfiguration(FlywayAutoConfiguration::class)
 @Testcontainers
-class ExposedProgressRepositoryIntegrationTest : FunSpec({
+class ExposedUserRepositoryTest(
+    private val userRepository: UserRepository,
+) {
     companion object {
         @Container
-        @ServiceConnection
-        val postgres = PostgreSQLContainer("postgres:18-alpine")
+        @JvmStatic
+        val postgres: PostgreSQLContainer = PostgreSQLContainer("postgres:18-alpine")
+
+        @JvmStatic
+        @DynamicPropertySource
+        @Suppress("unused")
+        fun dataSourceProperties(registry: DynamicPropertyRegistry) {
+            registry.add("app.datasource.url") { postgres.jdbcUrl }
+            registry.add("app.datasource.username") { postgres.username }
+            registry.add("app.datasource.password") { postgres.password }
+            registry.add("app.datasource.driver-class-name") { postgres.driverClassName }
+        }
     }
-    // tests
-})
+
+    @Test
+    fun `create persists and returns the generated id`() { ... }
+}
 ```
+
+Points-clés :
+
+- `ApplicationConfigTest` (en `src/intTest/.../config/`) override `@Bean clock` avec une
+  `Instant` fixe pour rendre les timestamps déterministes
+- `spring.main.allow-bean-definition-overriding=true` dans `src/intTest/resources/application.yaml`
+  pour autoriser cet override
+- Les controller tests utilisent `@SpringBootTest` + `@AutoConfigureMockMvc` + `@Import(ApplicationConfigTest::class)`
+- `flyway-database-postgresql` est requis en `runtimeOnly` (Flyway 11.x a sorti le support
+  Postgres de son module core)
 
 ### Tests de serializers (purs, sans Spring)
 Voir section "Sérialisation JSON" ci-dessus.
@@ -1103,70 +1156,97 @@ chaudes en cache.
 4. `domain/progress/`, `domain/user/` : entités + repositories (interfaces) + services
    au besoin. Pour les timestamps, on injecte `kotlin.time.Clock` (stdlib) — pas
    d'interface custom.
-5. `config/DomainConfig` pour le wiring `@Bean` des services (`Codec`, `AnswerValidator`,
-   `ExerciseGenerator`, `ProgressService`).
+5. **Pas de `config/DomainConfig` central** — les services domain seront wirés au moment de
+   leur premier consommateur, dans le `<Feature>Config` correspondant. Ex. `ExerciseGenerator`,
+   `AnswerValidator`, `Codec` iront dans `ExerciseConfig` quand la Phase 5 (Exercise API)
+   arrivera. Idem `ProgressService` dans `ProgressConfig`.
 
-### Phase 2 — Infrastructure DB
+### Phase 2 — Infrastructure DB ✅
 6. Postgres + Flyway (autoconfig), migrations `users`, `module_progress`,
    `exercise_attempts`, tables Spring Session
-7. `infrastructure/repository/` : tables Exposed + repositories (classes Kotlin pures)
-8. `config/DatabaseConfig` (`DataSource` + `Database` Exposed) + un `<Feature>RepositoryConfig`
-   par feature (ex. `UserRepositoryConfig` avec `@Bean userRepository`)
-9. Tests d'intégration Testcontainers ciblés (`classes = [DatabaseConfig::class, UserRepositoryConfig::class, ...]`)
+7. `infrastructure/repository/<feature>/` : tables Exposed + repositories (classes Kotlin pures)
+8. `config/DatabaseConfig` (`DataSource` + `Database` Exposed) + un `<Feature>Config`
+   par entité regroupant repo + JacksonModule (ex. `UserConfig` avec `@Bean userRepository`
+   + `@Bean userJacksonModule`)
+9. Tests d'intégration Testcontainers ciblés (`classes = [DatabaseConfig::class, UserConfig::class, ApplicationConfigTest::class]`)
 
-### Phase 3 — Sécurité + Auth
-10. `config/SecurityConfig` : `SecurityFilterChain`, password encoder, etc.
-11. `infrastructure/security/` : `UserDetailsService` basé sur `UserRepository`
-12. Controllers `/api/auth/*` (`@RestController`)
-13. Spring Session JDBC activé via `@EnableJdbcHttpSession`
-14. Tests d'intégration auth (login, logout, register, reset password)
+### Phase 3 — Sécurité + Auth fundamentals
+10. `config/SecurityConfig` : `SecurityFilterChain` JSON-friendly (CSRF cookie X-XSRF-TOKEN,
+    formLogin/httpBasic disabled, logout custom 204, 401 entry point), `PasswordEncoder`
+    (BCrypt strength 12), `AuthenticationManager`, `SecurityContextRepository` (HttpSession-based),
+    `PersistentTokenRepository` (JDBC) + `RememberMeServices` (persistent-token, 2 semaines)
+11. `infrastructure/security/` : `CustomUserDetailsService` basé sur `UserRepository.findByEmail`,
+    `UserDetailsAdapter` minimal (userId + email + passwordHashValue — pas le User complet,
+    pour ne pas forcer `User` à implémenter `Serializable`), `BCryptPasswordHasher` (impl du
+    port domain `PasswordHasher`)
+12. `domain/auth/` : `AuthService.register(...)`, port `PasswordHasher`, `AuthErrorType`
+    (`EMAIL_ALREADY_TAKEN`, `BAD_CREDENTIALS`, `SESSION_ORPHANED`), `OrphanedSessionException`
+13. `infrastructure/http/auth/` : DTOs `RegisterRequest`/`LoginRequest`, controllers
+    `POST /api/auth/{register,login,logout}` + `GET /api/auth/me`. Login en JSON (pas form),
+    contrôle manuel de l'`AuthenticationManager` + sauvegarde SecurityContext + remember-me
+    via wrapper `HttpServletRequest`
+14. `infrastructure/http/auth/serde/UserSerializer.kt` (Jackson 3 `ValueSerializer<User>`,
+    omet `passwordHash` et `updatedAt`)
+15. `infrastructure/http/GlobalExceptionHandler` (`@RestControllerAdvice`) :
+    `EmailAlreadyTakenException` → 409, `BadCredentialsException` → 401,
+    `OrphanedSessionException` → 401 + session invalidée, `MethodArgumentNotValidException`
+    → **422** (validation, pas 400)
+16. Spring Session JDBC activé via `@EnableJdbcHttpSession` + Flyway migration des tables
+    `spring_session*` + `persistent_logins` (remember-me)
+17. Tests d'intégration auth (register OK/conflict/422, login OK/wrong-creds/remember-me,
+    /me auth/non-auth, logout invalide la session) + unit test `UserSerializerTest`
 
-### Phase 4 — Sérialisation + API
-15. `config/JacksonConfig` : `ObjectMapper` avec modules custom (kotlin, kotlinx-datetime,
-    serializers domaine)
-16. `infrastructure/http/serialization/` : serializers custom + tests purs
-17. Controllers `/api/exercise/*` et `/api/progress`
-18. Validation des DTOs HTTP via Bean Validation
+### Phase 4 — Reset password + profile management
+18. Migration `password_reset_tokens` + service de génération/expiration de token + envoi
+    email (Mailpit en dev)
+19. Controllers `POST /api/auth/{forgot-password,reset-password}`
+20. Controllers `PATCH /api/profile`, `PATCH /api/profile/password`, `DELETE /api/profile`
+21. Gestion `updatedAt` dans `UserSerializer` (`writeNullProperty` quand null)
 
-### Phase 5 — Frontend setup
-19. `npx nuxi@latest init web` + TypeScript strict + Tailwind v4 + Nuxt UI v3
-20. Intercepteur `$fetch` global (credentials, CSRF header, parsing zod des responses)
-21. `@nuxtjs/i18n` setup avec namespaces FR/EN, FR par défaut
-22. Layouts `auth.vue` et `default.vue` dans `layouts/`, header/footer globaux
+### Phase 5 — Exercise + Progress backend API
+22. Controllers `/api/exercise/generate` et `/api/exercise/validate`, `/api/progress`
+23. `infrastructure/http/exercise/serde/StepSerializer` (anti-cheat : omet `expected`)
+    enregistré via `exerciseJacksonModule` dans `ExerciseConfig`
+24. Tests d'intégration end-to-end exercice
 
-### Phase 6 — Auth UI
-23. Pages `login.vue`, `register.vue`, `forgot-password.vue`, `reset-password.vue`
+### Phase 6 — Frontend setup
+25. `npx nuxi@latest init web` + TypeScript strict + Tailwind v4 + Nuxt UI v3
+26. Intercepteur `$fetch` global (credentials, CSRF header, parsing zod des responses)
+27. `@nuxtjs/i18n` setup avec namespaces FR/EN, FR par défaut
+28. Layouts `auth.vue` et `default.vue` dans `layouts/`, header/footer globaux
+
+### Phase 7 — Auth UI
+29. Pages `login.vue`, `register.vue`, `forgot-password.vue`, `reset-password.vue`
     (VeeValidate + zod + Nuxt UI)
-24. Page `profile.vue` avec sections (compte, langue, password, danger zone)
+30. Page `profile.vue` avec sections (compte, langue, password, danger zone)
 
-### Phase 7 — Exercices
-25. Composants atomiques : `BitDisplay`, `BitInput`, `HexInput`, `ByteDisplay`,
+### Phase 8 — Exercises UI
+31. Composants atomiques : `BitDisplay`, `BitInput`, `HexInput`, `ByteDisplay`,
     `FormatSelector`, `EndiannessSelector`, `StepProgress`, `FeedbackPanel`
-26. Module **Encoder en UTF-8** complet (niveaux 1 à 5) — le module phare
-27. Module **Décoder UTF-8**
-28. Modules UTF-16 encode/decode
-29. Modules UTF-32 encode/decode
-30. Module Endianness
-31. Module Mojibake
-32. Module Identifier l'encodage
+32. Module **Encoder en UTF-8** complet (niveaux 1 à 5) — le module phare
+33. Module **Décoder UTF-8**
+34. Modules UTF-16 encode/decode
+35. Modules UTF-32 encode/decode
+36. Module Endianness
+37. Module Mojibake
+38. Module Identifier l'encodage
 
-### Phase 8 — Landing + polish
-33. Landing mode invité (hero + CTAs)
-34. Landing mode connecté (cartes modules + progression)
-35. Random total
-36. Thèmes light/dark finalisés
-37. Responsive mobile complet
-38. Audit accessibilité (clavier, lecteur d'écran)
+### Phase 9 — Landing + polish
+39. Landing mode invité (hero + CTAs)
+40. Landing mode connecté (cartes modules + progression)
+41. Random total
+42. Thèmes light/dark finalisés
+43. Responsive mobile complet
+44. Audit accessibilité (clavier, lecteur d'écran)
 
-### Phase 9 — Déploiement
-39. Dockerfile Spring Boot
-40. Build Nuxt en mode SSR Node (`nuxt build` → `.output/server/index.mjs`)
-41. Caddyfile production
-42. Migrations en CI/CD
-43. Monitoring basique (Spring Boot Actuator + logs)
+### Phase 10 — Déploiement
+45. Dockerfile Spring Boot
+46. Build Nuxt en mode SSR Node (`nuxt build` → `.output/server/index.mjs`)
+47. Caddyfile production
+48. Migrations en CI/CD
+49. Monitoring basique (Spring Boot Actuator + logs)
 
 ### À envisager plus tard (post-v1)
-- `@ControllerAdvice` pour la gestion centralisée des erreurs HTTP
 - OpenAPI (Springdoc) si tu veux exposer la doc d'API
 - Cache Caffeine côté Spring si nécessaire
 - Rate limiting (Bucket4j ou Resilience4j)

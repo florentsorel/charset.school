@@ -1,0 +1,132 @@
+package school.charset.app.config
+
+import jakarta.servlet.http.HttpServletResponse
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.ProviderManager
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider
+import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.RememberMeServices
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl
+import org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository
+import org.springframework.security.web.context.SecurityContextRepository
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository
+import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHttpSession
+import school.charset.app.domain.user.UserRepository
+import school.charset.app.infrastructure.security.CustomUserDetailsService
+import javax.sql.DataSource
+
+@Configuration
+@EnableJdbcHttpSession
+class SecurityConfig {
+    @Bean
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder(BCRYPT_STRENGTH)
+
+    @Bean
+    fun userDetailsService(userRepository: UserRepository): UserDetailsService = CustomUserDetailsService(userRepository)
+
+    @Bean
+    fun authenticationManager(
+        userDetailsService: UserDetailsService,
+        passwordEncoder: PasswordEncoder,
+    ): AuthenticationManager {
+        val provider = DaoAuthenticationProvider(userDetailsService)
+        provider.setPasswordEncoder(passwordEncoder)
+        return ProviderManager(provider)
+    }
+
+    @Bean
+    fun persistentTokenRepository(dataSource: DataSource): PersistentTokenRepository = JdbcTokenRepositoryImpl().apply { setDataSource(dataSource) }
+
+    @Bean
+    fun rememberMeServices(
+        userDetailsService: UserDetailsService,
+        tokenRepository: PersistentTokenRepository,
+    ): RememberMeServices {
+        val services = PersistentTokenBasedRememberMeServices(
+            REMEMBER_ME_KEY,
+            userDetailsService,
+            tokenRepository,
+        )
+        services.parameter = REMEMBER_ME_PARAM
+        services.setCookieName(REMEMBER_ME_COOKIE)
+        services.setTokenValiditySeconds(REMEMBER_ME_VALIDITY_SECONDS)
+        return services
+    }
+
+    @Bean
+    fun securityContextRepository(): SecurityContextRepository = HttpSessionSecurityContextRepository()
+
+    @Bean
+    fun securityFilterChain(
+        http: HttpSecurity,
+        rememberMeServices: RememberMeServices,
+        securityContextRepository: SecurityContextRepository,
+    ): SecurityFilterChain {
+        http
+            .authorizeHttpRequests { auth ->
+                auth.requestMatchers(
+                    "/api/auth/register",
+                    "/api/auth/login",
+                    "/api/auth/forgot-password",
+                    "/api/auth/reset-password",
+                ).permitAll()
+                auth.anyRequest().authenticated()
+            }
+            .csrf { csrf ->
+                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                // CSRF skipped on register/login: no session exists yet so the front
+                // cannot have read the XSRF-TOKEN cookie. Reset password endpoints
+                // are bearer-token-based via emailed link, also skipped.
+                csrf.ignoringRequestMatchers(
+                    "/api/auth/register",
+                    "/api/auth/login",
+                    "/api/auth/forgot-password",
+                    "/api/auth/reset-password",
+                )
+            }
+            .formLogin { it.disable() }
+            .httpBasic { it.disable() }
+            .logout { logout ->
+                logout.logoutUrl("/api/auth/logout")
+                logout.logoutSuccessHandler { _, response, _ ->
+                    response.status = HttpServletResponse.SC_NO_CONTENT
+                }
+                logout.deleteCookies("SESSION", REMEMBER_ME_COOKIE)
+            }
+            .rememberMe { rm ->
+                rm.rememberMeServices(rememberMeServices)
+                rm.key(REMEMBER_ME_KEY)
+            }
+            .securityContext { ctx -> ctx.securityContextRepository(securityContextRepository) }
+            .exceptionHandling { eh ->
+                // No redirect to a login page (JSON API) - return 401 to the client.
+                eh.authenticationEntryPoint { _, response, _ ->
+                    response.status = HttpServletResponse.SC_UNAUTHORIZED
+                }
+            }
+        return http.build()
+    }
+
+    private companion object {
+        const val BCRYPT_STRENGTH = 12
+
+        // Name of the JSON body field / request parameter that triggers remember-me.
+        // Aligned with the camelCase field `rememberMe` in `LoginRequest`.
+        const val REMEMBER_ME_PARAM = "rememberMe"
+
+        // Cookie name on the wire - kept kebab-case by wire convention.
+        const val REMEMBER_ME_COOKIE = "remember-me"
+        const val REMEMBER_ME_VALIDITY_SECONDS = 60 * 60 * 24 * 14 // 2 weeks
+
+        // TODO: externalize to application.yaml + env var for production
+        const val REMEMBER_ME_KEY = "charset-school-remember-me-dev-only"
+    }
+}

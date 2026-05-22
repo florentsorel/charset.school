@@ -14,14 +14,14 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 import school.charset.app.config.ApplicationConfigTest
 import school.charset.app.config.DatabaseConfig
-import school.charset.app.config.UserRepositoryConfig
+import school.charset.app.config.UserConfig
 import school.charset.app.domain.user.EmailAlreadyTakenException
 import school.charset.app.domain.user.PasswordHash
 import school.charset.app.domain.user.UserRepository
 import java.util.UUID
 
 @SpringBootTest(
-    classes = [DatabaseConfig::class, UserRepositoryConfig::class, ApplicationConfigTest::class],
+    classes = [DatabaseConfig::class, UserConfig::class, ApplicationConfigTest::class],
 )
 @ImportAutoConfiguration(FlywayAutoConfiguration::class)
 @Testcontainers
@@ -50,14 +50,14 @@ class ExposedUserRepositoryTest(
         val hash = PasswordHash("hash")
         val user = userRepository.create(
             email = email,
-            name = "Florent",
+            name = "John",
             passwordHash = hash,
             locale = "fr",
         )
 
         (user.id > 0L) shouldBe true
         user.email shouldBe email
-        user.name shouldBe "Florent"
+        user.name shouldBe "John"
         user.passwordHash shouldBe hash
         user.locale shouldBe "fr"
         user.updatedAt.shouldBeNull()

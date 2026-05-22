@@ -6,6 +6,7 @@ import org.springframework.boot.runApplication
 @SpringBootApplication(
     scanBasePackages = [
         "school.charset.app.config",
+        "school.charset.app.infrastructure.http",
     ],
 )
 class Application

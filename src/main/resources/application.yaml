@@ -7,6 +7,10 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: false
 
+  session:
+    jdbc:
+      initialize-schema: never
+
 app:
   datasource:
     driver-class-name: org.postgresql.Driver
