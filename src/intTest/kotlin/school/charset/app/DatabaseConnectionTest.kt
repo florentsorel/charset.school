@@ -13,10 +13,10 @@ import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
-import school.charset.app.config.DataSourceConfig
+import school.charset.app.config.DatabaseConfig
 import javax.sql.DataSource
 
-@SpringBootTest(classes = [DataSourceConfig::class])
+@SpringBootTest(classes = [DatabaseConfig::class])
 @ImportAutoConfiguration(FlywayAutoConfiguration::class)
 @Testcontainers
 class DatabaseConnectionTest(

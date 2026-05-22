@@ -83,10 +83,11 @@ Pattern **ports & adapters léger** (pas de DDD strict, pas de CQRS).
 |---|---|---|
 | `domain/<feature>/*Service`, `*Validator`, `*Generator`, `Codec` | `@Bean` dans `DomainConfig` | Domaine pur, wiring explicite |
 | `domain/<feature>/*Repository` (interfaces) | rien (interface) | C'est un contrat |
-| `infrastructure/persistence/*` | `@Bean` dans `PersistenceConfig` | Pas d'annotation framework leakée |
+| `infrastructure/repository/<feature>/*` | `@Bean` dans `<Feature>RepositoryConfig` (un par feature) | Cohérent avec l'archi feature-first |
+| `Database` Exposed + `DataSource` | `@Bean` dans `DatabaseConfig` | Plomberie partagée par tous les repos, pas spécifique à un feature |
 | `infrastructure/http/*Controller` | `@RestController` direct | Intrinsèquement Spring |
 | `infrastructure/security/*` | `@Bean` dans `SecurityConfig` | Centralisation du wiring sécurité |
-| `infrastructure/time/SystemClock` | `@Bean` dans `InfrastructureConfig` | Remplaçable en test |
+| `kotlin.time.Clock` (stdlib) | `@Bean clock(): Clock = Clock.System` dans `ApplicationConfiguration` | Pas d'abstraction custom — MockK mocke directement `Clock`. `Clock.System` n'est qu'une instance, le port est déjà dans la stdlib |
 | `infrastructure/http/serialization/*` | `@Bean` Module Jackson dans `JacksonConfig` | Centralisé |
 | `config/*Config` | `@Configuration` | C'est leur rôle |
 | `DataSource` | Autoconfig Spring Boot via `application.yml` | Pas de raison de réinventer |
@@ -98,7 +99,7 @@ Pattern **ports & adapters léger** (pas de DDD strict, pas de CQRS).
 Spring Boot fait du component scan par défaut sur le package racine de
 `@SpringBootApplication`. Pour garantir qu'aucune annotation Spring (`@Service`,
 `@Repository`, `@Component`) ne soit accidentellement scannée dans `domain/` ou
-`infrastructure/persistence/`, on restreint explicitement le scan à `config/` et
+`infrastructure/repository/`, on restreint explicitement le scan à `config/` et
 `infrastructure/http/` :
 
 ```kotlin
@@ -168,22 +169,24 @@ school.charset.app/
 │   │   ├── ProgressRepository.kt       # interface (port)
 │   │   └── ProgressService.kt          # class — record d'une tentative + mise à jour de la progression
 │   │
-│   ├── user/                           # Tout ce qui concerne les utilisateurs
-│   │   ├── User.kt                     # data class (id, email, name, locale, ...)
-│   │   └── UserRepository.kt           # interface (port)
-│   │
-│   └── time/                           # Utilitaire transverse (séparé car réutilisé partout)
-│       └── Clock.kt                    # interface (port) — implémentation côté infrastructure
+│   └── user/                           # Tout ce qui concerne les utilisateurs
+│       ├── User.kt                     # data class (id, email, name, locale, ...)
+│       └── UserRepository.kt           # interface (port)
+│   # Pour les besoins temporels (timestamps, etc.), on injecte directement
+│   # `kotlin.time.Clock` (stdlib) — pas d'interface `Clock` custom dans `domain/time/`.
+│   # MockK mocke `Clock` natif sans effort, et le bean est fourni par
+│   # `config/ApplicationConfig.kt`.
+│   #
 │   # Note : les constantes "stables vers le front" (ErrorType, ParamKey, plus tard
 │   # HintType, MessageType, ...) vivent **dans le package du feature qui les produit**,
 │   # pas dans un package i18n/ transverse. Cohérent avec l'archi feature-first.
 │
 ├── infrastructure/                     # Le seul endroit où on a un mix Spring/Exposed/Jackson.
-│   │                                   # Top-level split par couche technique (persistence, http,
+│   │                                   # Top-level split par couche technique (repository, http,
 │   │                                   # security, time), puis feature-package À L'INTÉRIEUR
 │   │                                   # de chaque couche quand c'est pertinent.
 │   │
-│   ├── persistence/                    # Implémentations Exposed (sans annotation Spring)
+│   ├── repository/                    # Implémentations Exposed (sans annotation Spring)
 │   │   ├── exercise/                   # ExposedExerciseAttemptRepository + tables +
 │   │   │                               # mappers pour Step → table fille
 │   │   ├── progress/                   # ExposedProgressRepository + ModuleProgressTable
@@ -196,14 +199,15 @@ school.charset.app/
 │   │   ├── profile/
 │   │   └── serialization/              # serializers/deserializers Jackson custom transverses
 │   │
-│   ├── security/                       # Spring Security config + UserDetailsService
-│   └── time/
-│       └── SystemClock.kt              # implémentation de domain/time/Clock
+│   └── security/                       # Spring Security config + UserDetailsService
 │
 ├── config/                             # Wiring Spring centralisé
+│   ├── ApplicationConfig.kt     # @Bean Clock (= Clock.System) + @PostConstruct setTz(UTC)
 │   ├── DomainConfig.kt                 # @Bean des services domain
-│   ├── PersistenceConfig.kt            # @Bean des repositories + Database Exposed
-│   ├── InfrastructureConfig.kt         # @Bean Clock et autres utilitaires
+│   ├── DatabaseConfig.kt               # @Bean DataSource + @Bean Database Exposed
+│   ├── UserRepositoryConfig.kt         # @Bean userRepository
+│   ├── ProgressRepositoryConfig.kt     # @Bean progressRepository
+│   ├── ExerciseRepositoryConfig.kt     # @Bean exerciseAttemptRepository
 │   ├── JacksonConfig.kt                # ObjectMapper + modules custom
 │   ├── SecurityConfig.kt               # SecurityFilterChain, UserDetailsService, etc.
 │   └── WebConfig.kt                    # CORS, MessageSource, etc.
@@ -292,43 +296,89 @@ class DomainConfig {
     fun exerciseGenerator(clock: Clock): ExerciseGenerator = ExerciseGenerator(clock)
 }
 
-// config/PersistenceConfig.kt
+// config/DatabaseConfig.kt — plomberie partagée par tous les repos
 @Configuration
-class PersistenceConfig {
+@EnableConfigurationProperties(DataSourceProperties::class)
+class DatabaseConfig {
+
+    @Bean
+    fun dataSource(properties: DataSourceProperties): DataSource =
+        DataSourceBuilder.create()
+            .driverClassName(properties.driverClassName)
+            .url(properties.url)
+            .username(properties.username)
+            .password(properties.password)
+            .build()
 
     @Bean
     fun database(dataSource: DataSource): Database =
         Database.connect(
             dataSource,
-            databaseConfig = DatabaseConfig { useNestedTransactions = true },
+            databaseConfig = ExposedDatabaseConfig { useNestedTransactions = true },
         )
+}
 
+// config/UserRepositoryConfig.kt — un fichier par feature
+@Configuration
+class UserRepositoryConfig {
     @Bean
-    fun userRepository(database: Database): UserRepository =
-        ExposedUserRepository(database)
+    fun userRepository(clock: Clock): UserRepository = ExposedUserRepository(clock)
+}
 
+// config/ProgressRepositoryConfig.kt
+@Configuration
+class ProgressRepositoryConfig {
     @Bean
     fun progressRepository(database: Database): ProgressRepository =
         ExposedProgressRepository(database)
+}
 
+// config/ExerciseRepositoryConfig.kt
+@Configuration
+class ExerciseRepositoryConfig {
     @Bean
     fun exerciseAttemptRepository(database: Database): ExerciseAttemptRepository =
         ExposedExerciseAttemptRepository(database)
 }
 
-// config/InfrastructureConfig.kt
+// config/ApplicationConfig.kt — bean Clock (stdlib) + TZ forcé en UTC
 @Configuration
-class InfrastructureConfig {
+class ApplicationConfiguration {
+
+    @PostConstruct
+    fun setTz() {
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+    }
+
     @Bean
-    fun clock(): Clock = SystemClock()
+    fun clock(): Clock = Clock.System  // kotlin.time.Clock
 }
 ```
 
 ### Transactions
 
-Préférence : **transactions Exposed explicites** dans les repositories (`transaction(database) { }`),
-**pas** `@Transactional` Spring. Cohérent avec l'approche "pas d'annotations Spring qui leakent",
-et plus simple à raisonner (pas de mélange entre contexte transactionnel Spring et Exposed).
+Dans les repositories, on utilise la DSL Exposed `transaction { }` (sans argument).
+Le `Database` est enregistré comme **default global** par `Database.connect(dataSource)` dans
+`DatabaseConfig.database()` au démarrage Spring (le bean est instancié eagerly), donc tous
+les `transaction { }` ultérieurs partagent ce default. Plus besoin d'injecter `Database`
+dans chaque repo, le constructeur reste minimal (juste les vraies dépendances métier comme
+`Clock`).
+
+**Pas de `@Transactional` Spring** dans les repos :
+
+- Spring `@Transactional` et Exposed `transaction { }` sont deux systèmes de transaction
+  distincts. Spring ouvre une transaction via `PlatformTransactionManager` ; Exposed via
+  son `TransactionManager` interne. Sans bridge, Exposed ne voit pas la transaction Spring
+  et lève "No transaction" à l'exécution.
+- Le bridge officiel existe (`org.jetbrains.exposed:exposed-spring-transaction`) et serait
+  une option **défendable** sur le plan archi — `infrastructure/repository/` est de
+  l'infra, donc des annotations Spring n'y violent pas le principe (le principe protège
+  uniquement le `domain/`). On l'évite pour des raisons pragmatiques, pas de pureté :
+    - Une dépendance en plus
+    - Frontières de transaction implicites (proxy Spring) vs explicites au call site
+      (bloc `transaction { }` visible)
+    - Match avec le pattern nrea déjà éprouvé
+    - Pas un gain significatif : la DSL Exposed est aussi concise que l'annotation
 
 ---
 
@@ -920,7 +970,7 @@ class ProgressServiceTest : FunSpec({
 Tu peux n'importer que la config nécessaire pour gagner en vitesse :
 
 ```kotlin
-@SpringBootTest(classes = [PersistenceConfig::class])
+@SpringBootTest(classes = [DatabaseConfig::class, ProgressRepositoryConfig::class])
 @Testcontainers
 class ExposedProgressRepositoryIntegrationTest : FunSpec({
     companion object {
@@ -939,7 +989,7 @@ Voir section "Sérialisation JSON" ci-dessus.
 - `domain/encoding/Codec` : tous les cas frontières (U+007F, U+0080, U+07FF, U+0800,
   U+FFFF, U+10000, U+10FFFF, surrogates UTF-16) — pour `encode()` ET `decode()`
 - `domain/exercise/AnswerValidator` : chaque `errorType` produit avec les bons `params`
-- `infrastructure/persistence/*` : upsert, find, contraintes uniques
+- `infrastructure/repository/*` : upsert, find, contraintes uniques
 - Controllers : 401 si non auth, 403 si mauvais user, 200 si OK
 - Serializers custom : structure JSON exacte
 
@@ -1050,17 +1100,19 @@ chaudes en cache.
 3. `domain/exercise/` : `Granularity`, `StepType`, `Step` sealed class, `Answer` sealed
    class, `ValidationResult`, `Exercise`, `ExerciseAttempt`, `ExerciseAttemptRepository`
    (interface), `AnswerValidator`, `ExerciseGenerator`. Tests par type de step.
-4. `domain/progress/`, `domain/user/`, `domain/time/` : entités + repositories
-   (interfaces) + services au besoin.
+4. `domain/progress/`, `domain/user/` : entités + repositories (interfaces) + services
+   au besoin. Pour les timestamps, on injecte `kotlin.time.Clock` (stdlib) — pas
+   d'interface custom.
 5. `config/DomainConfig` pour le wiring `@Bean` des services (`Codec`, `AnswerValidator`,
    `ExerciseGenerator`, `ProgressService`).
 
 ### Phase 2 — Infrastructure DB
 6. Postgres + Flyway (autoconfig), migrations `users`, `module_progress`,
    `exercise_attempts`, tables Spring Session
-7. `infrastructure/persistence/` : tables Exposed + repositories (classes Kotlin pures)
-8. `config/PersistenceConfig` pour le wiring `@Bean` des repositories + `Database` Exposed
-9. Tests d'intégration Testcontainers ciblés sur `PersistenceConfig`
+7. `infrastructure/repository/` : tables Exposed + repositories (classes Kotlin pures)
+8. `config/DatabaseConfig` (`DataSource` + `Database` Exposed) + un `<Feature>RepositoryConfig`
+   par feature (ex. `UserRepositoryConfig` avec `@Bean userRepository`)
+9. Tests d'intégration Testcontainers ciblés (`classes = [DatabaseConfig::class, UserRepositoryConfig::class, ...]`)
 
 ### Phase 3 — Sécurité + Auth
 10. `config/SecurityConfig` : `SecurityFilterChain`, password encoder, etc.
