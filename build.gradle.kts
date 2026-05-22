@@ -44,7 +44,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-core")
     implementation("org.jetbrains.exposed:exposed-jdbc")
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime")
-    runtimeOnly("org.postgresql:postgresql")
+    implementation("org.postgresql:postgresql")
 
     // Unit tests
     testImplementation("org.springframework.boot:spring-boot-starter-test")
