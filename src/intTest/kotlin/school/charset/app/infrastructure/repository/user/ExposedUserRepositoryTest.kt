@@ -12,7 +12,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
-import school.charset.app.config.ApplicationConfiguration
+import school.charset.app.config.ApplicationConfigTest
 import school.charset.app.config.DatabaseConfig
 import school.charset.app.config.UserRepositoryConfig
 import school.charset.app.domain.user.EmailAlreadyTakenException
@@ -21,7 +21,7 @@ import school.charset.app.domain.user.UserRepository
 import java.util.UUID
 
 @SpringBootTest(
-    classes = [DatabaseConfig::class, UserRepositoryConfig::class, ApplicationConfiguration::class],
+    classes = [DatabaseConfig::class, UserRepositoryConfig::class, ApplicationConfigTest::class],
 )
 @ImportAutoConfiguration(FlywayAutoConfiguration::class)
 @Testcontainers

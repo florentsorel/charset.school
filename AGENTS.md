@@ -175,7 +175,7 @@ school.charset.app/
 │   # Pour les besoins temporels (timestamps, etc.), on injecte directement
 │   # `kotlin.time.Clock` (stdlib) — pas d'interface `Clock` custom dans `domain/time/`.
 │   # MockK mocke `Clock` natif sans effort, et le bean est fourni par
-│   # `config/ApplicationConfiguration.kt`.
+│   # `config/ApplicationConfig.kt`.
 │   #
 │   # Note : les constantes "stables vers le front" (ErrorType, ParamKey, plus tard
 │   # HintType, MessageType, ...) vivent **dans le package du feature qui les produit**,
@@ -202,7 +202,7 @@ school.charset.app/
 │   └── security/                       # Spring Security config + UserDetailsService
 │
 ├── config/                             # Wiring Spring centralisé
-│   ├── ApplicationConfiguration.kt     # @Bean Clock (= Clock.System) + @PostConstruct setTz(UTC)
+│   ├── ApplicationConfig.kt     # @Bean Clock (= Clock.System) + @PostConstruct setTz(UTC)
 │   ├── DomainConfig.kt                 # @Bean des services domain
 │   ├── DatabaseConfig.kt               # @Bean DataSource + @Bean Database Exposed
 │   ├── UserRepositoryConfig.kt         # @Bean userRepository
@@ -341,7 +341,7 @@ class ExerciseRepositoryConfig {
         ExposedExerciseAttemptRepository(database)
 }
 
-// config/ApplicationConfiguration.kt — bean Clock (stdlib) + TZ forcé en UTC
+// config/ApplicationConfig.kt — bean Clock (stdlib) + TZ forcé en UTC
 @Configuration
 class ApplicationConfiguration {
 
