@@ -39,11 +39,16 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
-        val fields = ex.bindingResult.fieldErrors.associate {
-            it.field to (it.defaultMessage ?: "invalid")
-        }
+        val fieldErrors = ex.bindingResult.fieldErrors
+            .groupBy { it.field }
+            .mapValues { (_, errors) ->
+                errors.map {
+                    it.defaultMessage
+                        ?: error("Bean Validation FieldError without message on '${it.field}'")
+                }
+            }
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(
-            ErrorResponse(errorType = "validation.failed", params = fields),
+            ErrorResponse(errorType = "validation.failed", fieldErrors = fieldErrors),
         )
     }
 }

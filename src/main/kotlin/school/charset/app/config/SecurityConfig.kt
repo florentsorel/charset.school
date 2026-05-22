@@ -1,6 +1,8 @@
 package school.charset.app.config
 
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -23,8 +25,12 @@ import school.charset.app.domain.user.UserRepository
 import school.charset.app.infrastructure.security.CustomUserDetailsService
 import javax.sql.DataSource
 
+@ConfigurationProperties(prefix = "app.remember-me")
+data class RememberMeProperties(val key: String)
+
 @Configuration
 @EnableJdbcHttpSession
+@EnableConfigurationProperties(RememberMeProperties::class)
 class SecurityConfig {
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder(BCRYPT_STRENGTH)
@@ -49,9 +55,10 @@ class SecurityConfig {
     fun rememberMeServices(
         userDetailsService: UserDetailsService,
         tokenRepository: PersistentTokenRepository,
+        rememberMeProperties: RememberMeProperties,
     ): RememberMeServices {
         val services = PersistentTokenBasedRememberMeServices(
-            REMEMBER_ME_KEY,
+            rememberMeProperties.key,
             userDetailsService,
             tokenRepository,
         )
@@ -69,6 +76,7 @@ class SecurityConfig {
         http: HttpSecurity,
         rememberMeServices: RememberMeServices,
         securityContextRepository: SecurityContextRepository,
+        rememberMeProperties: RememberMeProperties,
     ): SecurityFilterChain {
         http
             .authorizeHttpRequests { auth ->
@@ -103,7 +111,7 @@ class SecurityConfig {
             }
             .rememberMe { rm ->
                 rm.rememberMeServices(rememberMeServices)
-                rm.key(REMEMBER_ME_KEY)
+                rm.key(rememberMeProperties.key)
             }
             .securityContext { ctx -> ctx.securityContextRepository(securityContextRepository) }
             .exceptionHandling { eh ->
@@ -125,8 +133,5 @@ class SecurityConfig {
         // Cookie name on the wire - kept kebab-case by wire convention.
         const val REMEMBER_ME_COOKIE = "remember-me"
         const val REMEMBER_ME_VALIDITY_SECONDS = 60 * 60 * 24 * 14 // 2 weeks
-
-        // TODO: externalize to application.yaml + env var for production
-        const val REMEMBER_ME_KEY = "charset-school-remember-me-dev-only"
     }
 }

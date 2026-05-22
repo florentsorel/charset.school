@@ -69,7 +69,7 @@ class AuthController(
             rememberMeServices.loginSuccess(wrappedRequest, response, auth)
         }
 
-        val userId = (auth.principal as UserDetailsAdapter).userId
+        val userId = auth.requireUserDetailsAdapter().userId
         val user = userRepository.findById(userId)
             ?: throw OrphanedSessionException(userId)
         return ResponseEntity.ok(user)
@@ -77,11 +77,14 @@ class AuthController(
 
     @GetMapping("/me")
     fun me(authentication: Authentication): ResponseEntity<User> {
-        val userId = (authentication.principal as UserDetailsAdapter).userId
+        val userId = authentication.requireUserDetailsAdapter().userId
         val user = userRepository.findById(userId)
             ?: throw OrphanedSessionException(userId)
         return ResponseEntity.ok(user)
     }
+
+    private fun Authentication.requireUserDetailsAdapter(): UserDetailsAdapter = principal as? UserDetailsAdapter
+        ?: error("Expected UserDetailsAdapter principal but got ${principal?.let { it::class.qualifiedName } ?: "null"}")
 
     private companion object {
         const val REMEMBER_ME_PARAM = "rememberMe"
