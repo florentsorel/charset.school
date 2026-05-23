@@ -1,0 +1,22 @@
+{
+  "common": {
+    "app_name": "Charset School",
+    "loading": "Chargement…",
+    "retry": "Réessayer"
+  },
+  "auth": {
+    "me_title": "Mon profil",
+    "not_authenticated": "Vous n'êtes pas connecté.",
+    "member_since": "Membre depuis le {date}",
+    "email": "Email",
+    "name": "Nom",
+    "locale": "Langue",
+    "errors": {
+      "auth.email-already-taken": "L'email {email} est déjà utilisé.",
+      "auth.bad-credentials": "Email ou mot de passe incorrect.",
+      "auth.session-orphaned": "Votre session n'est plus valide. Reconnectez-vous.",
+      "validation.failed": "Certains champs sont invalides.",
+      "unknown": "Une erreur est survenue."
+    }
+  }
+}
