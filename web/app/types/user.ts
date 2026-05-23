@@ -1,6 +1,6 @@
 /**
- * Mirroir de `school.charset.app.domain.user.User` (backend).
- * La shape est produite par `UserSerializer` côté Kotlin — voir
+ * Mirror of `school.charset.app.domain.user.User` (backend).
+ * The wire shape is produced by `UserSerializer` on the Kotlin side — see
  * `infrastructure/http/auth/serde/UserSerializer.kt`.
  */
 export interface User {

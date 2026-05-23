@@ -40,7 +40,7 @@ export default defineNuxtConfig({
 
   i18n: {
     defaultLocale: 'en',
-    strategy: 'prefix_except_default', // EN sans préfixe (default), FR sous /fr/...
+    strategy: 'prefix_except_default', // EN has no prefix (default), FR lives under /fr/...
     locales: [
       { code: 'en', language: 'en-US', name: 'English', file: 'en.json' },
       { code: 'fr', language: 'fr-FR', name: 'Français', file: 'fr.json' }
@@ -52,5 +52,11 @@ export default defineNuxtConfig({
       fallbackLocale: 'en'
     },
     vueI18n: './i18n.config.ts'
+  },
+
+  // nuxt-skill-hub generates skill wrappers for AI agents. Restrict to Claude
+  // Code only (default auto-detects and also generates `.cursor/`, etc.).
+  skillHub: {
+    targets: ['claude-code']
   }
 })

@@ -1,12 +1,12 @@
 /**
- * Format wire des réponses d'erreur HTTP — discriminated union sur `errorType`.
+ * Wire format for HTTP error responses — discriminated union on `errorType`.
  *
- * Les variantes par feature (`AuthErrorVariant`, plus tard `ExerciseErrorVariant`,
- * etc.) sont définies dans le fichier `types/<feature>.ts` correspondant et
- * composées ici dans l'union `ErrorResponse`.
+ * Per-feature variants (`AuthErrorVariant`, later `ExerciseErrorVariant`, etc.)
+ * are defined in their respective `types/<feature>.ts` file and composed here
+ * into the `ErrorResponse` union.
  *
- * Côté backend, ce format est produit par `GlobalExceptionHandler` +
- * `ErrorResponse.kt` dans `infrastructure/http/`.
+ * On the backend, this format is produced by `GlobalExceptionHandler` +
+ * `ErrorResponse.kt` in `infrastructure/http/`.
  */
 import type { AuthErrorVariant } from './auth'
 

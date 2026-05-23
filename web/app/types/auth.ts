@@ -1,6 +1,6 @@
 /**
- * Mirroir de `school.charset.app.domain.auth.AuthErrorType` (backend).
- * Identifiants stables qui voyagent vers le front comme clés i18n.
+ * Mirror of `school.charset.app.domain.auth.AuthErrorType` (backend).
+ * Stable identifiers that travel to the front as i18n keys.
  */
 export const AuthErrorType = {
   EmailAlreadyTaken: 'auth.email-already-taken',
@@ -11,8 +11,8 @@ export const AuthErrorType = {
 export type AuthErrorTypeValue = (typeof AuthErrorType)[keyof typeof AuthErrorType]
 
 /**
- * Branches `ErrorResponse` produites par les exceptions auth (cf.
- * `GlobalExceptionHandler` backend).
+ * `ErrorResponse` branches produced by auth exceptions (see
+ * `GlobalExceptionHandler` on the backend).
  */
 export type AuthErrorVariant
   = | { errorType: typeof AuthErrorType.EmailAlreadyTaken, params: { email: string } }
