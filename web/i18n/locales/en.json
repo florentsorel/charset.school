@@ -1,0 +1,22 @@
+{
+  "common": {
+    "app_name": "Charset School",
+    "loading": "Loading…",
+    "retry": "Retry"
+  },
+  "auth": {
+    "me_title": "My profile",
+    "not_authenticated": "You are not signed in.",
+    "member_since": "Member since {date}",
+    "email": "Email",
+    "name": "Name",
+    "locale": "Language",
+    "errors": {
+      "auth.email-already-taken": "The email {email} is already in use.",
+      "auth.bad-credentials": "Invalid email or password.",
+      "auth.session-orphaned": "Your session is no longer valid. Please sign in again.",
+      "validation.failed": "Some fields are invalid.",
+      "unknown": "An error occurred."
+    }
+  }
+}
