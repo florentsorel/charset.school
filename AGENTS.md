@@ -38,18 +38,20 @@ d'erreur. Progression et statistiques persistées en base par utilisateur. Pas d
 - **Gradle 9** Kotlin DSL
 
 ### Frontend
-- **Nuxt 3** (Vue 3 + Vite + SSR activé, file-based routing, server routes possibles si besoin)
+- **Nuxt 4** (Vue 3 + Vite + SSR activé, file-based routing, server routes possibles si besoin).
+  Structure Nuxt 4 : sources sous `web/app/` (`app/pages/`, `app/components/`, `app/composables/`, etc.)
 - **Vue 3** Composition API avec `<script setup>` + **TypeScript** (strict)
 - **`useFetch` / `$fetch`** (built-in Nuxt) pour les appels API vers Spring Boot, avec
   intercepteur global pour `credentials: 'include'` + injection du header `X-XSRF-TOKEN`
 - **VeeValidate + zod** pour les formulaires (validation déclarative, type-safe)
-- **Tailwind CSS v4** (`@theme` dans CSS, module `@nuxtjs/tailwindcss` ou plugin Vite)
-- **Nuxt UI v3** (composants Vue prêts à l'emploi, theming Tailwind v4 natif, accessibilité)
+- **Tailwind CSS v4** (`@theme` dans CSS, intégré via Nuxt UI)
+- **Nuxt UI v4** (composants Vue prêts à l'emploi, theming Tailwind v4 natif, accessibilité,
+  inclut `@iconify-json/lucide` pour les icônes Lucide)
 - **Pinia** uniquement si nécessaire (user courant, locale, progression) — partir sans,
   ajouter quand le besoin de state cross-vue mutable apparaît réellement
 - **zod** pour valider les schémas des réponses API (en plus de VeeValidate côté forms)
 - **`@nuxtjs/i18n`** (FR + EN, FR par défaut, détection via cookie ou `users.locale`)
-- **`lucide-vue-next`** pour les icônes
+- **pnpm** comme package manager (déclaré dans `packageManager` field). CI cache la `pnpm-store`
 
 ### Reverse proxy / déploiement
 - **Caddy** comme reverse proxy unique (HTTPS auto via Let's Encrypt, proxy de Nuxt SSR
@@ -1210,7 +1212,7 @@ chaudes en cache.
 24. Tests d'intégration end-to-end exercice
 
 ### Phase 6 — Frontend setup
-25. `npx nuxi@latest init web` + TypeScript strict + Tailwind v4 + Nuxt UI v3
+25. `npx nuxi@latest init web` (template `ui`) → Nuxt 4 + Nuxt UI v4 + Tailwind v4 + TypeScript strict
 26. Intercepteur `$fetch` global (credentials, CSRF header, parsing zod des responses)
 27. `@nuxtjs/i18n` setup avec namespaces FR/EN, FR par défaut
 28. Layouts `auth.vue` et `default.vue` dans `layouts/`, header/footer globaux
