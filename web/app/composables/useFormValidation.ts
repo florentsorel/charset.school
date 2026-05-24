@@ -1,3 +1,6 @@
+// `useI18n` IS auto-imported in .vue setup contexts but NOT in .ts composables —
+// we need this explicit import for typecheck. Skill-hub flags it; safe to ignore.
+// eslint-disable-next-line skill-hub/no-redundant-import
 import { useI18n } from 'vue-i18n'
 import type { z } from 'zod'
 import type { ErrorResponse } from '~/types/api'
@@ -20,7 +23,7 @@ export function useFormValidation<TSchema extends z.ZodTypeAny>(
   const errors = reactive<Record<string, string | undefined>>({})
 
   function clearErrors() {
-    for (const k of Object.keys(errors) as FieldKey[]) delete errors[k]
+    for (const k of Object.keys(errors)) Reflect.deleteProperty(errors, k)
   }
 
   function setError(field: FieldKey, message: string) {

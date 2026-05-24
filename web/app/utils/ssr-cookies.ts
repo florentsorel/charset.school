@@ -1,3 +1,7 @@
+// `appendResponseHeader` is auto-imported in Nitro (server-side) but not in
+// shared utils — we keep the explicit import for the client bundle (even
+// though the call is inside `if (import.meta.server)` and tree-shaken away).
+// eslint-disable-next-line skill-hub/no-redundant-import
 import { appendResponseHeader } from 'h3'
 
 // Forwards Set-Cookie headers from an SSR-side $fetch response to the

@@ -5,7 +5,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
@@ -150,9 +149,16 @@ class AuthControllerTest(
         register(email = email, password = "password123")
         val loginResult: MvcResult = login(email = email, password = "password123").andReturn()
         val sessionCookie = loginResult.response.getCookie("SESSION")!!
+        // Real browser flow: read XSRF-TOKEN from login response (set there by
+        // our CsrfCookieFilter) and echo it back as cookie + header. `with(csrf())`
+        // doesn't add the cookie, so it wouldn't match the verbatim resolveCsrfTokenValue.
+        val xsrfCookie = loginResult.response.getCookie("XSRF-TOKEN")!!
 
-        mockMvc.perform(post("/api/auth/logout").cookie(sessionCookie).with(csrf()))
-            .andExpect(status().isNoContent)
+        mockMvc.perform(
+            post("/api/auth/logout")
+                .cookie(sessionCookie, xsrfCookie)
+                .header("X-XSRF-TOKEN", xsrfCookie.value),
+        ).andExpect(status().isNoContent)
 
         // Same cookie now invalid → 401
         mockMvc.perform(get("/api/auth/me").cookie(sessionCookie))

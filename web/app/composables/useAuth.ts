@@ -62,7 +62,10 @@ export function useAuth() {
     if (!$i18n || $i18n.locale.value === target) return
     try {
       await $i18n.setLocale(target)
-    } catch {}
+    } catch {
+      // setLocale triggers an internal navigation that can be aborted by a
+      // follow-up navigateTo — swallow the NavigationFailure.
+    }
   }
 
   return {
