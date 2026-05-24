@@ -29,17 +29,14 @@ async function onLogout() {
         <span class="font-mono text-md leading-none lowercase">charset.school</span>
       </NuxtLink>
 
-      <div class="flex items-center gap-2.5">
-        <ThemeToggle />
-        <button
-          v-if="isAuthenticated"
-          type="button"
-          class="btn btn-quiet"
-          @click="onLogout"
-        >
-          {{ t('auth.logout') }}
-        </button>
-      </div>
+      <button
+        v-if="isAuthenticated"
+        type="button"
+        class="btn btn-quiet"
+        @click="onLogout"
+      >
+        {{ t('auth.logout') }}
+      </button>
     </div>
   </header>
 </template>

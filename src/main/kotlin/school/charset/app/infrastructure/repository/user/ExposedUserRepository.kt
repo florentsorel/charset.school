@@ -5,6 +5,7 @@ import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.postgresql.util.PSQLState
 import school.charset.app.domain.user.EmailAlreadyTakenException
 import school.charset.app.domain.user.PasswordHash
@@ -56,5 +57,27 @@ class ExposedUserRepository(
             }
             throw e
         }
+    }
+
+    override fun update(id: Long, name: String?, email: String?, locale: String?): User = transaction {
+        try {
+            val now = clock.now()
+            UsersTable.update({ UsersTable.id eq id }) {
+                if (name != null) it[UsersTable.name] = name
+                if (email != null) it[UsersTable.email] = email
+                if (locale != null) it[UsersTable.locale] = locale
+                it[UsersTable.updatedAt] = now
+            }
+        } catch (e: ExposedSQLException) {
+            if (e.sqlState == PSQLState.UNIQUE_VIOLATION.state && email != null) {
+                throw EmailAlreadyTakenException(email)
+            }
+            throw e
+        }
+        UsersTable
+            .selectAll()
+            .where { UsersTable.id eq id }
+            .single()
+            .toUser()
     }
 }

@@ -6,4 +6,6 @@ interface UserRepository {
     fun findByEmail(email: String): User?
 
     fun create(email: String, name: String, passwordHash: PasswordHash, locale: String): User
+
+    fun update(id: Long, name: String? = null, email: String? = null, locale: String? = null): User
 }
