@@ -1,4 +1,3 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
@@ -16,18 +15,28 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
+    apiBaseServer: 'http://localhost:8080/api',
     public: {
-      // Backend base URL. Empty in prod (Caddy proxies /api/* on same origin),
-      // overridden in dev to point to the Spring Boot port.
-      apiBase: ''
+      skipClientValidation: false
     }
   },
 
   routeRules: {
-    '/': { prerender: false } // depends on auth state, no prerender
+    '/': { prerender: false }
   },
 
   compatibilityDate: '2025-01-15',
+
+  // Mirror what Caddy does in prod, so the front always talks to /api/* on
+  // the same origin — no CORS, no env vars to swap between envs.
+  nitro: {
+    devProxy: {
+      '/api': {
+        target: 'http://localhost:8080/api',
+        changeOrigin: true
+      }
+    }
+  },
 
   eslint: {
     config: {
@@ -40,7 +49,7 @@ export default defineNuxtConfig({
 
   i18n: {
     defaultLocale: 'en',
-    strategy: 'prefix_except_default', // EN has no prefix (default), FR lives under /fr/...
+    strategy: 'prefix_except_default',
     locales: [
       { code: 'en', language: 'en-US', name: 'English', file: 'en.json' },
       { code: 'fr', language: 'fr-FR', name: 'Français', file: 'fr.json' }
@@ -54,8 +63,7 @@ export default defineNuxtConfig({
     vueI18n: './i18n.config.ts'
   },
 
-  // nuxt-skill-hub generates skill wrappers for AI agents. Restrict to Claude
-  // Code only (default auto-detects and also generates `.cursor/`, etc.).
+  // Restrict to Claude Code — default auto-detects and generates `.cursor/` etc.
   skillHub: {
     targets: ['claude-code']
   }

@@ -2,7 +2,12 @@
   "common": {
     "app_name": "Charset School",
     "loading": "Chargement…",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "back": "Retour",
+    "or": "ou",
+    "theme_light": "Thème clair",
+    "theme_dark": "Thème sombre",
+    "theme_system": "Thème système"
   },
   "auth": {
     "me_title": "Mon profil",
@@ -10,12 +15,39 @@
     "member_since": "Membre depuis le {date}",
     "email": "Email",
     "name": "Nom",
+    "password": "Mot de passe",
     "locale": "Langue",
+    "remember_me": "Se souvenir de moi",
+    "login": "Se connecter",
+    "login_title": "Se connecter",
+    "login_tagline": "Reprends ton entraînement.",
+    "login_submit": "Se connecter",
+    "login_no_account": "Pas encore de compte ?",
+    "forgot_password": "Mot de passe oublié ?",
+    "register": "Créer un compte",
+    "register_title": "Créer votre compte",
+    "register_submit": "Créer le compte",
+    "register_have_account": "Vous avez déjà un compte ?",
+    "logout": "Se déconnecter",
+    "validation": {
+      "email_required": "L'email est requis",
+      "email_invalid": "Email invalide",
+      "email_too_long": "L'email doit faire 255 caractères ou moins",
+      "name_required": "Le nom est requis",
+      "name_too_long": "Le nom doit faire 255 caractères ou moins",
+      "password_required": "Le mot de passe est requis",
+      "password_size": "Le mot de passe doit faire entre 8 et 64 caractères",
+      "locale_invalid": "Langue non supportée"
+    },
     "errors": {
-      "auth.email-already-taken": "L'email {email} est déjà utilisé.",
-      "auth.bad-credentials": "Email ou mot de passe incorrect.",
-      "auth.session-orphaned": "Votre session n'est plus valide. Reconnectez-vous.",
-      "validation.failed": "Certains champs sont invalides.",
+      "auth": {
+        "email-already-taken": "L'email {email} est déjà utilisé.",
+        "bad-credentials": "Email ou mot de passe incorrect. Réessaie.",
+        "session-orphaned": "Ta session n'est plus valide. Reconnecte-toi."
+      },
+      "validation": {
+        "failed": "Certains champs sont invalides."
+      },
       "unknown": "Une erreur est survenue."
     }
   }

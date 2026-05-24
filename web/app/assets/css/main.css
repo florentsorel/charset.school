@@ -1,18 +1,276 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
-@theme static {
-  --font-sans: 'Public Sans', sans-serif;
+@custom-variant dark (&:where(.dark, .dark *));
 
-  --color-green-50: #EFFDF5;
-  --color-green-100: #D9FBE8;
-  --color-green-200: #B3F5D1;
-  --color-green-300: #75EDAE;
-  --color-green-400: #00DC82;
-  --color-green-500: #00C16A;
-  --color-green-600: #00A155;
-  --color-green-700: #007F45;
-  --color-green-800: #016538;
-  --color-green-900: #0A5331;
-  --color-green-950: #052E16;
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, "Apple Color Emoji", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --text-md: 1rem;
+
+  --color-page:        #F8F7F4;
+  --color-surface:     #FFFFFF;
+  --color-subtle:      #F0EEE7;
+  --color-code:        #ECEAE2;
+
+  --color-ink:         #1A1A1A;
+  --color-mute:        #5F5E59;
+  --color-faint:       #9B9890;
+
+  --color-rule:        #E4E1D8;
+  --color-rule-strong: #CFCBBF;
+
+  --color-accent:      #0F3D6B;
+  --color-accent-soft: #E6EDF5;
+  --color-accent-ink:  #FFFFFF;
+
+  --color-ok:          #2F6B43;
+  --color-ok-soft:     #E3EEE6;
+  --color-bad:         #8E2B2B;
+  --color-bad-soft:    #F3E1E1;
+  --color-warn:        #A8650A;
+  --color-warn-soft:   #F5EBD9;
+
+  /* Bit roles (light) — used by encoding/decoding exercises */
+  --color-bit-marker:       #A8650A;
+  --color-bit-marker-soft:  #F5EBD9;
+  --color-bit-cont:         #5C6B7E;
+  --color-bit-cont-soft:    #E6EAF0;
+  --color-bit-payload:      #0F3D6B;
+  --color-bit-payload-soft: #E0E8F2;
+
+  /* `primary` palette used by Nuxt UI (see app.config.ts → ui.colors.primary).
+     500 = brand hue (= --color-accent). */
+  --color-primary-50:  #E6EDF5;
+  --color-primary-100: #C7D6E8;
+  --color-primary-200: #98B3D2;
+  --color-primary-300: #6A8FBC;
+  --color-primary-400: #3D6BA6;
+  --color-primary-500: #0F3D6B;
+  --color-primary-600: #0C355F;
+  --color-primary-700: #0A2D52;
+  --color-primary-800: #082545;
+  --color-primary-900: #061D38;
+  --color-primary-950: #03152B;
 }
+
+/* Dark token overrides. Outside @theme so utilities re-resolve via var(). */
+.dark {
+  --color-page:        #1A1B1F;
+  --color-surface:     #23252B;
+  --color-subtle:      #15161A;
+  --color-code:        #2A2D33;
+
+  --color-ink:         #E8E4D9;
+  --color-mute:        #A09C92;
+  --color-faint:       #6B6864;
+
+  --color-rule:        #2E3137;
+  --color-rule-strong: #3D4148;
+
+  --color-accent:      #7CB1E0;
+  --color-accent-soft: #1F2D3F;
+  --color-accent-ink:  #0B1620;
+
+  --color-ok:          #7FB397;
+  --color-ok-soft:     #1E3026;
+  --color-bad:         #D08585;
+  --color-bad-soft:    #3A2020;
+  --color-warn:        #D4A067;
+  --color-warn-soft:   #3A2E1A;
+
+  --color-bit-marker:       #D4A067;
+  --color-bit-marker-soft:  #3A2E1A;
+  --color-bit-cont:         #9AA7BA;
+  --color-bit-cont-soft:    #232830;
+  --color-bit-payload:      #8DBBE0;
+  --color-bit-payload-soft: #1B2A3D;
+}
+
+html, body {
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11", "kern";
+}
+body { transition: background-color 220ms ease, color 220ms ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+.surface {
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+}
+.surface-subtle {
+  background: var(--color-subtle);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+}
+.divider { height: 1px; background: var(--color-rule); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-ghost {
+  background: transparent;
+  color: var(--color-ink);
+  border-color: var(--color-rule-strong);
+}
+.btn-ghost:hover { background: var(--color-subtle); }
+.btn-quiet {
+  background: transparent;
+  color: var(--color-mute);
+}
+.btn-quiet:hover { color: var(--color-ink); background: var(--color-subtle); }
+.btn-link {
+  background: transparent;
+  padding: 0;
+  color: var(--color-accent);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+  border: 0;
+  cursor: pointer;
+}
+.btn-link:hover { text-decoration-style: solid; }
+
+/* Forms */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.field-label-aside { font-size: 12px; color: var(--color-mute); font-weight: 400; }
+.field-input {
+  width: 100%;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1px solid var(--color-rule-strong);
+  border-radius: 6px;
+  padding: 0.6rem 0.85rem;
+  font-size: 14.5px;
+  font-family: var(--font-sans);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+.field-input::placeholder { color: var(--color-faint); }
+.field-input:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+  outline: none;
+}
+.field-input.is-error {
+  border-color: var(--color-bad);
+  background: color-mix(in oklab, var(--color-bad-soft) 50%, var(--color-surface));
+}
+.field-input-mono { font-family: var(--font-mono); letter-spacing: 0.01em; }
+.field-help { font-size: 12.5px; color: var(--color-mute); line-height: 1.5; }
+.field-error {
+  font-size: 12.5px;
+  color: var(--color-bad);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Checkbox */
+.checkbox-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.cb-input {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--color-rule-strong);
+  border-radius: 3px;
+  background: var(--color-surface);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.cb-input:checked { background: var(--color-accent); border-color: var(--color-accent); }
+.cb-input:checked::after {
+  content: '';
+  width: 8px;
+  height: 5px;
+  border-left: 2px solid var(--color-accent-ink);
+  border-bottom: 2px solid var(--color-accent-ink);
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+.cb-input:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+  outline: none;
+}
+
+/* Language pill (header) */
+.lang-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  border: 1px solid var(--color-rule);
+  border-radius: 999px;
+  color: var(--color-mute);
+  background: transparent;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+.lang-pill:hover {
+  color: var(--color-ink);
+  border-color: var(--color-rule-strong);
+  background: var(--color-subtle);
+}
+
+/* User avatar (header) */
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 0;
+  transition: filter 160ms ease;
+}
+.user-avatar:hover { filter: brightness(1.08); }

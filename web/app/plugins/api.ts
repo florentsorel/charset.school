@@ -1,17 +1,13 @@
-/**
- * Custom $fetch instance for the Spring Boot API.
- *
- * - `credentials: 'include'` so the SESSION cookie is sent/received cross-origin
- *   (dev: Nuxt on :3000 → Spring on :8080. Prod: same origin via Caddy)
- * - Reads the `XSRF-TOKEN` cookie set by Spring's CSRF filter and forwards it
- *   as the `X-XSRF-TOKEN` header on mutating requests (POST/PUT/PATCH/DELETE)
- * - Inject as `$api` via Nuxt plugin
- */
+// `$api`: $fetch instance pointed at the Spring back. Client uses '/api'
+// (Caddy in prod, devProxy in dev). SSR uses an absolute URL because Nitro
+// server-side $fetch doesn't go through devProxy and can't resolve relative
+// `/api/*`. Mutating requests forward the XSRF-TOKEN cookie as a header.
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
+  const baseURL = import.meta.server ? config.apiBaseServer : '/api'
 
   const api = $fetch.create({
-    baseURL: `${config.public.apiBase}/api`,
+    baseURL,
     credentials: 'include',
     onRequest({ options }) {
       const method = (options.method ?? 'GET').toUpperCase()

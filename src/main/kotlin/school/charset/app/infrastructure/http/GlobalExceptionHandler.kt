@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -42,13 +43,31 @@ class GlobalExceptionHandler {
         val fieldErrors = ex.bindingResult.fieldErrors
             .groupBy { it.field }
             .mapValues { (_, errors) ->
-                errors.map {
-                    it.defaultMessage
-                        ?: error("Bean Validation FieldError without message on '${it.field}'")
-                }
+                errors
+                    .sortedBy { it.constraintRank() }
+                    .map {
+                        it.defaultMessage
+                            ?: error("Bean Validation FieldError without message on '${it.field}'")
+                    }
             }
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(
             ErrorResponse(errorType = "validation.failed", fieldErrors = fieldErrors),
+        )
+    }
+
+    private fun FieldError.constraintRank(): Int = codes?.lastOrNull()?.let { CONSTRAINT_PRIORITY[it] } ?: Int.MAX_VALUE
+
+    companion object {
+        private val CONSTRAINT_PRIORITY = mapOf(
+            "NotNull" to 0,
+            "NotBlank" to 0,
+            "NotEmpty" to 0,
+            "Size" to 1,
+            "Length" to 1,
+            "Min" to 1,
+            "Max" to 1,
+            "Pattern" to 2,
+            "Email" to 2,
         )
     }
 }
