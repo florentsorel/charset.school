@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 import school.charset.app.domain.auth.OrphanedSessionException
 import school.charset.app.domain.user.User
 import school.charset.app.domain.user.UserRepository
-import school.charset.app.infrastructure.security.UserDetailsAdapter
+import school.charset.app.infrastructure.security.requireUserDetailsAdapter
 
 @RestController
 @RequestMapping(
@@ -26,8 +26,7 @@ class ProfileController(
         @Valid @RequestBody req: UpdateProfileRequest,
         authentication: Authentication,
     ): ResponseEntity<User> {
-        val userId = (authentication.principal as? UserDetailsAdapter)?.userId
-            ?: error("Expected UserDetailsAdapter principal but got ${authentication.principal?.let { it::class.qualifiedName } ?: "null"}")
+        val userId = authentication.requireUserDetailsAdapter().userId
 
         userRepository.findById(userId) ?: throw OrphanedSessionException(userId)
 

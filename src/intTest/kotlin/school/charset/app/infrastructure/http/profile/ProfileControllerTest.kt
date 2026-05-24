@@ -11,6 +11,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -48,9 +49,26 @@ class ProfileControllerTest(
     }
 
     @Test
-    fun `PATCH profile returns 401 when not authenticated`() {
+    fun `PATCH profile returns 403 when CSRF token is missing`() {
         mockMvc.perform(
             patch("/api/profile")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"name":"X"}"""),
+        ).andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `PATCH profile returns 401 when CSRF is valid but no session`() {
+        // Bootstrap an XSRF-TOKEN cookie via a no-auth endpoint (CsrfCookieFilter
+        // writes it on every response). Then PATCH with that token but no SESSION
+        // — CSRF passes, auth check fails → 401 (not 403).
+        val bootstrap: MvcResult = mockMvc.perform(get("/api/auth/me")).andReturn()
+        val xsrfCookie = bootstrap.response.getCookie("XSRF-TOKEN")!!
+
+        mockMvc.perform(
+            patch("/api/profile")
+                .cookie(xsrfCookie)
+                .header("X-XSRF-TOKEN", xsrfCookie.value)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"X"}"""),
         ).andExpect(status().isUnauthorized)
@@ -151,6 +169,16 @@ class ProfileControllerTest(
         val (sessionCookie, xsrfCookie) = registerAndLogin()
 
         patchProfile(sessionCookie, xsrfCookie, mapOf("name" to ""))
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("$.errorType").value("validation.failed"))
+            .andExpect(jsonPath("$.fieldErrors.name").exists())
+    }
+
+    @Test
+    fun `PATCH profile returns 422 when name is only whitespace`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin()
+
+        patchProfile(sessionCookie, xsrfCookie, mapOf("name" to "   "))
             .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.errorType").value("validation.failed"))
             .andExpect(jsonPath("$.fieldErrors.name").exists())

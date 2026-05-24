@@ -45,6 +45,7 @@ const accountSchema = computed(() =>
     email: z
       .string()
       .min(1, t('auth.validation.email_required'))
+      .max(255, t('auth.validation.email_too_long'))
       .email(t('auth.validation.email_invalid'))
   })
 )

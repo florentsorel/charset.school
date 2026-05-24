@@ -24,6 +24,7 @@ import school.charset.app.domain.user.RawPassword
 import school.charset.app.domain.user.User
 import school.charset.app.domain.user.UserRepository
 import school.charset.app.infrastructure.security.UserDetailsAdapter
+import school.charset.app.infrastructure.security.requireUserDetailsAdapter
 
 @RestController
 @RequestMapping(
@@ -102,9 +103,6 @@ class AuthController(
             ?: throw OrphanedSessionException(userId)
         return ResponseEntity.ok(user)
     }
-
-    private fun Authentication.requireUserDetailsAdapter(): UserDetailsAdapter = principal as? UserDetailsAdapter
-        ?: error("Expected UserDetailsAdapter principal but got ${principal?.let { it::class.qualifiedName } ?: "null"}")
 
     private companion object {
         const val REMEMBER_ME_PARAM = "rememberMe"
