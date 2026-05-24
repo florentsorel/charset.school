@@ -78,12 +78,9 @@ useHead({
         {{ t('common.back') }}
       </NuxtLink>
 
-      <h1 class="text-3xl font-medium leading-tight mb-2 tracking-tight">
+      <h1 class="text-3xl font-medium leading-tight mb-7 tracking-tight">
         {{ t('auth.login_title') }}
       </h1>
-      <p class="text-sm text-mute mb-7">
-        {{ t('auth.login_tagline') }}
-      </p>
 
       <FormErrorBanner
         :message="submitError"
