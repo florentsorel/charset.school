@@ -20,7 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 import school.charset.app.config.ApplicationConfigTest
 import school.charset.app.domain.auth.AuthErrorType
-import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import java.util.UUID
 
 @SpringBootTest
@@ -29,7 +29,7 @@ import java.util.UUID
 @Testcontainers
 class AuthControllerTest(
     private val mockMvc: MockMvc,
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: JsonMapper,
 ) {
     companion object {
         @Container

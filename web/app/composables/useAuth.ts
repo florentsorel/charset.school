@@ -57,6 +57,23 @@ export function useAuth() {
     user.value = null
   }
 
+  // PATCH /api/profile — partial update of name / email / locale. The back
+  // returns the full updated User; we keep `user.value` in sync and re-sync
+  // i18n if the locale changed.
+  async function updateProfile(input: {
+    name?: string
+    email?: string
+    locale?: User['locale']
+  }): Promise<User> {
+    const fetched = await $api<User>('/profile', {
+      method: 'PATCH',
+      body: input
+    })
+    user.value = fetched
+    if (input.locale) await syncLocaleWith(fetched.locale)
+    return fetched
+  }
+
   async function syncLocaleWith(target: User['locale']) {
     const $i18n = nuxtApp.$i18n
     if (!$i18n || $i18n.locale.value === target) return
@@ -74,6 +91,7 @@ export function useAuth() {
     fetchMe,
     login,
     register,
-    logout
+    logout,
+    updateProfile
   }
 }

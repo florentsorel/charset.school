@@ -114,6 +114,16 @@ body { transition: background-color 220ms ease, color 220ms ease; }
 }
 .divider { height: 1px; background: var(--color-rule); }
 
+.section-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+.section-card-danger {
+  border-color: color-mix(in oklab, var(--color-bad) 35%, var(--color-rule));
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

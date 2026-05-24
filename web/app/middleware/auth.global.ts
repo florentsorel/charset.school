@@ -1,6 +1,6 @@
 // Auth modes via `definePageMeta({ auth: ... })`:
 //   `false`   — public, no check
-//   `'guest'` — guest-only, authenticated users redirected to /me
+//   `'guest'` — guest-only, authenticated users redirected to /profile
 //   omitted   — protected, unauthenticated users redirected to /login
 //
 // Runs on SSR too so guest/protected redirects come back as 302 before the
@@ -14,7 +14,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const localePath = useLocalePath()
 
   if (authMode === 'guest') {
-    if (user.value) return navigateTo(localePath('/me'))
+    if (user.value) return navigateTo(localePath('/profile'))
     return
   }
 

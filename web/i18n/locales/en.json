@@ -5,19 +5,29 @@
     "retry": "Retry",
     "back": "Back",
     "or": "or",
-    "theme_light": "Light theme",
-    "theme_light_short": "LIGHT",
-    "theme_dark": "Dark theme",
-    "theme_dark_short": "DARK",
-    "theme_system": "System theme"
+    "save": "Save",
+    "cancel": "Cancel",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "theme_system": "System"
   },
   "landing": {
     "coming_soon": "Coming soon — an interactive playground for learning character encodings."
   },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your account and preferences.",
+    "saved": "Saved",
+    "account": {
+      "title": "Account information"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "language_label": "Interface language",
+      "theme_label": "Theme"
+    }
+  },
   "auth": {
-    "me_title": "My profile",
-    "not_authenticated": "You are not signed in.",
-    "member_since": "Member since {date}",
     "email": "Email",
     "name": "Name",
     "password": "Password",
@@ -36,8 +46,10 @@
     "validation": {
       "email_required": "Email is required",
       "email_invalid": "Please enter a valid email",
+      "email_size": "Email must be 1-255 characters",
       "email_too_long": "Email must be 255 characters or fewer",
       "name_required": "Name is required",
+      "name_size": "Name must be 1-255 characters",
       "name_too_long": "Name must be 255 characters or fewer",
       "password_required": "Password is required",
       "password_size": "Password must be 8-64 characters",

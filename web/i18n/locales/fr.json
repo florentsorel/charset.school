@@ -5,19 +5,29 @@
     "retry": "Réessayer",
     "back": "Retour",
     "or": "ou",
-    "theme_light": "Thème clair",
-    "theme_light_short": "CLAIR",
-    "theme_dark": "Thème sombre",
-    "theme_dark_short": "SOMBRE",
-    "theme_system": "Thème système"
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "theme_light": "Clair",
+    "theme_dark": "Sombre",
+    "theme_system": "Système"
   },
   "landing": {
     "coming_soon": "Bientôt disponible — un terrain de jeu interactif pour apprendre l'encodage des caractères."
   },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Gère ton compte et tes préférences.",
+    "saved": "Enregistré",
+    "account": {
+      "title": "Informations du compte"
+    },
+    "preferences": {
+      "title": "Préférences",
+      "language_label": "Langue de l'interface",
+      "theme_label": "Thème"
+    }
+  },
   "auth": {
-    "me_title": "Mon profil",
-    "not_authenticated": "Vous n'êtes pas connecté.",
-    "member_since": "Membre depuis le {date}",
     "email": "Email",
     "name": "Nom",
     "password": "Mot de passe",
@@ -36,8 +46,10 @@
     "validation": {
       "email_required": "L'email est requis",
       "email_invalid": "Email invalide",
+      "email_size": "L'email doit faire entre 1 et 255 caractères",
       "email_too_long": "L'email doit faire 255 caractères ou moins",
       "name_required": "Le nom est requis",
+      "name_size": "Le nom doit faire entre 1 et 255 caractères",
       "name_too_long": "Le nom doit faire 255 caractères ou moins",
       "password_required": "Le mot de passe est requis",
       "password_size": "Le mot de passe doit faire entre 8 et 64 caractères",

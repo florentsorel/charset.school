@@ -106,5 +106,57 @@ class ExposedUserRepositoryTest(
         ex.email shouldBe email
     }
 
+    @Test
+    fun `update applies the given fields and sets updatedAt`() {
+        val created = userRepository.create(
+            email = uniqueEmail(),
+            name = "Before",
+            passwordHash = PasswordHash("h"),
+            locale = "fr",
+        )
+
+        val updated = userRepository.update(
+            id = created.id,
+            name = "After",
+            locale = "en",
+        )
+
+        updated.id shouldBe created.id
+        updated.name shouldBe "After"
+        updated.locale shouldBe "en"
+        updated.email shouldBe created.email
+        updated.passwordHash shouldBe created.passwordHash
+        (updated.updatedAt != null) shouldBe true
+    }
+
+    @Test
+    fun `update with all null fields only bumps updatedAt`() {
+        val created = userRepository.create(
+            email = uniqueEmail(),
+            name = "Stay",
+            passwordHash = PasswordHash("h"),
+            locale = "fr",
+        )
+
+        val updated = userRepository.update(id = created.id)
+
+        updated.name shouldBe "Stay"
+        updated.email shouldBe created.email
+        updated.locale shouldBe "fr"
+        (updated.updatedAt != null) shouldBe true
+    }
+
+    @Test
+    fun `update throws EmailAlreadyTakenException when email belongs to another user`() {
+        val taken = uniqueEmail()
+        userRepository.create(email = taken, name = "Owner", passwordHash = PasswordHash("h"), locale = "fr")
+        val other = userRepository.create(email = uniqueEmail(), name = "Other", passwordHash = PasswordHash("h"), locale = "fr")
+
+        val ex = shouldThrow<EmailAlreadyTakenException> {
+            userRepository.update(id = other.id, email = taken)
+        }
+        ex.email shouldBe taken
+    }
+
     private fun uniqueEmail(): String = "user-${UUID.randomUUID()}@example.com"
 }

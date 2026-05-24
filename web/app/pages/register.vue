@@ -57,7 +57,7 @@ async function onSubmit() {
 
   submitting.value = false
   try {
-    await navigateTo(localePath('/me'))
+    await navigateTo(localePath('/profile'))
   } catch (err) {
     console.error('Post-register navigation failed:', err)
   }
