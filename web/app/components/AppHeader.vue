@@ -23,7 +23,7 @@ async function onLogout() {
           src="/logo.svg"
           width="22"
           height="13"
-          alt=""
+          alt="charset.school"
           aria-hidden="true"
         >
         <span class="font-mono text-md leading-none lowercase">charset.school</span>
