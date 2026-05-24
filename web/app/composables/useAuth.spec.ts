@@ -6,24 +6,26 @@ import type { User } from '~/types/user'
 
 /**
  * Pure-Vue unit tests for `useAuth`. We mock Nuxt's auto-imports
- * (`useNuxtApp`, `useState`, `useI18n`) globally before importing the
- * composable so its dependencies are controllable.
+ * (`useNuxtApp`, `useState`, `useRequestHeaders`) globally before importing
+ * the composable so its dependencies are controllable.
  */
-const apiMock = vi.fn()
+const apiRawMock = vi.fn()
+const apiMock = Object.assign(vi.fn(), { raw: apiRawMock })
 const setLocaleMock = vi.fn(async () => {})
 const localeRef = ref<'en' | 'fr'>('en')
 const userState = ref<User | null>(null)
 
-vi.stubGlobal('useNuxtApp', () => ({ $api: apiMock }))
+vi.stubGlobal('useNuxtApp', () => ({
+  $api: apiMock,
+  $i18n: { locale: localeRef, setLocale: setLocaleMock }
+}))
 vi.stubGlobal('useState', <T>(_key: string, init: () => T) => {
-  // `useAuth` always asks for `auth:user`. We return the shared `userState`
-  // ref so each test sees the same container — same semantics as real Nuxt.
   if (userState.value === null && init() === null) {
     return userState
   }
   return userState
 })
-vi.stubGlobal('useI18n', () => ({ locale: localeRef, setLocale: setLocaleMock }))
+vi.stubGlobal('useRequestHeaders', () => ({}))
 vi.stubGlobal('computed', computed)
 vi.stubGlobal('readonly', readonly)
 
@@ -41,9 +43,14 @@ function aUser(overrides: Partial<User> = {}): User {
   }
 }
 
+function rawResponse(data: User) {
+  return { _data: data, headers: new Headers() }
+}
+
 describe('useAuth', () => {
   beforeEach(() => {
     apiMock.mockReset()
+    apiRawMock.mockReset()
     setLocaleMock.mockReset()
     localeRef.value = 'en'
     userState.value = null
@@ -52,29 +59,19 @@ describe('useAuth', () => {
   describe('fetchMe', () => {
     it('populates user on success', async () => {
       const fetched = aUser({ id: 42, email: 'john@example.com' })
-      apiMock.mockResolvedValueOnce(fetched)
+      apiRawMock.mockResolvedValueOnce(rawResponse(fetched))
 
       const { fetchMe, user } = useAuth()
       const result = await fetchMe()
 
-      expect(apiMock).toHaveBeenCalledWith('/auth/me')
+      expect(apiRawMock).toHaveBeenCalledWith('/auth/me', { headers: undefined })
       expect(result).toEqual(fetched)
       expect(user.value).toEqual(fetched)
     })
 
-    it('syncs i18n locale with user.locale when they differ', async () => {
+    it('does NOT sync locale on fetchMe (only on login/register entry points)', async () => {
       localeRef.value = 'en'
-      apiMock.mockResolvedValueOnce(aUser({ locale: 'fr' }))
-
-      const { fetchMe } = useAuth()
-      await fetchMe()
-
-      expect(setLocaleMock).toHaveBeenCalledWith('fr')
-    })
-
-    it('does NOT call setLocale when locale already matches', async () => {
-      localeRef.value = 'fr'
-      apiMock.mockResolvedValueOnce(aUser({ locale: 'fr' }))
+      apiRawMock.mockResolvedValueOnce(rawResponse(aUser({ locale: 'fr' })))
 
       const { fetchMe } = useAuth()
       await fetchMe()
@@ -83,7 +80,7 @@ describe('useAuth', () => {
     })
 
     it('sets user to null and returns null on 401', async () => {
-      apiMock.mockRejectedValueOnce(Object.assign(new Error('Unauthorized'), { status: 401 }))
+      apiRawMock.mockRejectedValueOnce(Object.assign(new Error('Unauthorized'), { status: 401 }))
 
       const { fetchMe, user } = useAuth()
       const result = await fetchMe()
@@ -93,16 +90,88 @@ describe('useAuth', () => {
     })
 
     it('rethrows on non-401 errors', async () => {
-      apiMock.mockRejectedValueOnce(Object.assign(new Error('Boom'), { status: 500 }))
+      apiRawMock.mockRejectedValueOnce(Object.assign(new Error('Boom'), { status: 500 }))
 
       const { fetchMe } = useAuth()
       await expect(fetchMe()).rejects.toThrow('Boom')
     })
   })
 
+  describe('login', () => {
+    it('POSTs credentials, sets user and syncs locale', async () => {
+      const fetched = aUser({ email: 'alice@example.com', locale: 'fr' })
+      apiMock.mockResolvedValueOnce(fetched)
+
+      const { login, user } = useAuth()
+      const result = await login('alice@example.com', 'password123', true)
+
+      expect(apiMock).toHaveBeenCalledWith('/auth/login', {
+        method: 'POST',
+        body: { email: 'alice@example.com', password: 'password123', rememberMe: true }
+      })
+      expect(result).toEqual(fetched)
+      expect(user.value).toEqual(fetched)
+      expect(setLocaleMock).toHaveBeenCalledWith('fr')
+    })
+
+    it('does NOT call setLocale when locale already matches', async () => {
+      localeRef.value = 'fr'
+      apiMock.mockResolvedValueOnce(aUser({ locale: 'fr' }))
+
+      const { login } = useAuth()
+      await login('a@b.com', 'pw', false)
+
+      expect(setLocaleMock).not.toHaveBeenCalled()
+    })
+
+    it('rethrows on bad credentials (401)', async () => {
+      apiMock.mockRejectedValueOnce(Object.assign(new Error('Unauthorized'), { status: 401 }))
+
+      const { login } = useAuth()
+      await expect(login('x@x.com', 'wrong', false)).rejects.toThrow('Unauthorized')
+    })
+  })
+
+  describe('register', () => {
+    it('POSTs full payload, sets user and syncs locale', async () => {
+      const fetched = aUser({ email: 'bob@example.com', name: 'Bob', locale: 'fr' })
+      apiMock.mockResolvedValueOnce(fetched)
+
+      const { register, user } = useAuth()
+      const result = await register({
+        email: 'bob@example.com',
+        name: 'Bob',
+        password: 'password123',
+        locale: 'fr'
+      })
+
+      expect(apiMock).toHaveBeenCalledWith('/auth/register', {
+        method: 'POST',
+        body: {
+          email: 'bob@example.com',
+          name: 'Bob',
+          password: 'password123',
+          locale: 'fr'
+        }
+      })
+      expect(result).toEqual(fetched)
+      expect(user.value).toEqual(fetched)
+      expect(setLocaleMock).toHaveBeenCalledWith('fr')
+    })
+
+    it('rethrows on email already taken (409)', async () => {
+      apiMock.mockRejectedValueOnce(Object.assign(new Error('Conflict'), { status: 409 }))
+
+      const { register } = useAuth()
+      await expect(
+        register({ email: 'taken@x.com', name: 'X', password: 'password123', locale: 'en' })
+      ).rejects.toThrow('Conflict')
+    })
+  })
+
   describe('logout', () => {
     it('POSTs /auth/logout and clears user', async () => {
-      apiMock.mockResolvedValueOnce(aUser())
+      apiRawMock.mockResolvedValueOnce(rawResponse(aUser()))
       const { fetchMe, logout, user } = useAuth()
       await fetchMe()
       expect(user.value).not.toBeNull()
@@ -122,7 +191,7 @@ describe('useAuth', () => {
     })
 
     it('becomes true after fetchMe succeeds', async () => {
-      apiMock.mockResolvedValueOnce(aUser())
+      apiRawMock.mockResolvedValueOnce(rawResponse(aUser()))
       const { fetchMe, isAuthenticated } = useAuth()
       await fetchMe()
       expect(isAuthenticated.value).toBe(true)

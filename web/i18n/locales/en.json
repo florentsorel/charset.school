@@ -2,7 +2,17 @@
   "common": {
     "app_name": "Charset School",
     "loading": "Loading…",
-    "retry": "Retry"
+    "retry": "Retry",
+    "back": "Back",
+    "or": "or",
+    "theme_light": "Light theme",
+    "theme_light_short": "LIGHT",
+    "theme_dark": "Dark theme",
+    "theme_dark_short": "DARK",
+    "theme_system": "System theme"
+  },
+  "landing": {
+    "coming_soon": "Coming soon — an interactive playground for learning character encodings."
   },
   "auth": {
     "me_title": "My profile",
@@ -10,12 +20,38 @@
     "member_since": "Member since {date}",
     "email": "Email",
     "name": "Name",
+    "password": "Password",
     "locale": "Language",
+    "remember_me": "Remember me",
+    "login": "Sign in",
+    "login_title": "Sign in",
+    "login_submit": "Sign in",
+    "login_no_account": "Don't have an account yet?",
+    "forgot_password": "Forgot your password?",
+    "register": "Create account",
+    "register_title": "Create your account",
+    "register_submit": "Create account",
+    "register_have_account": "Already have an account?",
+    "logout": "Sign out",
+    "validation": {
+      "email_required": "Email is required",
+      "email_invalid": "Please enter a valid email",
+      "email_too_long": "Email must be 255 characters or fewer",
+      "name_required": "Name is required",
+      "name_too_long": "Name must be 255 characters or fewer",
+      "password_required": "Password is required",
+      "password_size": "Password must be 8-64 characters",
+      "locale_invalid": "Unsupported language"
+    },
     "errors": {
-      "auth.email-already-taken": "The email {email} is already in use.",
-      "auth.bad-credentials": "Invalid email or password.",
-      "auth.session-orphaned": "Your session is no longer valid. Please sign in again.",
-      "validation.failed": "Some fields are invalid.",
+      "auth": {
+        "email-already-taken": "The email {email} is already in use.",
+        "bad-credentials": "Invalid email or password. Try again.",
+        "session-orphaned": "Your session is no longer valid. Please sign in again."
+      },
+      "validation": {
+        "failed": "Some fields are invalid."
+      },
       "unknown": "An error occurred."
     }
   }

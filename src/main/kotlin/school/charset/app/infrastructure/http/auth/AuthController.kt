@@ -38,13 +38,33 @@ class AuthController(
     private val rememberMeServices: RememberMeServices,
 ) {
     @PostMapping("/register", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun register(@Valid @RequestBody req: RegisterRequest): ResponseEntity<User> {
+    fun register(
+        @Valid @RequestBody req: RegisterRequest,
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ): ResponseEntity<User> {
         val user = authService.register(
             email = req.email,
             name = req.name,
             rawPassword = RawPassword(req.password),
             locale = req.locale,
         )
+
+        val principal = UserDetailsAdapter(
+            userId = user.id,
+            email = user.email,
+            passwordHashValue = user.passwordHash.value,
+        )
+        val auth = UsernamePasswordAuthenticationToken.authenticated(
+            principal,
+            null,
+            principal.authorities,
+        )
+        val context = SecurityContextHolder.createEmptyContext()
+        context.authentication = auth
+        SecurityContextHolder.setContext(context)
+        securityContextRepository.saveContext(context, request, response)
+
         return ResponseEntity.status(HttpStatus.CREATED).body(user)
     }
 

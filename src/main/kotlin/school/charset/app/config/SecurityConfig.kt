@@ -17,11 +17,14 @@ import org.springframework.security.web.authentication.RememberMeServices
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl
 import org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.security.web.context.SecurityContextRepository
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler
 import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHttpSession
 import school.charset.app.domain.user.UserRepository
+import school.charset.app.infrastructure.security.CsrfCookieFilter
 import school.charset.app.infrastructure.security.CustomUserDetailsService
 import javax.sql.DataSource
 
@@ -90,9 +93,8 @@ class SecurityConfig {
             }
             .csrf { csrf ->
                 csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                // CSRF skipped on register/login: no session exists yet so the front
-                // cannot have read the XSRF-TOKEN cookie. Reset password endpoints
-                // are bearer-token-based via emailed link, also skipped.
+                val xorDelegate = XorCsrfTokenRequestAttributeHandler()
+                csrf.csrfTokenRequestHandler(xorDelegate::handle)
                 csrf.ignoringRequestMatchers(
                     "/api/auth/register",
                     "/api/auth/login",
@@ -100,6 +102,11 @@ class SecurityConfig {
                     "/api/auth/reset-password",
                 )
             }
+            // Forces the lazy XSRF-TOKEN cookie to be written on every response.
+            // Without this filter, the cookie is only saved on the first mutating
+            // request's validation — by which time the client never had it to
+            // echo back in X-XSRF-TOKEN, so that request always 403s.
+            .addFilterAfter(CsrfCookieFilter(), BasicAuthenticationFilter::class.java)
             .formLogin { it.disable() }
             .httpBasic { it.disable() }
             .logout { logout ->
