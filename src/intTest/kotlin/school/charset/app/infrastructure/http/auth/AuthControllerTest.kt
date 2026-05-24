@@ -83,6 +83,20 @@ class AuthControllerTest(
     }
 
     @Test
+    fun `POST register auto-logs-in — the SESSION cookie immediately accesses GET me`() {
+        val email = uniqueEmail()
+        val registerResult = register(email = email, password = "password123", name = "Eve", locale = "en")
+            .andExpect(status().isCreated)
+            .andReturn()
+        val sessionCookie = registerResult.response.getCookie("SESSION")!!
+
+        mockMvc.perform(get("/api/auth/me").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.email").value(email))
+            .andExpect(jsonPath("$.name").value("Eve"))
+    }
+
+    @Test
     fun `POST login returns 200 with user info and sets a session cookie`() {
         val email = uniqueEmail()
         register(email = email, password = "password123", name = "Alice", locale = "fr")

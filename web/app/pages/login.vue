@@ -127,13 +127,6 @@ useHead({
         >
           {{ submitting ? t('common.loading') : t('auth.login_submit') }}
         </button>
-
-        <NuxtLink
-          :to="localePath('/forgot-password')"
-          class="btn-link text-sm self-center mt-1"
-        >
-          {{ t('auth.forgot_password') }}
-        </NuxtLink>
       </form>
 
       <div class="my-7 flex items-center gap-4">

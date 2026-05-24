@@ -6,8 +6,13 @@
     "back": "Retour",
     "or": "ou",
     "theme_light": "Thème clair",
+    "theme_light_short": "CLAIR",
     "theme_dark": "Thème sombre",
+    "theme_dark_short": "SOMBRE",
     "theme_system": "Thème système"
+  },
+  "landing": {
+    "coming_soon": "Bientôt disponible — un terrain de jeu interactif pour apprendre l'encodage des caractères."
   },
   "auth": {
     "me_title": "Mon profil",
