@@ -4,7 +4,7 @@ definePageMeta({ auth: false })
 const { t } = useI18n()
 
 useHead({
-  title: () => t('common.app_name')
+  titleTemplate: '%siteName'
 })
 </script>
 

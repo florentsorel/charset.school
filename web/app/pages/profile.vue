@@ -230,7 +230,7 @@ const localeLabels: Record<Locale, string> = {
 }
 
 useHead({
-  title: () => `${t('profile.title')} · ${t('common.app_name')}`
+  title: () => t('profile.title')
 })
 </script>
 

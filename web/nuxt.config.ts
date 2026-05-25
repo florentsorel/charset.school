@@ -12,7 +12,30 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  app: {
+    head: {
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico', sizes: 'any' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/site.webmanifest' }
+      ],
+      meta: [
+        { name: 'theme-color', content: '#0F3D6B' }
+      ]
+    }
+  },
+
   css: ['~/assets/css/main.css'],
+
+  // Site config consumed by @nuxtjs/seo: feeds `%siteName` in the default
+  // titleTemplate (`%s %separator %siteName`), canonical URLs, sitemap,
+  // robots.txt, OG defaults, …
+  site: {
+    name: 'Charset School',
+    url: 'https://charset.sorel.dev',
+    defaultLocale: 'en'
+  },
 
   runtimeConfig: {
     apiBaseServer: 'http://localhost:8080/api',
@@ -61,6 +84,16 @@ export default defineNuxtConfig({
       fallbackLocale: 'en'
     },
     vueI18n: './i18n.config.ts'
+  },
+
+  sitemap: {
+    exclude: [
+      '/profile',
+      '/profile/**',
+      '/fr/profile',
+      '/fr/profile/**'
+    ],
+    zeroRuntime: true
   },
 
   // Restrict to Claude Code — default auto-detects and generates `.cursor/` etc.
