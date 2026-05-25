@@ -50,6 +50,11 @@
   "footer": {
     "tagline": "Teaching tool. No tracking, no ads."
   },
+  "header": {
+    "my_profile": "My profile",
+    "user_menu": "User menu",
+    "menu": "Menu"
+  },
   "profile": {
     "title": "Profile",
     "subtitle": "Manage your account and preferences.",
@@ -64,7 +69,7 @@
     },
     "password": {
       "title": "Change password",
-      "subtitle": "8 characters minimum. A phrase beats a rare word.",
+      "subtitle": "8 characters minimum.",
       "current_label": "Current password",
       "new_label": "New password",
       "confirm_label": "Confirm",

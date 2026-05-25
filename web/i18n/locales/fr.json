@@ -50,6 +50,11 @@
   "footer": {
     "tagline": "Outil pédagogique. Pas de tracking, pas de pub."
   },
+  "header": {
+    "my_profile": "Mon profil",
+    "user_menu": "Menu utilisateur",
+    "menu": "Menu"
+  },
   "profile": {
     "title": "Profil",
     "subtitle": "Gère ton compte et tes préférences.",
@@ -64,7 +69,7 @@
     },
     "password": {
       "title": "Changer le mot de passe",
-      "subtitle": "8 caractères minimum. Une phrase est mieux qu'un mot rare.",
+      "subtitle": "8 caractères minimum.",
       "current_label": "Mot de passe actuel",
       "new_label": "Nouveau mot de passe",
       "confirm_label": "Confirmer",
