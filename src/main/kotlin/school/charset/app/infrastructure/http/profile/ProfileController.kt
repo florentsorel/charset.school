@@ -1,6 +1,7 @@
 package school.charset.app.infrastructure.http.profile
 
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
@@ -9,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import school.charset.app.domain.auth.OrphanedSessionException
+import school.charset.app.domain.profile.PasswordConfirmationMismatchException
+import school.charset.app.domain.profile.ProfileService
+import school.charset.app.domain.user.RawPassword
 import school.charset.app.domain.user.User
 import school.charset.app.domain.user.UserRepository
 import school.charset.app.infrastructure.security.requireUserDetailsAdapter
@@ -20,6 +24,7 @@ import school.charset.app.infrastructure.security.requireUserDetailsAdapter
 )
 class ProfileController(
     private val userRepository: UserRepository,
+    private val profileService: ProfileService,
 ) {
     @PatchMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun update(
@@ -37,5 +42,21 @@ class ProfileController(
             locale = req.locale,
         )
         return ResponseEntity.ok(updated)
+    }
+
+    @PatchMapping("/password", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun changePassword(
+        @Valid @RequestBody req: ChangePasswordRequest,
+        authentication: Authentication,
+    ): ResponseEntity<Void> {
+        if (req.newPassword != req.confirmPassword) throw PasswordConfirmationMismatchException()
+
+        val userId = authentication.requireUserDetailsAdapter().userId
+        profileService.changePassword(
+            userId = userId,
+            currentPassword = RawPassword(req.currentPassword),
+            newPassword = RawPassword(req.newPassword),
+        )
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 }

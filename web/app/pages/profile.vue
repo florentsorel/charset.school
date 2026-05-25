@@ -7,7 +7,7 @@ type ThemePreference = 'system' | 'light' | 'dark'
 const THEMES: readonly ThemePreference[] = ['system', 'light', 'dark']
 
 const { t } = useI18n()
-const { user, updateProfile } = useAuth()
+const { user, updateProfile, changePassword } = useAuth()
 const { resolveAuthError } = useAuthErrors()
 const colorMode = useColorMode()
 
@@ -59,6 +59,34 @@ const preferencesSubmitting = ref(false)
 const preferencesError = ref<string | null>(null)
 const preferencesSavedAt = ref<number | null>(null)
 
+const passwordState = reactive({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const passwordSchema = computed(() =>
+  z.object({
+    currentPassword: z
+      .string()
+      .min(1, t('auth.validation.password_required')),
+    newPassword: z
+      .string()
+      .min(1, t('auth.validation.password_required'))
+      .min(8, t('auth.validation.password_size'))
+      .max(64, t('auth.validation.password_size')),
+    confirmPassword: z.string()
+  }).refine(d => d.confirmPassword === d.newPassword, {
+    path: ['confirmPassword'],
+    message: t('auth.validation.password_confirm_mismatch')
+  })
+)
+
+const password = useFormValidation(passwordSchema)
+const passwordSubmitting = ref(false)
+const passwordError = ref<string | null>(null)
+const passwordSavedAt = ref<number | null>(null)
+
 const accountDirty = computed(() =>
   !!user.value
   && (accountState.name !== user.value.name || accountState.email !== user.value.email)
@@ -72,6 +100,7 @@ const preferencesDirty = computed(() => {
 
 async function submitAccount() {
   accountError.value = null
+  accountSavedAt.value = null
   if (!account.validate(accountState)) return
 
   accountSubmitting.value = true
@@ -96,6 +125,7 @@ function cancelAccount() {
 
 async function submitPreferences() {
   preferencesError.value = null
+  preferencesSavedAt.value = null
   preferencesSubmitting.value = true
   try {
     // Locale is server-side (DB) — only PATCH if it actually changed.
@@ -118,6 +148,30 @@ function cancelPreferences() {
   if (user.value) preferencesState.locale = user.value.locale
   preferencesState.theme = (colorMode.preference || 'system') as ThemePreference
   preferencesError.value = null
+}
+
+async function submitPassword() {
+  passwordError.value = null
+  passwordSavedAt.value = null
+  if (!password.validate(passwordState)) return
+
+  passwordSubmitting.value = true
+  try {
+    await changePassword({
+      currentPassword: passwordState.currentPassword,
+      newPassword: passwordState.newPassword,
+      confirmPassword: passwordState.confirmPassword
+    })
+    passwordSavedAt.value = Date.now()
+    passwordState.currentPassword = ''
+    passwordState.newPassword = ''
+    passwordState.confirmPassword = ''
+  } catch (err) {
+    if (password.applyServerErrors(err)) return
+    passwordError.value = resolveAuthError(err)
+  } finally {
+    passwordSubmitting.value = false
+  }
 }
 
 const localeLabels: Record<Locale, string> = {
@@ -281,6 +335,75 @@ useHead({
               </button>
               <span
                 v-if="preferencesSavedAt && !preferencesDirty"
+                class="text-xs text-ok ml-1"
+              >
+                {{ t('profile.saved') }}
+              </span>
+            </div>
+          </form>
+        </section>
+
+        <!-- Section 3 — Change password -->
+        <section class="section-card">
+          <header class="flex items-baseline justify-between mb-5 gap-3">
+            <div>
+              <h2 class="text-md font-medium">
+                {{ t('profile.password.title') }}
+              </h2>
+              <p class="text-xs text-mute mt-0.5">
+                {{ t('profile.password.subtitle') }}
+              </p>
+            </div>
+          </header>
+
+          <FormErrorBanner
+            :message="passwordError"
+            class="mb-4 max-w-md"
+          />
+
+          <form
+            class="grid grid-cols-1 gap-4 max-w-md"
+            novalidate
+            @submit.prevent="submitPassword"
+          >
+            <FormField
+              v-model="passwordState.currentPassword"
+              name="currentPassword"
+              type="password"
+              autocomplete="current-password"
+              mono
+              :label="t('profile.password.current_label')"
+              :error="password.errors.currentPassword"
+            />
+            <FormField
+              v-model="passwordState.newPassword"
+              name="newPassword"
+              type="password"
+              autocomplete="new-password"
+              mono
+              :label="t('profile.password.new_label')"
+              :error="password.errors.newPassword"
+            />
+            <FormField
+              v-model="passwordState.confirmPassword"
+              name="confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              mono
+              :label="t('profile.password.confirm_label')"
+              :error="password.errors.confirmPassword"
+            />
+
+            <div class="flex items-center gap-2">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                :disabled="passwordSubmitting"
+              >
+                {{ passwordSubmitting ? t('common.loading') : t('profile.password.submit') }}
+              </button>
+              <span
+                v-if="passwordSavedAt"
                 class="text-xs text-ok ml-1"
               >
                 {{ t('profile.saved') }}

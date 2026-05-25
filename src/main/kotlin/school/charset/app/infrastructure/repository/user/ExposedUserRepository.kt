@@ -80,4 +80,17 @@ class ExposedUserRepository(
             .single()
             .toUser()
     }
+
+    override fun updatePasswordHash(id: Long, passwordHash: PasswordHash): User = transaction {
+        val now = clock.now()
+        UsersTable.update({ UsersTable.id eq id }) {
+            it[UsersTable.passwordHash] = passwordHash.value
+            it[UsersTable.updatedAt] = now
+        }
+        UsersTable
+            .selectAll()
+            .where { UsersTable.id eq id }
+            .single()
+            .toUser()
+    }
 }
