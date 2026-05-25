@@ -86,15 +86,6 @@ export default defineNuxtConfig({
     vueI18n: './i18n.config.ts'
   },
 
-  // Sitemap config — @nuxtjs/sitemap auto-discovers `pages/**` and is i18n-aware
-  // (one URL per locale + hreflang links). We exclude auth-required pages so
-  // Google doesn't index `/profile` etc. — they redirect to /login for
-  // unauthenticated visitors and have nothing of value for SEO.
-  //
-  // `zeroRuntime` removes the dynamic `/sitemap.xml` endpoint from the runtime
-  // server and bakes the XML at build time. We have no dynamic sources
-  // (no posts, no user-generated routes) so this is safe and trims the SSR
-  // bundle.
   sitemap: {
     exclude: [
       '/profile',
