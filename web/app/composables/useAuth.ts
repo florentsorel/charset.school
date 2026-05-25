@@ -88,6 +88,17 @@ export function useAuth() {
     })
   }
 
+  // DELETE /api/profile — back returns 204 and clears SESSION + remember-me
+  // cookies. The local user state is wiped so the next navigation sees
+  // an anonymous visitor.
+  async function deleteAccount(input: { password: string }): Promise<void> {
+    await $api('/profile', {
+      method: 'DELETE',
+      body: input
+    })
+    user.value = null
+  }
+
   async function syncLocaleWith(target: User['locale']) {
     const $i18n = nuxtApp.$i18n
     if (!$i18n || $i18n.locale.value === target) return
@@ -107,6 +118,7 @@ export function useAuth() {
     register,
     logout,
     updateProfile,
-    changePassword
+    changePassword,
+    deleteAccount
   }
 }

@@ -33,6 +33,19 @@
       "new_label": "Nouveau mot de passe",
       "confirm_label": "Confirmer",
       "submit": "Mettre à jour"
+    },
+    "danger": {
+      "title": "Zone dangereuse",
+      "subtitle": "Action irréversible.",
+      "description": "La suppression efface ton compte, ta progression et ton historique. On ne peut pas restaurer.",
+      "delete_button": "Supprimer mon compte",
+      "dialog": {
+        "title": "Supprimer ton compte ?",
+        "subtitle": "Cette action est irréversible.",
+        "description": "Toute ta progression et ton historique seront perdus. Saisis ton mot de passe pour confirmer.",
+        "password_label": "Mot de passe",
+        "confirm": "Oui, supprimer mon compte"
+      }
     }
   },
   "auth": {

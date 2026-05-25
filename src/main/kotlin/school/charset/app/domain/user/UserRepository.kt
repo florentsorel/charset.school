@@ -10,4 +10,6 @@ interface UserRepository {
     fun update(id: Long, name: String? = null, email: String? = null, locale: String? = null): User
 
     fun updatePasswordHash(id: Long, passwordHash: PasswordHash): User
+
+    fun deleteById(id: Long)
 }

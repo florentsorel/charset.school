@@ -7,7 +7,7 @@ type ThemePreference = 'system' | 'light' | 'dark'
 const THEMES: readonly ThemePreference[] = ['system', 'light', 'dark']
 
 const { t } = useI18n()
-const { user, updateProfile, changePassword } = useAuth()
+const { user, updateProfile, changePassword, deleteAccount } = useAuth()
 const { resolveAuthError } = useAuthErrors()
 const colorMode = useColorMode()
 
@@ -175,6 +175,52 @@ async function submitPassword() {
     passwordError.value = resolveAuthError(err)
   } finally {
     passwordSubmitting.value = false
+  }
+}
+
+// Danger zone — delete account
+const deleteDialog = useTemplateRef<HTMLDialogElement>('deleteDialog')
+const deleteState = reactive({ password: '' })
+const deleteSchema = computed(() =>
+  z.object({
+    password: z.string().min(1, t('auth.validation.password_required'))
+  })
+)
+const deleteForm = useFormValidation(deleteSchema)
+const deleteSubmitting = ref(false)
+const deleteError = ref<string | null>(null)
+
+function openDeleteDialog() {
+  deleteState.password = ''
+  deleteError.value = null
+  deleteForm.clearErrors()
+  deleteDialog.value?.showModal()
+}
+
+function closeDeleteDialog() {
+  deleteDialog.value?.close()
+}
+
+// Click outside the card (on the backdrop) closes the dialog. Native <dialog>
+// receives the click on itself when the user hits the backdrop area.
+function onDialogClick(e: MouseEvent) {
+  if (e.target === deleteDialog.value) closeDeleteDialog()
+}
+
+async function submitDelete() {
+  deleteError.value = null
+  if (!deleteForm.validate(deleteState)) return
+
+  deleteSubmitting.value = true
+  try {
+    await deleteAccount({ password: deleteState.password })
+    closeDeleteDialog()
+    await navigateTo('/')
+  } catch (err) {
+    if (deleteForm.applyServerErrors(err)) return
+    deleteError.value = resolveAuthError(err)
+  } finally {
+    deleteSubmitting.value = false
   }
 }
 
@@ -415,7 +461,109 @@ useHead({
             </div>
           </form>
         </section>
+
+        <!-- Section 4 — Danger zone -->
+        <section class="section-card section-card-danger">
+          <header class="mb-3">
+            <h2
+              class="text-md font-medium"
+              style="color: var(--color-bad);"
+            >
+              {{ t('profile.danger.title') }}
+            </h2>
+            <p class="text-xs text-mute mt-0.5">
+              {{ t('profile.danger.subtitle') }}
+            </p>
+          </header>
+          <p class="text-sm text-mute leading-relaxed max-w-md mb-5 mt-4">
+            {{ t('profile.danger.description') }}
+          </p>
+          <button
+            type="button"
+            class="btn btn-danger"
+            @click="openDeleteDialog"
+          >
+            {{ t('profile.danger.delete_button') }}
+          </button>
+        </section>
       </div>
     </div>
+
+    <dialog
+      ref="deleteDialog"
+      class="dlg"
+      aria-labelledby="delete-dialog-title"
+      @click="onDialogClick"
+      @close="deleteError = null"
+    >
+      <form
+        novalidate
+        @submit.prevent="submitDelete"
+      >
+        <div class="flex items-start gap-3 mb-4">
+          <span class="dlg-icon">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              aria-hidden="true"
+            >
+              <path d="M2 4h12M6 4V2.5a1 1 0 011-1h2a1 1 0 011 1V4M3.5 4l.7 9a1 1 0 001 .9h5.6a1 1 0 001-.9l.7-9" />
+            </svg>
+          </span>
+          <div>
+            <h3
+              id="delete-dialog-title"
+              class="text-lg font-medium leading-tight"
+            >
+              {{ t('profile.danger.dialog.title') }}
+            </h3>
+            <p class="text-sm text-mute mt-1">
+              {{ t('profile.danger.dialog.subtitle') }}
+            </p>
+          </div>
+        </div>
+        <p class="text-sm text-mute leading-relaxed mb-5">
+          {{ t('profile.danger.dialog.description') }}
+        </p>
+
+        <FormErrorBanner
+          :message="deleteError"
+          class="mb-4"
+        />
+
+        <FormField
+          v-model="deleteState.password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          mono
+          :label="t('profile.danger.dialog.password_label')"
+          :error="deleteForm.errors.password"
+          class="mb-5"
+        />
+
+        <div class="flex items-center gap-2 justify-end flex-wrap">
+          <button
+            type="button"
+            class="btn btn-ghost"
+            :disabled="deleteSubmitting"
+            @click="closeDeleteDialog"
+          >
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            type="submit"
+            class="btn btn-danger"
+            :disabled="deleteSubmitting"
+          >
+            {{ deleteSubmitting ? t('common.loading') : t('profile.danger.dialog.confirm') }}
+          </button>
+        </div>
+      </form>
+    </dialog>
   </main>
 </template>

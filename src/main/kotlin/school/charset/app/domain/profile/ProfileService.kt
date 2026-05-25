@@ -17,4 +17,12 @@ class ProfileService(
         }
         return userRepository.updatePasswordHash(userId, passwordHasher.hash(newPassword))
     }
+
+    fun deleteAccount(userId: Long, password: RawPassword) {
+        val user = userRepository.findById(userId) ?: throw OrphanedSessionException(userId)
+        if (!passwordHasher.matches(password, user.passwordHash)) {
+            throw CurrentPasswordMismatchException(field = "password")
+        }
+        userRepository.deleteById(userId)
+    }
 }

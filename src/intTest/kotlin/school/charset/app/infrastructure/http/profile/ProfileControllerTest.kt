@@ -11,6 +11,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -299,6 +300,68 @@ class ProfileControllerTest(
         ).andExpect(status().isUnauthorized)
     }
 
+    @Test
+    fun `DELETE profile deletes the account, clears cookies and future logins fail`() {
+        val email = uniqueEmail()
+        val (sessionCookie, xsrfCookie) = registerAndLogin(email = email, password = "real-password")
+
+        val result = deleteAccount(sessionCookie, xsrfCookie, password = "real-password")
+            .andExpect(status().isNoContent)
+            .andReturn()
+
+        val clearedSession = result.response.getCookie("SESSION")
+        val clearedRememberMe = result.response.getCookie("remember-me")
+        // The DELETE response must instruct the browser to drop both cookies.
+        check(clearedSession?.maxAge == 0) { "SESSION cookie should be expired" }
+        check(clearedRememberMe?.maxAge == 0) { "remember-me cookie should be expired" }
+
+        // Future login attempts return 401 — the user no longer exists.
+        login(email = email, password = "real-password").andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `DELETE profile returns 422 when password is wrong`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin(password = "real-password")
+
+        deleteAccount(sessionCookie, xsrfCookie, password = "wrong-password")
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("$.errorType").value("validation.failed"))
+            .andExpect(jsonPath("$.fieldErrors.password[0]").value(ProfileValidationKey.CURRENT_PASSWORD_MISMATCH))
+    }
+
+    @Test
+    fun `DELETE profile returns 422 when password is blank`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin()
+
+        deleteAccount(sessionCookie, xsrfCookie, password = "")
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("$.errorType").value("validation.failed"))
+            .andExpect(jsonPath("$.fieldErrors.password").exists())
+    }
+
+    @Test
+    fun `DELETE profile returns 403 when CSRF token is missing`() {
+        mockMvc.perform(
+            delete("/api/profile")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"password":"x"}"""),
+        ).andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `DELETE profile returns 401 when not authenticated`() {
+        val bootstrap: MvcResult = mockMvc.perform(get("/api/auth/me")).andReturn()
+        val xsrfCookie = bootstrap.response.getCookie("XSRF-TOKEN")!!
+
+        mockMvc.perform(
+            delete("/api/profile")
+                .cookie(xsrfCookie)
+                .header("X-XSRF-TOKEN", xsrfCookie.value)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"password":"x"}"""),
+        ).andExpect(status().isUnauthorized)
+    }
+
     private fun registerAndLogin(
         email: String = uniqueEmail(),
         password: String = "password123",
@@ -344,6 +407,18 @@ class ProfileControllerTest(
                     ),
                 ),
             ),
+    )
+
+    private fun deleteAccount(
+        sessionCookie: Cookie,
+        xsrfCookie: Cookie,
+        password: String,
+    ): ResultActions = mockMvc.perform(
+        delete("/api/profile")
+            .cookie(sessionCookie, xsrfCookie)
+            .header("X-XSRF-TOKEN", xsrfCookie.value)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsString(mapOf("password" to password))),
     )
 
     private fun login(email: String, password: String): ResultActions = mockMvc.perform(
