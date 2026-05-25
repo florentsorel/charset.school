@@ -74,6 +74,20 @@ export function useAuth() {
     return fetched
   }
 
+  // PATCH /api/profile/password — back returns 204, no body. The user record
+  // doesn't visibly change (we never expose the hash) so we don't refresh
+  // user.value.
+  async function changePassword(input: {
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+  }): Promise<void> {
+    await $api('/profile/password', {
+      method: 'PATCH',
+      body: input
+    })
+  }
+
   async function syncLocaleWith(target: User['locale']) {
     const $i18n = nuxtApp.$i18n
     if (!$i18n || $i18n.locale.value === target) return
@@ -92,6 +106,7 @@ export function useAuth() {
     login,
     register,
     logout,
-    updateProfile
+    updateProfile,
+    changePassword
   }
 }

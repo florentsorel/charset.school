@@ -21,6 +21,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 import school.charset.app.config.ApplicationConfigTest
 import school.charset.app.domain.auth.AuthErrorType
+import school.charset.app.domain.profile.ProfileValidationKey
 import tools.jackson.databind.json.JsonMapper
 import java.util.UUID
 
@@ -193,6 +194,111 @@ class ProfileControllerTest(
             .andExpect(jsonPath("$.errorType").value("validation.failed"))
     }
 
+    @Test
+    fun `PATCH profile password updates the hash, accepts the new password on login`() {
+        val email = uniqueEmail()
+        val (sessionCookie, xsrfCookie) = registerAndLogin(email = email, password = "current-password")
+
+        changePassword(
+            sessionCookie,
+            xsrfCookie,
+            currentPassword = "current-password",
+            newPassword = "new-password-123",
+        ).andExpect(status().isNoContent)
+
+        login(email = email, password = "new-password-123").andExpect(status().isOk)
+        login(email = email, password = "current-password").andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `PATCH profile password returns 422 when current password is wrong`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin(password = "real-password")
+
+        changePassword(
+            sessionCookie,
+            xsrfCookie,
+            currentPassword = "wrong-password",
+            newPassword = "new-password-123",
+        )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("$.errorType").value("validation.failed"))
+            .andExpect(jsonPath("$.fieldErrors.currentPassword[0]").value(ProfileValidationKey.CURRENT_PASSWORD_MISMATCH))
+    }
+
+    @Test
+    fun `PATCH profile password returns 422 when new password is too short`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin(password = "current-password")
+
+        changePassword(
+            sessionCookie,
+            xsrfCookie,
+            currentPassword = "current-password",
+            newPassword = "short",
+        )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("$.errorType").value("validation.failed"))
+            .andExpect(jsonPath("$.fieldErrors.newPassword").exists())
+    }
+
+    @Test
+    fun `PATCH profile password returns 422 when current password is blank`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin()
+
+        changePassword(
+            sessionCookie,
+            xsrfCookie,
+            currentPassword = "",
+            newPassword = "new-password-123",
+        )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("$.fieldErrors.currentPassword").exists())
+    }
+
+    @Test
+    fun `PATCH profile password returns 422 when confirmPassword does not match newPassword`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin(password = "current-password")
+
+        changePassword(
+            sessionCookie,
+            xsrfCookie,
+            currentPassword = "current-password",
+            newPassword = "new-password-123",
+            confirmPassword = "different-confirmation",
+        )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("$.errorType").value("validation.failed"))
+            .andExpect(jsonPath("$.fieldErrors.confirmPassword[0]").value(ProfileValidationKey.PASSWORD_CONFIRM_MISMATCH))
+    }
+
+    @Test
+    fun `PATCH profile password returns 422 when confirmPassword is blank`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin()
+
+        changePassword(
+            sessionCookie,
+            xsrfCookie,
+            currentPassword = "password123",
+            newPassword = "new-password-123",
+            confirmPassword = "",
+        )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("$.fieldErrors.confirmPassword").exists())
+    }
+
+    @Test
+    fun `PATCH profile password returns 401 when not authenticated`() {
+        val bootstrap: MvcResult = mockMvc.perform(get("/api/auth/me")).andReturn()
+        val xsrfCookie = bootstrap.response.getCookie("XSRF-TOKEN")!!
+
+        mockMvc.perform(
+            patch("/api/profile/password")
+                .cookie(xsrfCookie)
+                .header("X-XSRF-TOKEN", xsrfCookie.value)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"currentPassword":"a","newPassword":"b-very-long"}"""),
+        ).andExpect(status().isUnauthorized)
+    }
+
     private fun registerAndLogin(
         email: String = uniqueEmail(),
         password: String = "password123",
@@ -216,6 +322,34 @@ class ProfileControllerTest(
             .header("X-XSRF-TOKEN", xsrfCookie.value)
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsString(body)),
+    )
+
+    private fun changePassword(
+        sessionCookie: Cookie,
+        xsrfCookie: Cookie,
+        currentPassword: String,
+        newPassword: String,
+        confirmPassword: String = newPassword,
+    ): ResultActions = mockMvc.perform(
+        patch("/api/profile/password")
+            .cookie(sessionCookie, xsrfCookie)
+            .header("X-XSRF-TOKEN", xsrfCookie.value)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(
+                mapper.writeValueAsString(
+                    mapOf(
+                        "currentPassword" to currentPassword,
+                        "newPassword" to newPassword,
+                        "confirmPassword" to confirmPassword,
+                    ),
+                ),
+            ),
+    )
+
+    private fun login(email: String, password: String): ResultActions = mockMvc.perform(
+        post("/api/auth/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsString(mapOf("email" to email, "password" to password))),
     )
 
     private fun register(

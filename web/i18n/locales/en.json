@@ -25,6 +25,14 @@
       "title": "Preferences",
       "language_label": "Interface language",
       "theme_label": "Theme"
+    },
+    "password": {
+      "title": "Change password",
+      "subtitle": "8 characters minimum. A phrase beats a rare word.",
+      "current_label": "Current password",
+      "new_label": "New password",
+      "confirm_label": "Confirm",
+      "submit": "Update"
     }
   },
   "auth": {
@@ -53,6 +61,8 @@
       "name_too_long": "Name must be 255 characters or fewer",
       "password_required": "Password is required",
       "password_size": "Password must be 8-64 characters",
+      "password_confirm_mismatch": "Passwords do not match",
+      "current_password_mismatch": "Current password is incorrect.",
       "locale_invalid": "Unsupported language"
     },
     "errors": {

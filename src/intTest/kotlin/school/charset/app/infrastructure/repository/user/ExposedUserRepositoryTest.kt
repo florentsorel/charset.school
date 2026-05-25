@@ -158,5 +158,22 @@ class ExposedUserRepositoryTest(
         ex.email shouldBe taken
     }
 
+    @Test
+    fun `updatePasswordHash replaces the hash and bumps updatedAt`() {
+        val created = userRepository.create(
+            email = uniqueEmail(),
+            name = "Bob",
+            passwordHash = PasswordHash("old-hash"),
+            locale = "fr",
+        )
+
+        val updated = userRepository.updatePasswordHash(created.id, PasswordHash("new-hash"))
+
+        updated.passwordHash shouldBe PasswordHash("new-hash")
+        updated.email shouldBe created.email
+        updated.name shouldBe created.name
+        (updated.updatedAt != null) shouldBe true
+    }
+
     private fun uniqueEmail(): String = "user-${UUID.randomUUID()}@example.com"
 }

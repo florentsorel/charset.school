@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import school.charset.app.domain.auth.AuthErrorType
 import school.charset.app.domain.auth.OrphanedSessionException
+import school.charset.app.domain.profile.CurrentPasswordMismatchException
+import school.charset.app.domain.profile.PasswordConfirmationMismatchException
+import school.charset.app.domain.profile.ProfileValidationKey
 import school.charset.app.domain.user.EmailAlreadyTakenException
 
 @RestControllerAdvice
@@ -37,6 +40,26 @@ class GlobalExceptionHandler {
             ErrorResponse(errorType = AuthErrorType.SESSION_ORPHANED),
         )
     }
+
+    @ExceptionHandler(CurrentPasswordMismatchException::class)
+    fun handleCurrentPasswordMismatch(): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(
+            ErrorResponse(
+                errorType = "validation.failed",
+                fieldErrors = mapOf("currentPassword" to listOf(ProfileValidationKey.CURRENT_PASSWORD_MISMATCH)),
+            ),
+        )
+
+    @ExceptionHandler(PasswordConfirmationMismatchException::class)
+    fun handlePasswordConfirmationMismatch(): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(
+            ErrorResponse(
+                errorType = "validation.failed",
+                fieldErrors = mapOf("confirmPassword" to listOf(ProfileValidationKey.PASSWORD_CONFIRM_MISMATCH)),
+            ),
+        )
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {

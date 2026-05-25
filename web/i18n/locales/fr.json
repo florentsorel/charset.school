@@ -25,6 +25,14 @@
       "title": "Préférences",
       "language_label": "Langue de l'interface",
       "theme_label": "Thème"
+    },
+    "password": {
+      "title": "Changer le mot de passe",
+      "subtitle": "8 caractères minimum. Une phrase est mieux qu'un mot rare.",
+      "current_label": "Mot de passe actuel",
+      "new_label": "Nouveau mot de passe",
+      "confirm_label": "Confirmer",
+      "submit": "Mettre à jour"
     }
   },
   "auth": {
@@ -53,6 +61,8 @@
       "name_too_long": "Le nom doit faire 255 caractères ou moins",
       "password_required": "Le mot de passe est requis",
       "password_size": "Le mot de passe doit faire entre 8 et 64 caractères",
+      "password_confirm_mismatch": "Les deux mots de passe ne correspondent pas",
+      "current_password_mismatch": "Mot de passe actuel incorrect.",
       "locale_invalid": "Langue non supportée"
     },
     "errors": {
