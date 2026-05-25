@@ -75,7 +75,11 @@ const passwordSchema = computed(() =>
       .min(1, t('auth.validation.password_required'))
       .min(8, t('auth.validation.password_size'))
       .max(64, t('auth.validation.password_size')),
-    confirmPassword: z.string()
+    confirmPassword: z
+      .string()
+      .min(1, t('auth.validation.password_required'))
+      .min(8, t('auth.validation.password_size'))
+      .max(64, t('auth.validation.password_size'))
   }).refine(d => d.confirmPassword === d.newPassword, {
     path: ['confirmPassword'],
     message: t('auth.validation.password_confirm_mismatch')

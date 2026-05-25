@@ -10,5 +10,6 @@ data class ChangePasswordRequest(
     @field:Size(min = 8, max = 64, message = "auth.validation.password_size")
     val newPassword: String,
     @field:NotBlank(message = "auth.validation.password_required")
+    @field:Size(min = 8, max = 64, message = "auth.validation.password_size")
     val confirmPassword: String,
 )
