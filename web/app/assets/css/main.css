@@ -47,16 +47,15 @@
   --color-warn:        #A8650A;
   --color-warn-soft:   #F5EBD9;
 
-  /* Bit roles (light) — used by encoding/decoding exercises */
   --color-bit-marker:       #A8650A;
   --color-bit-marker-soft:  #F5EBD9;
-  --color-bit-cont:         #5C6B7E;
-  --color-bit-cont-soft:    #E6EAF0;
+  --color-bit-boundary:     #B8934C;
+  --color-bit-boundary-soft: #F0E5C7;
+  --color-bit-cont:         #7A5A3B;
+  --color-bit-cont-soft:    #EAE0D0;
   --color-bit-payload:      #0F3D6B;
   --color-bit-payload-soft: #E0E8F2;
 
-  /* `primary` palette used by Nuxt UI (see app.config.ts → ui.colors.primary).
-     500 = brand hue (= --color-accent). */
   --color-primary-50:  #E6EDF5;
   --color-primary-100: #C7D6E8;
   --color-primary-200: #98B3D2;
@@ -97,8 +96,10 @@
 
   --color-bit-marker:       #D4A067;
   --color-bit-marker-soft:  #3A2E1A;
-  --color-bit-cont:         #9AA7BA;
-  --color-bit-cont-soft:    #232830;
+  --color-bit-boundary:     #D4C28F;
+  --color-bit-boundary-soft: #2D2820;
+  --color-bit-cont:         #B89870;
+  --color-bit-cont-soft:    #2A2218;
   --color-bit-payload:      #8DBBE0;
   --color-bit-payload-soft: #1B2A3D;
 }
@@ -113,8 +114,57 @@ html, body {
 }
 body { transition: background-color 220ms ease, color 220ms ease; }
 
-@media (prefers-reduced-motion: reduce) {
+@variant motion-reduce {
   *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+.bit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 2.25rem;
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  background: var(--color-code);
+  color: var(--color-ink);
+  border-radius: 4px;
+  line-height: 1;
+  letter-spacing: 0;
+  transition: background-color 200ms ease, color 200ms ease, transform 200ms ease;
+}
+.bit-marker   { background: var(--color-bit-marker-soft);   color: var(--color-bit-marker); }
+.bit-boundary { background: var(--color-bit-boundary-soft); color: var(--color-bit-boundary); }
+.bit-cont     { background: var(--color-bit-cont-soft);     color: var(--color-bit-cont); }
+.bit-payload  { background: var(--color-bit-payload-soft);  color: var(--color-bit-payload); }
+.bit-wrong    { background: var(--color-bad-soft);          color: var(--color-bad); }
+
+.bit-row { display: inline-flex; gap: 3px; align-items: center; flex-wrap: wrap; }
+.bit-sep-mid { width: 8px; }
+
+.codepoint-glyph {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.hex {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.hero-grid {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+
+  @variant lg {
+    grid-template-columns: 2.5fr 1fr;
+    gap: 3.5rem;
+  }
 }
 
 .surface {
@@ -188,10 +238,6 @@ body { transition: background-color 220ms ease, color 220ms ease; }
 .btn-danger:hover { filter: brightness(1.06); }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; filter: none; }
 
-/* Modal dialog (native <dialog>) — Tailwind preflight zeroes margin on
-   <dialog>, which kills the UA `margin: auto` that centers modal dialogs.
-   We restore the centering explicitly: fixed positioning, inset: 0 to fill
-   the viewport, then margin: auto distributes leftover space on both axes. */
 .dlg {
   position: fixed;
   inset: 0;
@@ -265,7 +311,6 @@ body { transition: background-color 220ms ease, color 220ms ease; }
   gap: 6px;
 }
 
-/* Checkbox */
 .checkbox-wrap {
   display: inline-flex;
   align-items: center;
@@ -302,7 +347,6 @@ body { transition: background-color 220ms ease, color 220ms ease; }
   outline: none;
 }
 
-/* Language pill (header) */
 .lang-pill {
   display: inline-flex;
   align-items: center;
