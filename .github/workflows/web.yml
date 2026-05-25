@@ -11,12 +11,20 @@ on:
       - reopened
     paths:
       - "web/**"
+      - ".github/workflows/web.yml"
   push:
     branches:
       - main
       - prod
+    tags:
+      - 'v*'
     paths:
       - "web/**"
+      - ".github/workflows/web.yml"
+
+permissions:
+  contents: read
+  packages: write   # required when the `image` job pushes to ghcr.io
 
 jobs:
   lint:
@@ -102,3 +110,56 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+  image:
+    name: Build & push image
+    runs-on: ubuntu-latest
+    # Image build runs `nuxt build` inside Docker — no separate `build` job
+    # needed in CI. We still gate on lint / typecheck / test passing.
+    needs: [lint, typecheck, test]
+    # Push images on PRs too (tagged `:pr-N`) so the homelab can smoke-test
+    # the image before merge. Feature-branch pushes (no PR) and merge_group
+    # requests are skipped.
+    if: |
+      github.event_name == 'pull_request'
+      || (github.event_name == 'push'
+          && (github.ref == 'refs/heads/main'
+              || github.ref == 'refs/heads/prod'
+              || startsWith(github.ref, 'refs/tags/v')))
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tags produced:
+      #   - PR push      → `:pr-<N>` + `:sha-<short>`
+      #   - main push    → `:latest` + `:sha-<short>`
+      #   - prod push    → `:sha-<short>`
+      #   - tag v1.2.3   → `:1.2.3` + `:1.2` + `:1` + `:sha-<short>`
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ghcr.io/florentsorel/charset-front
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=ref,event=pr
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./web
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+          cache-from: type=gha,scope=front
+          cache-to: type=gha,scope=front,mode=max

@@ -1,0 +1,36 @@
+# Front .dockerignore — context is ./web
+
+# VCS
+.git
+.gitignore
+.gitattributes
+
+# IDE / editor
+.idea
+.vscode
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Nuxt build artefacts — the Dockerfile runs `pnpm install` and
+# `nuxt build` inside the container, so we don't need any local outputs.
+node_modules
+.nuxt
+.output
+.data
+
+# Tests / coverage
+coverage
+.vitest
+
+# Env files (no public env vars baked in via Docker build)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*

@@ -3,7 +3,7 @@ spring:
     name: charset.school
 
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migration
     baseline-on-migrate: false
 
