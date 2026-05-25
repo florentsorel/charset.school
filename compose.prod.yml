@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     ports:
       - "5432:5432"
     healthcheck:
@@ -17,7 +17,7 @@ services:
       timeout: 5s
       retries: 10
 
-  migrate:
+  back:
     image: ghcr.io/florentsorel/charset-back:${TAG:-latest}
     build:
       context: .
@@ -29,24 +29,6 @@ services:
       APP_DB_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:?POSTGRES_DB must be set}
       APP_DB_USERNAME: ${POSTGRES_USER:?POSTGRES_USER must be set}
       APP_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
-      APP_REMEMBER_ME_KEY: ${APP_REMEMBER_ME_KEY:?APP_REMEMBER_ME_KEY must be set}
-    command:
-      - --spring.flyway.enabled=true
-      - --spring.main.web-application-type=none
-    restart: "no"
-
-  back:
-    image: ghcr.io/florentsorel/charset-back:${TAG:-latest}
-    build:
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-    environment:
-      APP_DB_URL: jdbc:postgresql://database:5432/${POSTGRES_DB?:POSTGRES_DB must be set}
-      APP_DB_USERNAME: ${POSTGRES_USER?:POSTGRES_USER must be set}
-      APP_DB_PASSWORD: ${POSTGRES_PASSWORD?:POSTGRES_PASSWORD must be set}
       APP_REMEMBER_ME_KEY: ${APP_REMEMBER_ME_KEY:?APP_REMEMBER_ME_KEY must be set}
     ports:
       - "8080:8080"

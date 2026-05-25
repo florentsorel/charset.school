@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - charset-postgres-data:/var/lib/postgresql/data
+      - charset-postgres-data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U charset -d charset"]
       interval: 5s
