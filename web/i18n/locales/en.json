@@ -33,6 +33,19 @@
       "new_label": "New password",
       "confirm_label": "Confirm",
       "submit": "Update"
+    },
+    "danger": {
+      "title": "Danger zone",
+      "subtitle": "Irreversible action.",
+      "description": "Deleting your account erases your progress and history. It cannot be restored.",
+      "delete_button": "Delete my account",
+      "dialog": {
+        "title": "Delete your account?",
+        "subtitle": "This action is irreversible.",
+        "description": "All your progress and history will be lost. Enter your password to confirm.",
+        "password_label": "Password",
+        "confirm": "Yes, delete my account"
+      }
     }
   },
   "auth": {

@@ -42,12 +42,12 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(CurrentPasswordMismatchException::class)
-    fun handleCurrentPasswordMismatch(): ResponseEntity<ErrorResponse> = ResponseEntity
+    fun handleCurrentPasswordMismatch(ex: CurrentPasswordMismatchException): ResponseEntity<ErrorResponse> = ResponseEntity
         .status(HttpStatus.UNPROCESSABLE_CONTENT)
         .body(
             ErrorResponse(
                 errorType = "validation.failed",
-                fieldErrors = mapOf("currentPassword" to listOf(ProfileValidationKey.CURRENT_PASSWORD_MISMATCH)),
+                fieldErrors = mapOf(ex.field to listOf(ProfileValidationKey.CURRENT_PASSWORD_MISMATCH)),
             ),
         )
 

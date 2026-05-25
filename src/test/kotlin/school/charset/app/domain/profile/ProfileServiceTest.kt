@@ -71,4 +71,37 @@ class ProfileServiceTest :
             }
             verify(exactly = 0) { passwordHasher.matches(any(), any()) }
         }
+
+        test("deleteAccount removes the user when password matches") {
+            val password = RawPassword("real-password")
+            every { userRepository.findById(42) } returns existingUser
+            every { passwordHasher.matches(password, existingUser.passwordHash) } returns true
+            every { userRepository.deleteById(42) } returns Unit
+
+            service.deleteAccount(42, password)
+
+            verify { userRepository.deleteById(42) }
+        }
+
+        test("deleteAccount throws CurrentPasswordMismatchException with field=password when password is wrong") {
+            val password = RawPassword("wrong")
+            every { userRepository.findById(42) } returns existingUser
+            every { passwordHasher.matches(password, existingUser.passwordHash) } returns false
+
+            val ex = shouldThrow<CurrentPasswordMismatchException> {
+                service.deleteAccount(42, password)
+            }
+            ex.field shouldBe "password"
+            verify(exactly = 0) { userRepository.deleteById(any()) }
+        }
+
+        test("deleteAccount throws OrphanedSessionException when user no longer exists") {
+            every { userRepository.findById(42) } returns null
+
+            shouldThrow<OrphanedSessionException> {
+                service.deleteAccount(42, RawPassword("x"))
+            }
+            verify(exactly = 0) { passwordHasher.matches(any(), any()) }
+            verify(exactly = 0) { userRepository.deleteById(any()) }
+        }
     })

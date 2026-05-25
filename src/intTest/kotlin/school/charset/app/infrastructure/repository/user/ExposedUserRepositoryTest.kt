@@ -175,5 +175,25 @@ class ExposedUserRepositoryTest(
         (updated.updatedAt != null) shouldBe true
     }
 
+    @Test
+    fun `deleteById removes the user`() {
+        val created = userRepository.create(
+            email = uniqueEmail(),
+            name = "Dead Man",
+            passwordHash = PasswordHash("h"),
+            locale = "fr",
+        )
+
+        userRepository.deleteById(created.id)
+
+        userRepository.findById(created.id).shouldBeNull()
+    }
+
+    @Test
+    fun `deleteById is a no-op when the id does not exist`() {
+        // No exception even when the row is absent — caller does not care.
+        userRepository.deleteById(Long.MAX_VALUE)
+    }
+
     private fun uniqueEmail(): String = "user-${UUID.randomUUID()}@example.com"
 }
