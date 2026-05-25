@@ -40,3 +40,8 @@ out/
 .kotlin
 
 theme/
+
+### Env / secrets ###
+.env
+.env.*
+!.env.example
