@@ -86,6 +86,10 @@ export default defineNuxtConfig({
     vueI18n: './i18n.config.ts'
   },
 
+  icon: {
+    localApiEndpoint: '/_nuxt_icon'
+  },
+
   sitemap: {
     exclude: [
       '/profile',
