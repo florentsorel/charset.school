@@ -14,16 +14,18 @@ const apiMock = Object.assign(vi.fn(), { raw: apiRawMock })
 const setLocaleMock = vi.fn(async () => {})
 const localeRef = ref<'en' | 'fr'>('en')
 const userState = ref<User | null>(null)
+const userFetchedState = ref<boolean>(false)
 
 vi.stubGlobal('useNuxtApp', () => ({
   $api: apiMock,
   $i18n: { locale: localeRef, setLocale: setLocaleMock }
 }))
-vi.stubGlobal('useState', <T>(_key: string, init: () => T) => {
-  if (userState.value === null && init() === null) {
-    return userState
-  }
-  return userState
+// Returns the same ref per key so reactive state is shared across
+// useAuth() calls in the test, mirroring Nuxt's real useState behaviour.
+vi.stubGlobal('useState', (key: string) => {
+  if (key === 'auth:user') return userState
+  if (key === 'auth:fetched') return userFetchedState
+  throw new Error(`Unknown useState key in test: ${key}`)
 })
 vi.stubGlobal('useRequestHeaders', () => ({}))
 vi.stubGlobal('computed', computed)
@@ -54,6 +56,7 @@ describe('useAuth', () => {
     setLocaleMock.mockReset()
     localeRef.value = 'en'
     userState.value = null
+    userFetchedState.value = false
   })
 
   describe('fetchMe', () => {
@@ -94,6 +97,42 @@ describe('useAuth', () => {
 
       const { fetchMe } = useAuth()
       await expect(fetchMe()).rejects.toThrow('Boom')
+    })
+
+    it('is idempotent: a second call after success does NOT refetch', async () => {
+      apiRawMock.mockResolvedValueOnce(rawResponse(aUser({ id: 7 })))
+
+      const { fetchMe, user } = useAuth()
+      const first = await fetchMe()
+      const second = await fetchMe()
+
+      expect(apiRawMock).toHaveBeenCalledTimes(1)
+      expect(first).toEqual(user.value)
+      expect(second).toEqual(user.value)
+    })
+
+    it('is idempotent: a second call after a 401 does NOT refetch', async () => {
+      apiRawMock.mockRejectedValueOnce(Object.assign(new Error('Unauthorized'), { status: 401 }))
+
+      const { fetchMe } = useAuth()
+      await fetchMe()
+      await fetchMe()
+
+      expect(apiRawMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('allows retry after a non-401 error (marker is rolled back)', async () => {
+      apiRawMock.mockRejectedValueOnce(Object.assign(new Error('Boom'), { status: 500 }))
+      const fetched = aUser()
+      apiRawMock.mockResolvedValueOnce(rawResponse(fetched))
+
+      const { fetchMe, user } = useAuth()
+      await expect(fetchMe()).rejects.toThrow('Boom')
+      const recovered = await fetchMe()
+
+      expect(apiRawMock).toHaveBeenCalledTimes(2)
+      expect(recovered).toEqual(fetched)
+      expect(user.value).toEqual(fetched)
     })
   })
 
@@ -181,6 +220,21 @@ describe('useAuth', () => {
 
       expect(apiMock).toHaveBeenLastCalledWith('/auth/logout', { method: 'POST' })
       expect(user.value).toBeNull()
+    })
+
+    it('resets the fetched marker so a subsequent fetchMe refetches', async () => {
+      apiRawMock.mockResolvedValueOnce(rawResponse(aUser({ id: 1 })))
+      const { fetchMe, logout } = useAuth()
+      await fetchMe()
+
+      apiMock.mockResolvedValueOnce(undefined)
+      await logout()
+
+      apiRawMock.mockResolvedValueOnce(rawResponse(aUser({ id: 2 })))
+      const refetched = await fetchMe()
+
+      expect(apiRawMock).toHaveBeenCalledTimes(2)
+      expect(refetched?.id).toBe(2)
     })
   })
 
