@@ -12,7 +12,30 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  app: {
+    head: {
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico', sizes: 'any' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/site.webmanifest' }
+      ],
+      meta: [
+        { name: 'theme-color', content: '#0F3D6B' }
+      ]
+    }
+  },
+
   css: ['~/assets/css/main.css'],
+
+  // Site config consumed by @nuxtjs/seo: feeds `%siteName` in the default
+  // titleTemplate (`%s %separator %siteName`), canonical URLs, sitemap,
+  // robots.txt, OG defaults, …
+  site: {
+    name: 'Charset School',
+    url: 'https://charset.sorel.dev',
+    defaultLocale: 'en'
+  },
 
   runtimeConfig: {
     apiBaseServer: 'http://localhost:8080/api',
@@ -61,6 +84,25 @@ export default defineNuxtConfig({
       fallbackLocale: 'en'
     },
     vueI18n: './i18n.config.ts'
+  },
+
+  // Sitemap config — @nuxtjs/sitemap auto-discovers `pages/**` and is i18n-aware
+  // (one URL per locale + hreflang links). We exclude auth-required pages so
+  // Google doesn't index `/profile` etc. — they redirect to /login for
+  // unauthenticated visitors and have nothing of value for SEO.
+  //
+  // `zeroRuntime` removes the dynamic `/sitemap.xml` endpoint from the runtime
+  // server and bakes the XML at build time. We have no dynamic sources
+  // (no posts, no user-generated routes) so this is safe and trims the SSR
+  // bundle.
+  sitemap: {
+    exclude: [
+      '/profile',
+      '/profile/**',
+      '/fr/profile',
+      '/fr/profile/**'
+    ],
+    zeroRuntime: true
   },
 
   // Restrict to Claude Code — default auto-detects and generates `.cursor/` etc.

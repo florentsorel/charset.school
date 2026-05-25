@@ -43,6 +43,7 @@ services:
       - back
     environment:
       NUXT_API_BASE_SERVER: http://back:8080/api
+      NUXT_OG_IMAGE_SECRET: ${NUXT_OG_IMAGE_SECRET:?NUXT_OG_IMAGE_SECRET must be set}
     ports:
       - "3000:3000"
     restart: unless-stopped

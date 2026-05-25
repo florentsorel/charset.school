@@ -64,7 +64,7 @@ async function onSubmit() {
 }
 
 useHead({
-  title: () => `${t('auth.register_title')} · ${t('common.app_name')}`
+  title: () => t('auth.register_title')
 })
 </script>
 
