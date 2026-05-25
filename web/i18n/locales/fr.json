@@ -12,7 +12,43 @@
     "theme_system": "Système"
   },
   "landing": {
-    "coming_soon": "Bientôt disponible — un terrain de jeu interactif pour apprendre l'encodage des caractères."
+    "kicker": "outil pédagogique",
+    "headline_lead": "Apprends l'encodage des caractères,",
+    "headline_tail": "un bit à la fois.",
+    "lede": "Exercices interactifs pour décortiquer UTF-8, UTF-16, UTF-32, Latin-1 et Windows-1252 - à la main, sans calculatrice, avec validation pas à pas. Pour les développeurs qui veulent vraiment comprendre la mécanique des bits.",
+    "cta_primary": "Créer un compte gratuit",
+    "cta_secondary": "J'ai déjà un compte",
+    "demo_label": "exemple · encoder UTF-8",
+    "preview_kicker": "aperçu",
+    "preview_title_lead": "Pas juste un sandbox.",
+    "preview_title_tail": "Un coach qui te corrige bit à bit.",
+    "preview_blurb": "Chaque exercice est découpé en étapes. Tu encodes ou décodes à la main, et l'app te dit exactement où tu t'es planté - en langage humain.",
+    "bullets": [
+      "Validation étape par étape, pas seulement à la fin",
+      "Erreurs expliquées en français, pas en codes",
+      "Code points tirés au hasard - pas de fin",
+      "9 modules - UTF-8, UTF-16, UTF-32, Latin-1, mojibake…"
+    ],
+    "coach": {
+      "step_label": "encoder UTF-8 · insérer les marqueurs",
+      "your_answer": "Ta réponse",
+      "feedback": "Tu as oublié le marqueur. U+00E9 (entre U+0080 et U+07FF) tient en 2 octets → premier octet commence par 110xxxxx."
+    },
+    "modules_kicker": "9 modules pour t'entraîner",
+    "modules": {
+      "utf8-encode":  { "title": "Encoder en UTF-8",        "subtitle": "code point → octets" },
+      "utf8-decode":  { "title": "Décoder UTF-8",           "subtitle": "octets → code point" },
+      "utf16-encode": { "title": "Encoder en UTF-16",       "subtitle": "endianness + BOM" },
+      "utf16-decode": { "title": "Décoder UTF-16",          "subtitle": "surrogate pairs inclus" },
+      "utf32-encode": { "title": "Encoder en UTF-32",       "subtitle": "4 octets fixes, padding" },
+      "utf32-decode": { "title": "Décoder UTF-32",          "subtitle": "4 octets + BOM → code point" },
+      "latin1":       { "title": "Latin-1 / Windows-1252",  "subtitle": "tables 8 bits, pièges" },
+      "identify":     { "title": "Identifier l'encodage",   "subtitle": "quels encodages possibles" },
+      "mojibake":     { "title": "Mojibake",                "subtitle": "retrouver l'original" }
+    }
+  },
+  "footer": {
+    "tagline": "Outil pédagogique. Pas de tracking, pas de pub."
   },
   "profile": {
     "title": "Profil",
@@ -60,9 +96,9 @@
     "login_no_account": "Pas encore de compte ?",
     "forgot_password": "Mot de passe oublié ?",
     "register": "Créer un compte",
-    "register_title": "Créer votre compte",
+    "register_title": "Crée ton compte",
     "register_submit": "Créer le compte",
-    "register_have_account": "Vous avez déjà un compte ?",
+    "register_have_account": "Tu as déjà un compte ?",
     "logout": "Se déconnecter",
     "validation": {
       "email_required": "L'email est requis",

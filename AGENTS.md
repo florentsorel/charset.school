@@ -778,6 +778,21 @@ Force 12 (par défaut Spring Security = 10, on monte un peu).
 `/en/...`). Namespaces / fichiers locaux : `common.json`, `auth.json`, `landing.json`,
 `exercise.json`, `modules.json`, `feedback.json` dans `i18n/locales/{fr,en}/`.
 
+### Conventions de rédaction du contenu user-facing
+
+**Tutoiement en FR.** Toujours, partout. Pas de "vous", "votre", "vos". L'app
+s'adresse à l'utilisateur comme un coach, pas comme un manuel administratif.
+Exemples : « Crée ton compte », « Saisis ton mot de passe », « Tu as déjà un
+compte ? ».
+
+**Tiret simple `-`, jamais le tiret cadratin `—`.** Dans tous les contenus
+visibles par l'utilisateur (i18n locales, textes dans les `<template>`),
+on utilise `-` (U+002D, le tiret du clavier). Le caractère `—` (U+2014, em
+dash) est interdit dans le contenu — il rompt l'homogénéité visuelle et
+introduit une variation typographique sans valeur ajoutée. Les commentaires
+de code (`//`, `/* */`, `<!-- -->`) ne sont pas du contenu user-facing et
+peuvent garder le caractère qu'on veut.
+
 ### Synchronisation
 La locale courante est dans `users.locale` (DB) ou cookie `locale` (invités). Renvoyée
 dans `GET /api/auth/me`.
@@ -806,6 +821,49 @@ class AnswerValidator {
     // une fonction privée par type de step
 }
 ```
+
+### Feedback gradué — `hintLevel` côté domaine
+
+**À implémenter en Phase 5** (TBD au moment où on câblera l'API exercice).
+Pour l'instant la landing montre juste un mock direct du feedback "niveau 3".
+
+L'idée : ne pas donner la réponse au premier échec. Le coach guide
+progressivement pour préserver la dimension pédagogique (chercher d'abord par
+soi-même, l'aide arrive si on bloque).
+
+Architecture suggérée :
+
+| Tentative | `hintLevel` | Forme du feedback |
+|---|---|---|
+| 1ère erreur | `1` | Question ouverte qui force la réflexion sans rien révéler ("Quel format UTF-8 correspond à un code point < 2048 ?") |
+| 2ème erreur | `2` | Indice conceptuel — range, format, mais pas la solution ("U+00E9 = 233 < 2048, donc format 2 octets. Le marker 2 octets ressemble à quoi ?") |
+| 3ème erreur | `3` (sur demande) | Réponse + raison ("Le marker 2 octets c'est `110xxxxx`. Sans lui, le décodeur croit que c'est de l'ASCII.") |
+
+**Niveau 3 = sur demande explicite**. Après le 3ème échec, ne pas pousser
+la réponse automatiquement : afficher un bouton "Donne-moi la réponse" qui
+révèle le niveau 3 quand l'utilisateur clique. Sinon il reste sur le hint
+niveau 2 et continue à chercher. L'utilisateur qui veut vraiment apprendre
+ne se fait pas spoiler ; celui qui est bloqué peut débloquer quand il veut.
+
+Modélisation côté domaine :
+
+```kotlin
+data class ValidationResult(
+    val ok: Boolean,
+    val errorType: String? = null,
+    val params: Map<String, String> = emptyMap(),
+    val hintLevel: Int? = null,   // 1, 2 ou 3 — null quand ok = true
+)
+```
+
+Le compteur de tentatives par step vit côté back (dans la session ou dans
+`attempt_steps` selon le besoin de persistence). Le front choisit la clé
+i18n à afficher en fonction du `hintLevel` reçu :
+`feedback.{errorType}.level{hintLevel}`. Le niveau 3 n'est envoyé que si
+le front l'a demandé explicitement via le payload de validation.
+
+Cohérent avec la convention `errorType` stable côté domaine : on ajoute
+une dimension de progression, pas une explosion de codes d'erreur.
 
 ### Anti-cheat — `ValidationResult` ne porte pas la valeur attendue
 
