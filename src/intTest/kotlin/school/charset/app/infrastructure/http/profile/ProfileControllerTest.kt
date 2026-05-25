@@ -349,6 +349,43 @@ class ProfileControllerTest(
     }
 
     @Test
+    fun `DELETE profile revokes persistent remember-me tokens so an orphan cookie cannot reauth after re-registration`() {
+        val email = uniqueEmail()
+        register(email = email, password = "first-password").andExpect(status().isCreated)
+
+        // Login with remember-me to materialise a row in persistent_logins.
+        val loginResult: MvcResult = mockMvc.perform(
+            post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    mapper.writeValueAsString(
+                        mapOf(
+                            "email" to email,
+                            "password" to "first-password",
+                            "rememberMe" to true,
+                        ),
+                    ),
+                ),
+        ).andExpect(status().isOk).andReturn()
+
+        val sessionCookie = loginResult.response.getCookie("SESSION")!!
+        val xsrfCookie = loginResult.response.getCookie("XSRF-TOKEN")!!
+        val rememberMeCookie = loginResult.response.getCookie("remember-me")!!
+        check(!rememberMeCookie.value.isNullOrBlank()) { "remember-me cookie must be issued by the login" }
+
+        deleteAccount(sessionCookie, xsrfCookie, password = "first-password")
+            .andExpect(status().isNoContent)
+
+        // Same email is re-registered as a fresh user. If the old persistent
+        // token had not been revoked, the orphan cookie would auto-log-in the
+        // bearer as this new user (tokens are keyed by username = email).
+        register(email = email, password = "second-password").andExpect(status().isCreated)
+
+        mockMvc.perform(get("/api/auth/me").cookie(rememberMeCookie))
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
     fun `DELETE profile returns 401 when not authenticated`() {
         val bootstrap: MvcResult = mockMvc.perform(get("/api/auth/me")).andReturn()
         val xsrfCookie = bootstrap.response.getCookie("XSRF-TOKEN")!!
