@@ -4,10 +4,13 @@ export function useAuth() {
   const nuxtApp = useNuxtApp()
   const { $api } = nuxtApp
   const user = useState<User | null>('auth:user', () => null)
+  const userFetched = useState<boolean>('auth:fetched', () => false)
 
   const isAuthenticated = computed(() => user.value !== null)
 
   async function fetchMe(): Promise<User | null> {
+    if (userFetched.value) return user.value
+    userFetched.value = true
     const headers = import.meta.server
       ? useRequestHeaders(['cookie'])
       : undefined
@@ -23,6 +26,7 @@ export function useAuth() {
         user.value = null
         return null
       }
+      userFetched.value = false
       throw err
     }
   }
@@ -33,6 +37,7 @@ export function useAuth() {
       body: { email, password, rememberMe }
     })
     user.value = fetched
+    userFetched.value = true
     await syncLocaleWith(fetched.locale)
     return fetched
   }
@@ -48,6 +53,7 @@ export function useAuth() {
       body: input
     })
     user.value = fetched
+    userFetched.value = true
     await syncLocaleWith(fetched.locale)
     return fetched
   }
@@ -55,6 +61,7 @@ export function useAuth() {
   async function logout(): Promise<void> {
     await $api('/auth/logout', { method: 'POST' })
     user.value = null
+    userFetched.value = false
   }
 
   // PATCH /api/profile — partial update of name / email / locale. The back
@@ -97,6 +104,7 @@ export function useAuth() {
       body: input
     })
     user.value = null
+    userFetched.value = false
   }
 
   async function syncLocaleWith(target: User['locale']) {
