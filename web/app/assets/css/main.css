@@ -106,6 +106,7 @@
 
 html {
   scrollbar-gutter: stable;
+  --header-height: 4rem;
 }
 html, body {
   background: var(--color-page);
@@ -167,6 +168,74 @@ body { transition: background-color 220ms ease, color 220ms ease; }
   background: var(--color-code);
   color: var(--color-ink);
   letter-spacing: 0.02em;
+}
+
+/* Sandbox sidebar: sticky offset = natural rest position, so the sidebar
+   doesn't visually shift on first scroll. Position = AppHeader height +
+   layout top padding on lg+ (3.5rem from `md:py-14`). Keep in sync if
+   either changes. */
+.sandbox-sidebar-sticky {
+  top: calc(var(--header-height) + 3.5rem);
+}
+
+/* Sandbox mobile collapsible: native <details> styled as a card with a
+   chevron that rotates open. Keeps the dropdown UX simple - no extra JS
+   for click-outside or escape. */
+.sandbox-nav-collapsible {
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+}
+.sandbox-nav-collapsible > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  list-style: none;
+}
+.sandbox-nav-collapsible > summary::-webkit-details-marker { display: none; }
+.sandbox-nav-collapsible-chevron {
+  margin-left: auto;
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-mute);
+  transition: transform 180ms ease;
+}
+.sandbox-nav-collapsible[open] .sandbox-nav-collapsible-chevron {
+  transform: rotate(180deg);
+}
+
+/* Sandbox sidebar nav: tight rows, active item gets accent left-border. */
+.sandbox-nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-left: 2px solid transparent;
+  font-size: 0.8125rem;
+  color: var(--color-mute);
+  border-radius: 0 4px 4px 0;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.sandbox-nav-link:hover {
+  background: var(--color-subtle);
+  color: var(--color-ink);
+}
+.sandbox-nav-link-active {
+  border-left-color: var(--color-accent);
+  color: var(--color-ink);
+  background: var(--color-subtle);
+  font-weight: 500;
+}
+.sandbox-nav-link-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.sandbox-nav-link-disabled:hover {
+  background: transparent;
+  color: var(--color-mute);
 }
 
 /* Sandbox-specific sizing: bigger headline glyph + tighter result-byte cells. */

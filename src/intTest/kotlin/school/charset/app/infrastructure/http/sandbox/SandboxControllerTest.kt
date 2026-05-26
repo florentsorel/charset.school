@@ -40,13 +40,13 @@ class SandboxControllerTest(
 
     @Test
     fun `encode-utf8 is publicly accessible without auth`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "U+0041"))
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+0041"))
             .andExpect(status().isOk)
     }
 
     @Test
     fun `encodes ASCII 'A' (U+0041) as 1-byte 0x41`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "U+0041"))
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+0041"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.codepoint").value(0x41))
             .andExpect(jsonPath("$.codepointLabel").value("U+0041"))
@@ -57,7 +57,7 @@ class SandboxControllerTest(
 
     @Test
     fun `encodes 'é' (U+00E9) as 2-byte 0xC3 0xA9`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "U+00E9"))
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+00E9"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.codepoint").value(0xE9))
             .andExpect(jsonPath("$.glyph").value("é"))
@@ -70,7 +70,7 @@ class SandboxControllerTest(
 
     @Test
     fun `encodes '🎉' (U+1F389) as 4-byte 0xF0 0x9F 0x8E 0x89`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "🎉"))
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "🎉"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.codepointLabel").value("U+1F389"))
             .andExpect(jsonPath("$.glyph").value("🎉"))
@@ -82,26 +82,26 @@ class SandboxControllerTest(
 
     @Test
     fun `accepts decimal input`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "233"))
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "233"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.codepoint").value(0xE9))
     }
 
     @Test
     fun `accepts 0x-prefixed hex input`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "0xE9"))
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "0xE9"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.codepoint").value(0xE9))
     }
 
     @Test
     fun `control characters get null glyph and a mnemonic label`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "U+000A")) // LF
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+000A")) // LF
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.glyph").doesNotExist())
             .andExpect(jsonPath("$.label").value("LF"))
 
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "U+000F")) // SI
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+000F")) // SI
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.glyph").doesNotExist())
             .andExpect(jsonPath("$.label").value("SI"))
@@ -109,7 +109,7 @@ class SandboxControllerTest(
 
     @Test
     fun `U+0020 SPACE gets null glyph and label SPACE (so the UI shows something)`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "U+0020"))
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+0020"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.glyph").doesNotExist())
             .andExpect(jsonPath("$.label").value("SPACE"))
@@ -117,7 +117,7 @@ class SandboxControllerTest(
 
     @Test
     fun `printable code points get a glyph and null label`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "U+0041")) // 'A'
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+0041")) // 'A'
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.glyph").value("A"))
             .andExpect(jsonPath("$.label").doesNotExist())
@@ -125,7 +125,7 @@ class SandboxControllerTest(
 
     @Test
     fun `returns 422 when input is empty`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", ""))
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", ""))
             .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.errorType").value("sandbox.input-invalid"))
             .andExpect(jsonPath("$.params.reason").value("empty"))
@@ -133,7 +133,7 @@ class SandboxControllerTest(
 
     @Test
     fun `returns 422 when input is unparseable`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "not-a-codepoint"))
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "not-a-codepoint"))
             .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.errorType").value("sandbox.input-invalid"))
             .andExpect(jsonPath("$.params.reason").value("unparseable"))
@@ -141,7 +141,7 @@ class SandboxControllerTest(
 
     @Test
     fun `returns 422 when code point is out of Unicode range`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "U+110000"))
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+110000"))
             .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.errorType").value("sandbox.input-invalid"))
             .andExpect(jsonPath("$.params.reason").value("out_of_range"))
@@ -149,7 +149,7 @@ class SandboxControllerTest(
 
     @Test
     fun `returns 422 when code point is a surrogate`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8").param("input", "U+D800"))
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+D800"))
             .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.errorType").value("sandbox.input-invalid"))
             .andExpect(jsonPath("$.params.reason").value("surrogate"))
@@ -157,7 +157,7 @@ class SandboxControllerTest(
 
     @Test
     fun `returns 422 when input param is missing entirely (defaults to empty)`() {
-        mockMvc.perform(get("/api/sandbox/encode-utf8"))
+        mockMvc.perform(get("/api/sandbox/encode/utf-8"))
             .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.params.reason").value("empty"))
     }

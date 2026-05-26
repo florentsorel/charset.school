@@ -51,7 +51,11 @@
       "utf16-decode": { "title": "Decode UTF-16",           "subtitle": "surrogate pairs included" },
       "utf32-encode": { "title": "Encode UTF-32",           "subtitle": "fixed 4 bytes, padding" },
       "utf32-decode": { "title": "Decode UTF-32",           "subtitle": "4 bytes + BOM → code point" },
-      "latin1":       { "title": "Latin-1 / Windows-1252",  "subtitle": "8-bit tables, gotchas" },
+      "latin1":         { "title": "Latin-1 / Windows-1252", "subtitle": "8-bit tables, gotchas" },
+      "latin1-encode":      { "title": "Encode in Latin-1",      "subtitle": "code point → byte" },
+      "latin1-decode":      { "title": "Decode Latin-1",         "subtitle": "byte → code point" },
+      "windows1252-encode": { "title": "Encode in Windows-1252", "subtitle": "code point → byte" },
+      "windows1252-decode": { "title": "Decode Windows-1252",    "subtitle": "byte → code point" },
       "identify":     { "title": "Identify the encoding",   "subtitle": "what encodings are possible" },
       "mojibake":     { "title": "Mojibake",                "subtitle": "recover the original" }
     }
@@ -65,6 +69,14 @@
     "menu": "Menu"
   },
   "sandbox": {
+    "landing": {
+      "title": "Sandbox",
+      "subtitle": "Explore character encodings by hand, no quizzes. Pick a module to get started.",
+      "section_encode": "Encoding",
+      "section_decode": "Decoding",
+      "section_other": "Other",
+      "coming_soon": "Coming soon"
+    },
     "title": "UTF-8 sandbox",
     "subtitle": "Convert a Unicode code point to UTF-8.",
     "input_label": "Code point",

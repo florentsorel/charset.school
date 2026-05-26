@@ -18,7 +18,7 @@ class SandboxController(
     private val sandboxService: SandboxService,
     private val sandboxInputParser: SandboxInputParser,
 ) {
-    @GetMapping("/encode-utf8")
+    @GetMapping("/encode/utf-8")
     fun encodeUtf8(@RequestParam(defaultValue = "") input: String): ResponseEntity<Utf8SandboxResponse> {
         val codePoint = sandboxInputParser.parse(input)
         val steps = sandboxService.encodeUtf8Verbose(codePoint)

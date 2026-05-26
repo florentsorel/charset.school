@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ auth: false })
+definePageMeta({ auth: false, layout: 'sandbox' })
 
 const { t } = useI18n()
 const { $api } = useNuxtApp()
@@ -50,7 +50,7 @@ const { data: response } = await useAsyncData<Utf8SandboxResponse | null>(
   async () => {
     try {
       const result = await $api<Utf8SandboxResponse>(
-        `/sandbox/encode-utf8?input=${encodeURIComponent(debouncedInput.value)}`
+        `/sandbox/encode/utf-8?input=${encodeURIComponent(debouncedInput.value)}`
       )
       apiError.value = null
       return result
@@ -106,7 +106,7 @@ function hexLabel(byte: number): string {
 </script>
 
 <template>
-  <main class="mx-auto w-full max-w-3xl min-w-0 px-4 sm:px-6 py-12 md:py-16">
+  <main class="min-w-0">
     <header class="mb-10">
       <p class="font-mono text-xs uppercase tracking-widest text-faint mb-3">
         sandbox
