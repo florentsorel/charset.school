@@ -1,4 +1,12 @@
 {
+  "format-choice": {
+    "byte-count": {
+      "1": "1 byte",
+      "2": "2 bytes",
+      "3": "3 bytes",
+      "4": "4 bytes"
+    }
+  },
   "common": {
     "app_name": "Charset School",
     "loading": "Loading…",
@@ -55,6 +63,48 @@
     "my_profile": "My profile",
     "user_menu": "User menu",
     "menu": "Menu"
+  },
+  "sandbox": {
+    "title": "UTF-8 sandbox",
+    "subtitle": "Convert a Unicode code point to UTF-8.",
+    "input_label": "Code point",
+    "input_placeholder": "U+00E9, 0xE9, 233 or the character itself",
+    "input_help": "Accepts U+XXXX, 0xXX, decimal, or a single character.",
+    "non_printable": "non-printable",
+    "errors": {
+      "empty": "Enter a code point.",
+      "unparseable": "Unrecognised format.",
+      "out_of_range": "Outside the Unicode range (0 → U+10FFFF).",
+      "surrogate": "Surrogates (U+D800 → U+DFFF) are not valid UTF-8."
+    },
+    "byte_singular": "{n} byte",
+    "byte_plural": "{n} bytes",
+    "hex_label": "Hexadecimal",
+    "binary_label": "Binary",
+    "steps_title": "Step-by-step breakdown",
+    "step": {
+      "binary": "Convert to binary",
+      "binary_desc": "Code point {cp} fits in {bits} significant bits (padded to the form's payload length).",
+      "format": "Pick the UTF-8 form",
+      "format_desc": {
+        "1": "Range `U+0000` -> `U+007F` - 7 useful bits, plain ASCII form.",
+        "2": "Range `U+0080` -> `U+07FF` - 11 useful bits, beyond ASCII.",
+        "3": "Range `U+0800` -> `U+FFFF` - 16 useful bits, BMP beyond Latin extended.",
+        "4": "Range `U+10000` -> `U+10FFFF` - 21 useful bits, supplementary planes (emojis, etc.)."
+      },
+      "split": "Split into chunks",
+      "split_desc": "Split by the form's payload-slot widths ({slots} bits).",
+      "markers": "Insert the markers",
+      "markers_desc": {
+        "1": "The byte carries the marker `0` (1 bit). ASCII-compatible code point, no continuation bytes.",
+        "2": "The first byte carries the marker `110` (3 bits); the next carries `10` (continuation).",
+        "3": "The first byte carries the marker `1110` (4 bits); the 2 following carry `10` (continuation).",
+        "4": "The first byte carries the marker `11110` (5 bits); the 3 following carry `10` (continuation)."
+      },
+      "hex": "Convert to hexadecimal",
+      "hex_desc_singular": "Each binary byte becomes its hex value on `1` digit.",
+      "hex_desc_plural": "Each binary byte becomes its hex value on `{count}` digits."
+    }
   },
   "profile": {
     "title": "Profile",

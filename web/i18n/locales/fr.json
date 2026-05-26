@@ -1,4 +1,12 @@
 {
+  "format-choice": {
+    "byte-count": {
+      "1": "1 octet",
+      "2": "2 octets",
+      "3": "3 octets",
+      "4": "4 octets"
+    }
+  },
   "common": {
     "app_name": "Charset School",
     "loading": "Chargement…",
@@ -55,6 +63,48 @@
     "my_profile": "Mon profil",
     "user_menu": "Menu utilisateur",
     "menu": "Menu"
+  },
+  "sandbox": {
+    "title": "Sandbox UTF-8",
+    "subtitle": "Convertis un code point Unicode en UTF-8.",
+    "input_label": "Code point",
+    "input_placeholder": "U+00E9, 0xE9, 233 ou directement le caractère",
+    "input_help": "Accepte U+XXXX, 0xXX, décimal, ou un caractère unique.",
+    "non_printable": "non imprimable",
+    "errors": {
+      "empty": "Entre un code point.",
+      "unparseable": "Format non reconnu.",
+      "out_of_range": "Hors plage Unicode (0 → U+10FFFF).",
+      "surrogate": "Les surrogates (U+D800 → U+DFFF) ne sont pas valides en UTF-8."
+    },
+    "byte_singular": "{n} octet",
+    "byte_plural": "{n} octets",
+    "hex_label": "Hexadécimal",
+    "binary_label": "Binaire",
+    "steps_title": "Étapes détaillées",
+    "step": {
+      "binary": "Convertir en binaire",
+      "binary_desc": "Le code point {cp} tient sur {bits} bits significatifs (paddés à la longueur du format).",
+      "format": "Choisir le format UTF-8",
+      "format_desc": {
+        "1": "Plage `U+0000` → `U+007F` - 7 bits utiles, format ASCII pur.",
+        "2": "Plage `U+0080` → `U+07FF` - 11 bits utiles, au-delà de l'ASCII.",
+        "3": "Plage `U+0800` → `U+FFFF` - 16 bits utiles, BMP au-delà du Latin étendu.",
+        "4": "Plage `U+10000` → `U+10FFFF` - 21 bits utiles, plans supplémentaires (emojis, etc.)."
+      },
+      "split": "Découper en chunks",
+      "split_desc": "Découpage selon les emplacements payload du format ({slots} bits).",
+      "markers": "Insérer les marqueurs",
+      "markers_desc": {
+        "1": "L'octet porte le marqueur `0` (1 bit). Code point compatible ASCII, pas d'octet de continuation.",
+        "2": "Le premier octet porte le marqueur `110` (3 bits) ; le suivant porte `10` (continuation).",
+        "3": "Le premier octet porte le marqueur `1110` (4 bits) ; les 2 suivants portent `10` (continuation).",
+        "4": "Le premier octet porte le marqueur `11110` (5 bits) ; les 3 suivants portent `10` (continuation)."
+      },
+      "hex": "Convertir en hexadécimal",
+      "hex_desc_singular": "Chaque octet binaire devient sa valeur hex sur `1` chiffre.",
+      "hex_desc_plural": "Chaque octet binaire devient sa valeur hex sur `{count}` chiffres."
+    }
   },
   "profile": {
     "title": "Profil",

@@ -10,9 +10,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import school.charset.app.domain.auth.AuthErrorType
 import school.charset.app.domain.auth.OrphanedSessionException
+import school.charset.app.domain.encoding.EncoderException
 import school.charset.app.domain.profile.CurrentPasswordMismatchException
 import school.charset.app.domain.profile.PasswordConfirmationMismatchException
 import school.charset.app.domain.profile.ProfileValidationKey
+import school.charset.app.domain.sandbox.SandboxParseException
 import school.charset.app.domain.user.EmailAlreadyTakenException
 
 @RestControllerAdvice
@@ -58,6 +60,26 @@ class GlobalExceptionHandler {
             ErrorResponse(
                 errorType = "validation.failed",
                 fieldErrors = mapOf("confirmPassword" to listOf(ProfileValidationKey.PASSWORD_CONFIRM_MISMATCH)),
+            ),
+        )
+
+    @ExceptionHandler(SandboxParseException::class)
+    fun handleSandboxParse(ex: SandboxParseException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(
+            ErrorResponse(
+                errorType = "sandbox.input-invalid",
+                params = mapOf("reason" to ex.reason),
+            ),
+        )
+
+    @ExceptionHandler(EncoderException::class)
+    fun handleEncoderException(ex: EncoderException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .body(
+            ErrorResponse(
+                errorType = "encoding.not-encodable",
+                params = mapOf("reason" to (ex.message ?: "")),
             ),
         )
 

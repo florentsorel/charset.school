@@ -104,6 +104,9 @@
   --color-bit-payload-soft: #1B2A3D;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
 html, body {
   background: var(--color-page);
   color: var(--color-ink);
@@ -156,6 +159,25 @@ body { transition: background-color 220ms ease, color 220ms ease; }
   letter-spacing: 0.02em;
 }
 
+.inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  padding: 0.05em 0.35em;
+  border-radius: 4px;
+  background: var(--color-code);
+  color: var(--color-ink);
+  letter-spacing: 0.02em;
+}
+
+/* Sandbox-specific sizing: bigger headline glyph + tighter result-byte cells. */
+.codepoint-label-lg { font-size: 1.75rem; line-height: 1; }
+.bit-sm {
+  width: 1.5rem;
+  height: 1.85rem;
+  font-size: 13px;
+}
+.bit-row-tight { gap: 2px; }
+
 .hero-grid {
   display: grid;
   gap: 2.5rem;
@@ -165,6 +187,30 @@ body { transition: background-color 220ms ease, color 220ms ease; }
     grid-template-columns: 2.5fr 1fr;
     gap: 3.5rem;
   }
+}
+
+.step-dot {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  background: var(--color-subtle);
+  color: var(--color-mute);
+  border: 1px solid var(--color-rule);
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+.step-connector {
+  width: 2px;
+  flex: 1;
+  background: var(--color-rule);
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 
 .surface {
