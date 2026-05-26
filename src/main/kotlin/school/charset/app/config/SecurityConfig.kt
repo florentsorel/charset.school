@@ -88,6 +88,7 @@ class SecurityConfig {
                     "/api/auth/login",
                     "/api/auth/forgot-password",
                     "/api/auth/reset-password",
+                    "/api/sandbox/**",
                 ).permitAll()
                 auth.anyRequest().authenticated()
             }
@@ -100,6 +101,7 @@ class SecurityConfig {
                     "/api/auth/login",
                     "/api/auth/forgot-password",
                     "/api/auth/reset-password",
+                    "/api/sandbox/**",
                 )
             }
             // Forces the lazy XSRF-TOKEN cookie to be written on every response.

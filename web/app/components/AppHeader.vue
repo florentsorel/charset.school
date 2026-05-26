@@ -39,9 +39,16 @@ const guestItems = computed(() => [
   { label: t('auth.register'), icon: 'i-lucide-user-plus', to: localePath('/register') }
 ])
 
-const mobileMenuItems = computed(() =>
-  isAuthenticated.value ? authedItems.value : guestItems.value
-)
+const sandboxItem = computed(() => ({
+  label: t('header.sandbox'),
+  icon: 'i-lucide-flask-conical',
+  to: localePath('/sandbox')
+}))
+
+const mobileMenuItems = computed(() => [
+  sandboxItem.value,
+  ...(isAuthenticated.value ? authedItems.value : guestItems.value)
+])
 
 // Custom styling that overrides Nuxt UI's default dropdown look so it
 // matches our design tokens (surface/rule/subtle colors, sans font,
@@ -82,6 +89,13 @@ const mobileDropdownUi = {
            `class` prop lands on its inner trigger, not on a wrapper —
            making conditional visibility unreliable when applied directly. -->
       <div class="hidden md:flex items-center gap-2.5">
+        <NuxtLink
+          :to="localePath('/sandbox')"
+          class="btn btn-soft text-sm"
+        >
+          {{ t('header.sandbox') }}
+        </NuxtLink>
+
         <template v-if="!isAuthenticated">
           <NuxtLink
             :to="localePath('/login')"
