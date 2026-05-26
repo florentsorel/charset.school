@@ -13,6 +13,7 @@
   },
   "landing": {
     "kicker": "teaching tool",
+    "title_tagline": "Learn character encoding",
     "headline_lead": "Learn character encoding,",
     "headline_tail": "one bit at a time.",
     "lede": "Interactive exercises to take apart UTF-8, UTF-16, UTF-32, Latin-1 and Windows-1252 - by hand, no calculator, step-by-step validation. For developers who actually want to understand the bit-level mechanics.",

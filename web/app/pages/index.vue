@@ -6,7 +6,7 @@ const localePath = useLocalePath()
 const { isAuthenticated } = useAuth()
 
 useHead({
-  titleTemplate: '%siteName'
+  titleTemplate: () => `${t('landing.title_tagline')} · charset.school`
 })
 
 // Modules listed in the landing teaser. IDs map to the future exercise URLs

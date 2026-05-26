@@ -13,6 +13,7 @@
   },
   "landing": {
     "kicker": "outil pédagogique",
+    "title_tagline": "Apprends l'encodage des caractères",
     "headline_lead": "Apprends l'encodage des caractères,",
     "headline_tail": "un bit à la fois.",
     "lede": "Exercices interactifs pour décortiquer UTF-8, UTF-16, UTF-32, Latin-1 et Windows-1252 - à la main, sans calculatrice, avec validation pas à pas. Pour les développeurs qui veulent vraiment comprendre la mécanique des bits.",
