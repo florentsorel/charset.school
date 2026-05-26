@@ -18,7 +18,8 @@ class SandboxInputParser {
             return validateRange(it.toInt(16))
         }
         if (decRegex.matches(s)) {
-            return validateRange(s.toInt())
+            val value = s.toIntOrNull() ?: throw SandboxParseException(REASON_OUT_OF_RANGE)
+            return validateRange(value)
         }
 
         val codePoints = s.codePoints().toArray()

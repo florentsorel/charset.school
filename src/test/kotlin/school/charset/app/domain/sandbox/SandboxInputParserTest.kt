@@ -50,6 +50,11 @@ class SandboxInputParserTest :
             shouldThrow<SandboxParseException> { parser.parse("1114112") }.reason shouldBe "out_of_range"
         }
 
+        test("rejects decimal inputs that overflow Int as out_of_range (no NFE leak to 500)") {
+            shouldThrow<SandboxParseException> { parser.parse("9999999999") }.reason shouldBe "out_of_range"
+            shouldThrow<SandboxParseException> { parser.parse("99999999999999999999") }.reason shouldBe "out_of_range"
+        }
+
         test("rejects surrogate code points") {
             shouldThrow<SandboxParseException> { parser.parse("U+D800") }.reason shouldBe "surrogate"
             shouldThrow<SandboxParseException> { parser.parse("U+DFFF") }.reason shouldBe "surrogate"

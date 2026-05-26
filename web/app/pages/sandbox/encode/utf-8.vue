@@ -70,10 +70,14 @@ const errorMessage = computed(() => {
   return t(`sandbox.errors.${apiError.value}`)
 })
 
-const formatStep = computed(() => response.value?.steps.find(s => s.type === 'format'))
-const binaryStep = computed(() => response.value?.steps.find(s => s.type === 'binary'))
-const bitGroupsStep = computed(() => response.value?.steps.find(s => s.type === 'bit-groups'))
-const hexBytesStep = computed(() => response.value?.steps.find(s => s.type === 'hex-bytes'))
+function stepOfType<T extends SandboxStep['type']>(type: T) {
+  return (s: SandboxStep): s is Extract<SandboxStep, { type: T }> => s.type === type
+}
+
+const formatStep = computed(() => response.value?.steps.find(stepOfType('format')))
+const binaryStep = computed(() => response.value?.steps.find(stepOfType('binary')))
+const bitGroupsStep = computed(() => response.value?.steps.find(stepOfType('bit-groups')))
+const hexBytesStep = computed(() => response.value?.steps.find(stepOfType('hex-bytes')))
 
 function byteLabel(n: number): string {
   return n <= 1 ? t('sandbox.byte_singular', { n }) : t('sandbox.byte_plural', { n })
