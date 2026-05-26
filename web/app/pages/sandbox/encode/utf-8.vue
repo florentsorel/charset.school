@@ -29,7 +29,13 @@ type SandboxParseError = {
   }
 }
 
-const rawInput = ref('U+00E9')
+const route = useRoute()
+const router = useRouter()
+const initialRawInput = (() => {
+  const q = route.query.input
+  return typeof q === 'string' && q.length > 0 ? q : 'U+00E9'
+})()
+const rawInput = ref(initialRawInput)
 
 const debouncedInput = ref(rawInput.value)
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -41,6 +47,10 @@ watch(rawInput, (v) => {
 })
 onBeforeUnmount(() => {
   if (debounceTimer) clearTimeout(debounceTimer)
+})
+
+watch(debouncedInput, (v) => {
+  router.replace({ query: { ...route.query, input: v } })
 })
 
 const apiError = ref<SandboxParseError['params']['reason'] | null>(null)
