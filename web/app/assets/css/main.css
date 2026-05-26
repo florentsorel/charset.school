@@ -333,6 +333,11 @@ body { transition: background-color 220ms ease, color 220ms ease; }
   color: var(--color-mute);
 }
 .btn-quiet:hover { color: var(--color-ink); background: var(--color-subtle); }
+.btn-soft {
+  background: var(--color-subtle);
+  color: var(--color-ink);
+}
+.btn-soft:hover { background: var(--color-code); }
 .btn-link {
   background: transparent;
   padding: 0;

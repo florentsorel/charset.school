@@ -65,6 +65,12 @@ const bulletItems = computed(() => tm('landing.bullets') as unknown as string[])
             >
               {{ t('landing.cta_secondary') }}
             </NuxtLink>
+            <NuxtLink
+              :to="localePath('/sandbox')"
+              :class="isAuthenticated ? 'btn btn-primary' : 'btn btn-ghost'"
+            >
+              {{ t('landing.cta_sandbox') }}
+            </NuxtLink>
           </div>
         </div>
         <!-- Hidden on mobile/tablet to keep the hero focused on the headline.

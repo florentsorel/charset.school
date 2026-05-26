@@ -27,6 +27,7 @@
     "lede": "Exercices interactifs pour décortiquer UTF-8, UTF-16, UTF-32, Latin-1 et Windows-1252 - à la main, sans calculatrice, avec validation pas à pas. Pour les développeurs qui veulent vraiment comprendre la mécanique des bits.",
     "cta_primary": "Créer un compte gratuit",
     "cta_secondary": "J'ai déjà un compte",
+    "cta_sandbox": "Essayer le sandbox",
     "demo_label": "exemple · encoder UTF-8",
     "preview_kicker": "aperçu",
     "preview_title_lead": "Pas juste un sandbox.",
@@ -66,7 +67,8 @@
   "header": {
     "my_profile": "Mon profil",
     "user_menu": "Menu utilisateur",
-    "menu": "Menu"
+    "menu": "Menu",
+    "sandbox": "Sandbox"
   },
   "sandbox": {
     "landing": {

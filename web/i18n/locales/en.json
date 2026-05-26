@@ -27,6 +27,7 @@
     "lede": "Interactive exercises to take apart UTF-8, UTF-16, UTF-32, Latin-1 and Windows-1252 - by hand, no calculator, step-by-step validation. For developers who actually want to understand the bit-level mechanics.",
     "cta_primary": "Create a free account",
     "cta_secondary": "I already have an account",
+    "cta_sandbox": "Try the sandbox",
     "demo_label": "example · encode UTF-8",
     "preview_kicker": "preview",
     "preview_title_lead": "Not just a sandbox.",
@@ -66,7 +67,8 @@
   "header": {
     "my_profile": "My profile",
     "user_menu": "User menu",
-    "menu": "Menu"
+    "menu": "Menu",
+    "sandbox": "Sandbox"
   },
   "sandbox": {
     "landing": {
