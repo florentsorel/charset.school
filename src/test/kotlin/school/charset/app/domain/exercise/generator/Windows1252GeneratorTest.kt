@@ -111,6 +111,126 @@ class Windows1252GeneratorTest :
             exception.message shouldBe "Cannot generate exercise for windows-1252 level 99: level must be one of: 1, 2"
         }
 
+        "buildEncodeStepsFor (sandbox)" - {
+            val sut = Windows1252Generator(codec, mockk(), mockk())
+
+            "ASCII identity U+0041 (A) -> byte 0x41" {
+                val steps = sut.buildEncodeStepsFor(CodePoint(0x41), Granularity.Verbose)
+                steps shouldHaveSize 2
+                val binary = steps[0].shouldBeInstanceOf<Step.Binary>()
+                val hex = steps[1].shouldBeInstanceOf<Step.HexBytes>()
+                binary.expected shouldBe "01000001"
+                binary.length shouldBe 8
+                hex.expected shouldBe listOf(0x41)
+            }
+
+            "Latin-1 identity U+00E9 (e acute) -> byte 0xE9" {
+                val steps = sut.buildEncodeStepsFor(CodePoint(0xE9), Granularity.Verbose)
+                val binary = steps[0].shouldBeInstanceOf<Step.Binary>()
+                val hex = steps[1].shouldBeInstanceOf<Step.HexBytes>()
+                binary.expected shouldBe "11101001"
+                hex.expected shouldBe listOf(0xE9)
+            }
+
+            "Microsoft extension U+20AC (Euro) -> byte 0x80" {
+                val steps = sut.buildEncodeStepsFor(CodePoint(0x20AC), Granularity.Verbose)
+                val binary = steps[0].shouldBeInstanceOf<Step.Binary>()
+                val hex = steps[1].shouldBeInstanceOf<Step.HexBytes>()
+                binary.expected shouldBe "10000000"
+                hex.expected shouldBe listOf(0x80)
+            }
+
+            "Microsoft extension U+2014 (em dash) -> byte 0x97" {
+                val steps = sut.buildEncodeStepsFor(CodePoint(0x2014), Granularity.Verbose)
+                val hex = steps[1].shouldBeInstanceOf<Step.HexBytes>()
+                hex.expected shouldBe listOf(0x97)
+            }
+
+            "Microsoft extension U+2122 (trademark) -> byte 0x99" {
+                val steps = sut.buildEncodeStepsFor(CodePoint(0x2122), Granularity.Verbose)
+                val hex = steps[1].shouldBeInstanceOf<Step.HexBytes>()
+                hex.expected shouldBe listOf(0x99)
+            }
+
+            "Microsoft extension U+2018 (left single quote, smart quote) -> byte 0x91" {
+                val steps = sut.buildEncodeStepsFor(CodePoint(0x2018), Granularity.Verbose)
+                val hex = steps[1].shouldBeInstanceOf<Step.HexBytes>()
+                hex.expected shouldBe listOf(0x91)
+            }
+
+            "U+0100 (Latin A with macron) is rejected as not encodable" {
+                shouldThrow<school.charset.app.domain.encoding.EncoderException> {
+                    sut.buildEncodeStepsFor(CodePoint(0x0100), Granularity.Verbose)
+                }
+            }
+        }
+
+        "buildDecodeStepsFor (sandbox)" - {
+            val sut = Windows1252Generator(codec, mockk(), mockk())
+
+            "ASCII identity byte 0x41 -> U+0041 (A)" {
+                val bytes = byteArrayOf(0x41)
+                val cp = codec.decode(bytes, Encoding.Windows1252)
+                val steps = sut.buildDecodeStepsFor(bytes, cp, Granularity.Verbose)
+                steps shouldHaveSize 2
+                steps[0].shouldBeInstanceOf<Step.Binary>().expected shouldBe "01000001"
+                steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x41
+            }
+
+            "Latin-1 identity byte 0xE9 -> U+00E9 (e acute)" {
+                val bytes = byteArrayOf(0xE9.toByte())
+                val cp = codec.decode(bytes, Encoding.Windows1252)
+                val steps = sut.buildDecodeStepsFor(bytes, cp, Granularity.Verbose)
+                steps[0].shouldBeInstanceOf<Step.Binary>().expected shouldBe "11101001"
+                steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0xE9
+            }
+
+            "Microsoft extension byte 0x80 -> U+20AC (Euro)" {
+                val bytes = byteArrayOf(0x80.toByte())
+                val cp = codec.decode(bytes, Encoding.Windows1252)
+                val steps = sut.buildDecodeStepsFor(bytes, cp, Granularity.Verbose)
+                steps[0].shouldBeInstanceOf<Step.Binary>().expected shouldBe "10000000"
+                steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x20AC
+            }
+
+            "Microsoft extension byte 0x97 -> U+2014 (em dash)" {
+                val bytes = byteArrayOf(0x97.toByte())
+                val cp = codec.decode(bytes, Encoding.Windows1252)
+                val steps = sut.buildDecodeStepsFor(bytes, cp, Granularity.Verbose)
+                steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x2014
+            }
+
+            "unassigned byte 0x81 is rejected by Codec.decode" {
+                shouldThrow<school.charset.app.domain.encoding.DecoderException> {
+                    codec.decode(byteArrayOf(0x81.toByte()), Encoding.Windows1252)
+                }
+            }
+
+            "unassigned byte 0x8D is rejected by Codec.decode" {
+                shouldThrow<school.charset.app.domain.encoding.DecoderException> {
+                    codec.decode(byteArrayOf(0x8D.toByte()), Encoding.Windows1252)
+                }
+            }
+
+            "unassigned byte 0x8F is rejected by Codec.decode" {
+                shouldThrow<school.charset.app.domain.encoding.DecoderException> {
+                    codec.decode(byteArrayOf(0x8F.toByte()), Encoding.Windows1252)
+                }
+            }
+
+            "unassigned byte 0x90 is rejected by Codec.decode" {
+                shouldThrow<school.charset.app.domain.encoding.DecoderException> {
+                    codec.decode(byteArrayOf(0x90.toByte()), Encoding.Windows1252)
+                }
+            }
+
+            "unassigned byte 0x9D is rejected by Codec.decode" {
+                shouldThrow<school.charset.app.domain.encoding.DecoderException> {
+                    codec.decode(byteArrayOf(0x9D.toByte()), Encoding.Windows1252)
+                }
+            }
+        }
+
         "generateDecode" - {
             fun newDecodeSut(bytes: ByteArray, level: Int = 1): Windows1252Generator {
                 val bag = mockk<ByteArrayGenerator>()

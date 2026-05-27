@@ -293,6 +293,60 @@
         "code_point": "Convert to a code point",
         "code_point_desc": "The binary equals `{decimal}` in decimal, i.e. `{cp}` in Unicode notation."
       }
+    },
+    "encode_windows1252": {
+      "title": "Windows-1252 sandbox (encode)",
+      "subtitle": "Convert a Unicode code point into a single Windows-1252 (CP1252) byte.",
+      "range_label": "[CP1252^Code Page 1252] range",
+      "range_desc": {
+        "ascii": "Range `0x00` → `0x7F` - identical to ASCII (and to Latin-1).",
+        "special": "Range `0x80` → `0x9F` - the Microsoft extension: 27 printable characters like `€`, `™`, `—`, smart quotes, ... This is where [CP1252^Code Page 1252] differs from Latin-1 (which has C1 controls in that slot). 5 bytes remain unassigned: `0x81`, `0x8D`, `0x8F`, `0x90`, `0x9D`.",
+        "latin1": "Range `0xA0` → `0xFF` - identical to Latin-1 (accented characters, symbols)."
+      },
+      "errors": {
+        "not-encodable": "This code point isn't in the Windows-1252 table. Outside the ASCII and Latin-1 ranges, only 27 specific characters can be encoded."
+      },
+      "step": {
+        "binary": "Read the byte value in binary",
+        "binary_desc": {
+          "ascii": "Code point `{cp}` is in the ASCII range: its byte `0x00` → `0x7F` reads straight into binary (8 bits, high bit `0`).",
+          "special": "Code point `{cp}` isn't in an identity range. Look up the [CP1252^Code Page 1252] table to find its byte between `0x80` and `0x9F`, then convert to binary.",
+          "latin1": "Code point `{cp}` is in the Latin-1 Supplement range (`U+00A0` → `U+00FF`): its byte matches the code point value, written as 8 bits."
+        },
+        "hex": "Convert to hexadecimal",
+        "hex_desc": "The binary byte becomes its 2-digit hex value."
+      }
+    },
+    "decode_windows1252": {
+      "title": "Windows-1252 sandbox (decode)",
+      "subtitle": "Convert a Windows-1252 (CP1252) byte into a Unicode code point.",
+      "input_label": "Byte",
+      "input_placeholder": "80, 0x80, or E9",
+      "input_help": "Hex (with or without `0x`). Windows-1252 encodes one character per byte.",
+      "range_label": "[CP1252^Code Page 1252] range",
+      "range_desc": {
+        "ascii": "Range `0x00` → `0x7F` - ASCII identity: the byte is its own code point.",
+        "special": "Range `0x80` → `0x9F` - the Microsoft extension. This is where Windows-1252 diverges from Latin-1: 27 printable characters (`€` at `0x80`, `™` at `0x99`, em-dash `—` at `0x97`, smart quotes, ...) instead of C1 controls.",
+        "latin1": "Range `0xA0` → `0xFF` - Latin-1 identity: the byte is its own code point."
+      },
+      "errors": {
+        "empty": "Enter a hex byte.",
+        "invalid_hex": "Non-hex characters detected.",
+        "odd_length": "The byte is incomplete (odd number of hex digits).",
+        "too_long": "Too many bytes: Windows-1252 encodes a single character in one byte.",
+        "not-decodable": "This byte doesn't map to any character in Windows-1252. Either it's an unassigned byte (`0x81`, `0x8D`, `0x8F`, `0x90`, `0x9D`), or you entered more than one byte (CP1252 = 1 byte per character)."
+      },
+      "bytes_label": "Byte",
+      "step": {
+        "binary": "Read the value in binary",
+        "binary_desc": "Write the byte value as 8 bits.",
+        "code_point": "Convert to a code point",
+        "code_point_desc": {
+          "ascii": "The byte is `{decimal}` in decimal, identical to its code point (ASCII range: pure identity). That's `{cp}` in Unicode notation.",
+          "special": "The byte is in the Microsoft extension. The [CP1252^Code Page 1252] table maps it to `{cp}` (decimal `{decimal}`). Classic trap: if you read this same byte as Latin-1, you get an invisible C1 control instead of a printable character.",
+          "latin1": "The byte is `{decimal}` in decimal, identical to its code point (Latin-1 range: pure identity). That's `{cp}` in Unicode notation."
+        }
+      }
     }
   },
   "profile": {

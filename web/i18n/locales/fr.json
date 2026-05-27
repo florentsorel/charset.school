@@ -293,6 +293,60 @@
         "code_point": "Convertir en code point",
         "code_point_desc": "Le binaire vaut `{decimal}` en décimal, soit `{cp}` en notation Unicode."
       }
+    },
+    "encode_windows1252": {
+      "title": "Sandbox Windows-1252 (encodage)",
+      "subtitle": "Convertis un code point Unicode en un seul octet Windows-1252 (CP1252).",
+      "range_label": "Plage [CP1252^Code Page 1252]",
+      "range_desc": {
+        "ascii": "Plage `0x00` → `0x7F` - identique à l'ASCII (et à Latin-1).",
+        "special": "Plage `0x80` → `0x9F` - l'extension Microsoft : 27 caractères imprimables comme `€`, `™`, `—`, les guillemets typographiques... C'est là que [CP1252^Code Page 1252] diffère de Latin-1 (qui contient des contrôles C1 à cet endroit). 5 octets restent non assignés : `0x81`, `0x8D`, `0x8F`, `0x90`, `0x9D`.",
+        "latin1": "Plage `0xA0` → `0xFF` - identique à Latin-1 (caractères accentués, symboles)."
+      },
+      "errors": {
+        "not-encodable": "Ce code point n'existe pas dans la table Windows-1252. Au-delà des plages ASCII et Latin-1, seuls 27 caractères spécifiques sont encodables."
+      },
+      "step": {
+        "binary": "Lire la valeur de l'octet en binaire",
+        "binary_desc": {
+          "ascii": "Le code point `{cp}` est dans la plage ASCII : son octet `0x00` → `0x7F` se lit directement en binaire (8 bits, bit haut à `0`).",
+          "special": "Le code point `{cp}` n'est pas dans une plage d'identité. Il faut consulter la table [CP1252^Code Page 1252] pour trouver son octet entre `0x80` et `0x9F`, puis convertir en binaire.",
+          "latin1": "Le code point `{cp}` est dans la plage Latin-1 supplément (`U+00A0` → `U+00FF`) : son octet est identique à la valeur du code point, à convertir en binaire sur 8 bits."
+        },
+        "hex": "Convertir en hexadécimal",
+        "hex_desc": "L'octet binaire devient sa valeur hex sur 2 chiffres."
+      }
+    },
+    "decode_windows1252": {
+      "title": "Sandbox Windows-1252 (décodage)",
+      "subtitle": "Convertis un octet Windows-1252 (CP1252) en code point Unicode.",
+      "input_label": "Octet",
+      "input_placeholder": "80, 0x80, ou E9",
+      "input_help": "Hex (avec ou sans `0x`). Windows-1252 encode un caractère sur un seul octet.",
+      "range_label": "Plage [CP1252^Code Page 1252]",
+      "range_desc": {
+        "ascii": "Plage `0x00` → `0x7F` - identité ASCII : l'octet est son propre code point.",
+        "special": "Plage `0x80` → `0x9F` - l'extension Microsoft. C'est ici que Windows-1252 diverge de Latin-1 : on a 27 caractères imprimables (`€` à `0x80`, `™` à `0x99`, l'em-dash `—` à `0x97`, les guillemets typographiques...) au lieu des contrôles C1.",
+        "latin1": "Plage `0xA0` → `0xFF` - identité Latin-1 : l'octet est son propre code point."
+      },
+      "errors": {
+        "empty": "Entre un octet hex.",
+        "invalid_hex": "Caractères non-hex détectés.",
+        "odd_length": "L'octet est incomplet (nombre impair de chiffres hex).",
+        "too_long": "Trop d'octets : Windows-1252 encode un seul caractère sur un seul octet.",
+        "not-decodable": "Cet octet ne donne aucun caractère en Windows-1252. Soit c'est un octet non assigné (`0x81`, `0x8D`, `0x8F`, `0x90`, `0x9D`), soit tu as saisi plusieurs octets (CP1252 = 1 octet par caractère)."
+      },
+      "bytes_label": "Octet",
+      "step": {
+        "binary": "Lire la valeur en binaire",
+        "binary_desc": "On écrit la valeur de l'octet sur 8 bits.",
+        "code_point": "Convertir en code point",
+        "code_point_desc": {
+          "ascii": "L'octet vaut `{decimal}` en décimal, identique à son code point (plage ASCII : pure identité). Soit `{cp}` en notation Unicode.",
+          "special": "L'octet est dans l'extension Microsoft. La table [CP1252^Code Page 1252] le fait correspondre à `{cp}` (décimal `{decimal}`). C'est le piège classique : si on lit ce même octet comme Latin-1, on obtient un contrôle C1 invisible au lieu d'un caractère imprimable.",
+          "latin1": "L'octet vaut `{decimal}` en décimal, identique à son code point (plage Latin-1 : pure identité). Soit `{cp}` en notation Unicode."
+        }
+      }
     }
   },
   "profile": {
