@@ -1,6 +1,5 @@
 package school.charset.app.infrastructure.http.sandbox.serde
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import school.charset.app.domain.encoding.Encoding
@@ -88,9 +87,25 @@ class StepSerializerTest :
             )
         }
 
-        test("Step.Endianness is rejected (not part of sandbox UTF-8 flows)") {
-            shouldThrow<UnsupportedSandboxStepException> {
-                mapper.writeValueAsString(Step.Endianness(expected = Encoding.Endian.BigEndian))
-            }
+        test("Step.Endianness (BigEndian) -> {type, value: \"big\"}") {
+            Step.Endianness(expected = Encoding.Endian.BigEndian).serializeAndAssert(
+                """
+                {
+                    "type": "endianness",
+                    "value": "big"
+                }
+                """,
+            )
+        }
+
+        test("Step.Endianness (LittleEndian) -> {type, value: \"little\"}") {
+            Step.Endianness(expected = Encoding.Endian.LittleEndian).serializeAndAssert(
+                """
+                {
+                    "type": "endianness",
+                    "value": "little"
+                }
+                """,
+            )
         }
     })

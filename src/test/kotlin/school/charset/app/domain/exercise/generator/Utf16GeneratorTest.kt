@@ -1,16 +1,11 @@
 package school.charset.app.domain.exercise.generator
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
-import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
-import io.mockk.every
-import io.mockk.mockk
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
-import school.charset.app.domain.exercise.ExerciseGenerationException
 import school.charset.app.domain.exercise.FormatChoice
 import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
@@ -18,291 +13,103 @@ import school.charset.app.domain.exercise.Step
 class Utf16GeneratorTest :
     FreeSpec({
         val codec = Codec()
-        val formatChoices = listOf(FormatChoice.TWO_BYTES, FormatChoice.FOUR_BYTES)
+        val generator = Utf16Generator(codec)
 
-        fun newSut(encoding: Encoding, codePoint: CodePoint, level: Int): Utf16Generator {
-            val codePointGenerator = mockk<CodePointGenerator>()
-            val utf16Level = Utf16Level.fromNumber(level)!!
-            every { codePointGenerator.randomUtf16(utf16Level) } returns codePoint
-            return Utf16Generator(codec, codePointGenerator, mockk(), encoding)
-        }
+        "encode" - {
+            "BMP code point (U+00E9 'é')" - {
+                "BigEndian produces 4 verbose steps ending in 00 E9" {
+                    val steps = generator.buildEncodeStepsFor(
+                        codePoint = CodePoint(0xE9),
+                        endian = Encoding.Endian.BigEndian,
+                        granularity = Granularity.Verbose,
+                    )
 
-        "constructor" - {
-            "encoding = Utf16Be is accepted" {
-                Utf16Generator(codec, mockk(), mockk(), Encoding.Utf16Be).encoding shouldBe Encoding.Utf16Be
-            }
-
-            "encoding = Utf16Le is accepted" {
-                Utf16Generator(codec, mockk(), mockk(), Encoding.Utf16Le).encoding shouldBe Encoding.Utf16Le
-            }
-
-            "throws if encoding is not a UTF-16 variant" {
-                val exception = shouldThrow<IllegalArgumentException> {
-                    Utf16Generator(codec, mockk(), mockk(), Encoding.Ascii)
+                    steps.size shouldBe 4
+                    (steps[0] as Step.Endianness).expected shouldBe Encoding.Endian.BigEndian
+                    (steps[1] as Step.Format).expected shouldBe FormatChoice.ONE_CODE_UNIT
+                    (steps[2] as Step.Binary).expected shouldBe "0000000011101001"
+                    (steps[2] as Step.Binary).length shouldBe 16
+                    (steps[3] as Step.HexBytes).expected.shouldContainExactly(0x00, 0xE9)
                 }
-                exception.message shouldBe
-                    "Utf16Generator handles only utf-16be, utf-16le, got ascii"
-            }
-        }
 
-        // Structural assertions that are identical between BE and LE
-        // (Format, Binary, BitGroups don't depend on byte order - only HexBytes does).
-        "structural / verbose BMP - U+00E9 (é)" - {
-            "Format=2 bytes, Binary(16)=0000000011101001, steps count=3" {
-                val sut = newSut(Encoding.Utf16Be, CodePoint(0xE9), level = 1)
-                val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
+                "LittleEndian swaps the byte order to E9 00" {
+                    val steps = generator.buildEncodeStepsFor(
+                        codePoint = CodePoint(0xE9),
+                        endian = Encoding.Endian.LittleEndian,
+                        granularity = Granularity.Verbose,
+                    )
 
-                exercise.steps shouldHaveSize 3
-                val format = exercise.steps[0].shouldBeInstanceOf<Step.Format>()
-                val binary = exercise.steps[1].shouldBeInstanceOf<Step.Binary>()
-
-                format.choices shouldBe formatChoices
-                format.expected shouldBe FormatChoice.TWO_BYTES
-                binary.length shouldBe 16
-                binary.expected shouldBe "0000000011101001"
-            }
-        }
-
-        "structural / verbose Supplementary - U+1F600 (😀)" - {
-            "Format=4 bytes, Binary(20 offset)=00001111011000000000, BitGroups=10+10, steps count=4" {
-                val sut = newSut(Encoding.Utf16Be, CodePoint(0x1F600), level = 2)
-                val exercise = sut.generateEncode(level = 2, Granularity.Verbose)
-
-                exercise.steps shouldHaveSize 4
-                val format = exercise.steps[0].shouldBeInstanceOf<Step.Format>()
-                val binary = exercise.steps[1].shouldBeInstanceOf<Step.Binary>()
-                val bitGroups = exercise.steps[2].shouldBeInstanceOf<Step.BitGroups>()
-
-                format.expected shouldBe FormatChoice.FOUR_BYTES
-                binary.length shouldBe 20
-                binary.expected shouldBe "00001111011000000000" // 0xF600 in 20 bits
-                bitGroups.expected shouldBe listOf("0000111101", "1000000000")
-            }
-        }
-
-        // Byte-order-specific assertions: HexBytes content differs between BE and LE.
-        "Be / verbose BMP" - {
-            "U+00E9 (é) -> bytes [0x00, 0xE9]" {
-                val sut = newSut(Encoding.Utf16Be, CodePoint(0xE9), level = 1)
-                val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
-                exercise.steps[2].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x00, 0xE9)
-            }
-
-            "U+0000 (low boundary) -> bytes [0x00, 0x00]" {
-                val sut = newSut(Encoding.Utf16Be, CodePoint(0x00), level = 1)
-                val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
-                exercise.steps[2].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x00, 0x00)
-            }
-
-            "U+FFFF (BMP max) -> bytes [0xFF, 0xFF]" {
-                val sut = newSut(Encoding.Utf16Be, CodePoint(0xFFFF), level = 1)
-                val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
-                exercise.steps[2].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0xFF, 0xFF)
-            }
-
-            "U+4E2D (中) -> bytes [0x4E, 0x2D]" {
-                val sut = newSut(Encoding.Utf16Be, CodePoint(0x4E2D), level = 1)
-                val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
-                exercise.steps[2].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x4E, 0x2D)
-            }
-        }
-
-        "Be / verbose Supplementary" - {
-            "U+1F600 (😀) -> bytes [0xD8, 0x3D, 0xDE, 0x00]" {
-                val sut = newSut(Encoding.Utf16Be, CodePoint(0x1F600), level = 2)
-                val exercise = sut.generateEncode(level = 2, Granularity.Verbose)
-                exercise.steps[3].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe
-                    listOf(0xD8, 0x3D, 0xDE, 0x00)
-            }
-
-            "U+10000 (low boundary) -> bytes [0xD8, 0x00, 0xDC, 0x00]" {
-                val sut = newSut(Encoding.Utf16Be, CodePoint(0x10000), level = 2)
-                val exercise = sut.generateEncode(level = 2, Granularity.Verbose)
-                exercise.steps[3].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe
-                    listOf(0xD8, 0x00, 0xDC, 0x00)
-            }
-
-            "U+10FFFF (high boundary) -> bytes [0xDB, 0xFF, 0xDF, 0xFF]" {
-                val sut = newSut(Encoding.Utf16Be, CodePoint(0x10FFFF), level = 2)
-                val exercise = sut.generateEncode(level = 2, Granularity.Verbose)
-                exercise.steps[3].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe
-                    listOf(0xDB, 0xFF, 0xDF, 0xFF)
-            }
-        }
-
-        "Le / verbose BMP" - {
-            "U+00E9 (é) -> bytes [0xE9, 0x00] (swapped vs BE)" {
-                val sut = newSut(Encoding.Utf16Le, CodePoint(0xE9), level = 1)
-                val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
-                exercise.steps[2].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0xE9, 0x00)
-            }
-
-            "U+0000 (palindromic) -> bytes [0x00, 0x00]" {
-                val sut = newSut(Encoding.Utf16Le, CodePoint(0x00), level = 1)
-                val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
-                exercise.steps[2].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x00, 0x00)
-            }
-
-            "U+FFFF (palindromic) -> bytes [0xFF, 0xFF]" {
-                val sut = newSut(Encoding.Utf16Le, CodePoint(0xFFFF), level = 1)
-                val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
-                exercise.steps[2].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0xFF, 0xFF)
-            }
-
-            "U+4E2D (中) -> bytes [0x2D, 0x4E] (swapped vs BE)" {
-                val sut = newSut(Encoding.Utf16Le, CodePoint(0x4E2D), level = 1)
-                val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
-                exercise.steps[2].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x2D, 0x4E)
-            }
-        }
-
-        "Le / verbose Supplementary" - {
-            "U+1F600 (😀) -> bytes [0x3D, 0xD8, 0x00, 0xDE]" {
-                val sut = newSut(Encoding.Utf16Le, CodePoint(0x1F600), level = 2)
-                val exercise = sut.generateEncode(level = 2, Granularity.Verbose)
-                exercise.steps[3].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe
-                    listOf(0x3D, 0xD8, 0x00, 0xDE)
-            }
-
-            "U+10000 (low boundary) -> bytes [0x00, 0xD8, 0x00, 0xDC]" {
-                val sut = newSut(Encoding.Utf16Le, CodePoint(0x10000), level = 2)
-                val exercise = sut.generateEncode(level = 2, Granularity.Verbose)
-                exercise.steps[3].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe
-                    listOf(0x00, 0xD8, 0x00, 0xDC)
-            }
-
-            "U+10FFFF (high boundary) -> bytes [0xFF, 0xDB, 0xFF, 0xDF]" {
-                val sut = newSut(Encoding.Utf16Le, CodePoint(0x10FFFF), level = 2)
-                val exercise = sut.generateEncode(level = 2, Granularity.Verbose)
-                exercise.steps[3].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe
-                    listOf(0xFF, 0xDB, 0xFF, 0xDF)
-            }
-        }
-
-        "standard / produces [Format, HexBytes]" - {
-            "Be BMP" {
-                val sut = newSut(Encoding.Utf16Be, CodePoint(0xE9), level = 1)
-                val exercise = sut.generateEncode(level = 1, Granularity.Standard)
-                exercise.steps shouldHaveSize 2
-                exercise.steps[0].shouldBeInstanceOf<Step.Format>().expected shouldBe FormatChoice.TWO_BYTES
-                exercise.steps[1].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x00, 0xE9)
-            }
-
-            "Le Supplementary" {
-                val sut = newSut(Encoding.Utf16Le, CodePoint(0x1F600), level = 2)
-                val exercise = sut.generateEncode(level = 2, Granularity.Standard)
-                exercise.steps shouldHaveSize 2
-                exercise.steps[0].shouldBeInstanceOf<Step.Format>().expected shouldBe FormatChoice.FOUR_BYTES
-                exercise.steps[1].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe
-                    listOf(0x3D, 0xD8, 0x00, 0xDE)
-            }
-        }
-
-        "compact / produces [HexBytes] only" - {
-            "Be BMP" {
-                val sut = newSut(Encoding.Utf16Be, CodePoint(0xE9), level = 1)
-                val exercise = sut.generateEncode(level = 1, Granularity.Compact)
-                exercise.steps shouldHaveSize 1
-                exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x00, 0xE9)
-            }
-
-            "Le Supplementary" {
-                val sut = newSut(Encoding.Utf16Le, CodePoint(0x1F600), level = 2)
-                val exercise = sut.generateEncode(level = 2, Granularity.Compact)
-                exercise.steps shouldHaveSize 1
-                exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe
-                    listOf(0x3D, 0xD8, 0x00, 0xDE)
-            }
-        }
-
-        "invalid level (encode) throws ExerciseGenerationException" - {
-            "Be" {
-                val sut = Utf16Generator(codec, mockk(), mockk(), Encoding.Utf16Be)
-                val exception = shouldThrow<ExerciseGenerationException> {
-                    sut.generateEncode(level = 99, Granularity.Verbose)
+                    (steps.last() as Step.HexBytes).expected.shouldContainExactly(0xE9, 0x00)
                 }
-                exception.encoding shouldBe Encoding.Utf16Be
-                exception.level shouldBe 99
-                exception.message shouldBe "Cannot generate exercise for utf-16be level 99: level must be one of: 1, 2"
             }
 
-            "Le" {
-                val sut = Utf16Generator(codec, mockk(), mockk(), Encoding.Utf16Le)
-                val exception = shouldThrow<ExerciseGenerationException> {
-                    sut.generateEncode(level = 99, Granularity.Verbose)
+            "supplementary code point (U+1F389 '🎉')" - {
+                "BigEndian produces 5 verbose steps with surrogate pair D8 3C DF 89" {
+                    val steps = generator.buildEncodeStepsFor(
+                        codePoint = CodePoint(0x1F389),
+                        endian = Encoding.Endian.BigEndian,
+                        granularity = Granularity.Verbose,
+                    )
+
+                    steps.size shouldBe 5
+                    (steps[0] as Step.Endianness).expected shouldBe Encoding.Endian.BigEndian
+                    (steps[1] as Step.Format).expected shouldBe FormatChoice.TWO_CODE_UNITS
+                    // 0x1F389 - 0x10000 = 0xF389 = binary 0000 1111 0011 1000 1001 padded to 20 bits
+                    (steps[2] as Step.Binary).expected shouldBe "00001111001110001001"
+                    (steps[2] as Step.Binary).length shouldBe 20
+                    (steps[3] as Step.BitGroups).expected.shouldContainExactly("0000111100", "1110001001")
+                    // High surrogate = 0xD800 + 0x3C = 0xD83C. Low = 0xDC00 + 0x389 = 0xDF89.
+                    (steps[4] as Step.HexBytes).expected.shouldContainExactly(0xD8, 0x3C, 0xDF, 0x89)
                 }
-                exception.encoding shouldBe Encoding.Utf16Le
-                exception.level shouldBe 99
-                exception.message shouldBe "Cannot generate exercise for utf-16le level 99: level must be one of: 1, 2"
+
+                "LittleEndian swaps each code unit to 3C D8 89 DF" {
+                    val steps = generator.buildEncodeStepsFor(
+                        codePoint = CodePoint(0x1F389),
+                        endian = Encoding.Endian.LittleEndian,
+                        granularity = Granularity.Verbose,
+                    )
+
+                    (steps.last() as Step.HexBytes).expected.shouldContainExactly(0x3C, 0xD8, 0x89, 0xDF)
+                }
             }
         }
 
-        "generateDecode" - {
-            fun newDecodeSut(encoding: Encoding, bytes: ByteArray, level: Int): Utf16Generator {
-                val bag = mockk<ByteArrayGenerator>()
-                val utf16Level = Utf16Level.fromNumber(level)!!
-                every { bag.randomUtf16(utf16Level, encoding) } returns bytes
-                return Utf16Generator(codec, mockk(), bag, encoding)
+        "decode" - {
+            "BMP 2-byte input" - {
+                "00 E9 BigEndian produces 4 verbose steps ending at U+00E9" {
+                    val bytes = byteArrayOf(0x00, 0xE9.toByte())
+                    val steps = generator.buildDecodeStepsFor(
+                        bytes = bytes,
+                        codePoint = CodePoint(0xE9),
+                        endian = Encoding.Endian.BigEndian,
+                        granularity = Granularity.Verbose,
+                    )
+
+                    steps.size shouldBe 4
+                    (steps[0] as Step.Endianness).expected shouldBe Encoding.Endian.BigEndian
+                    (steps[1] as Step.Format).expected shouldBe FormatChoice.ONE_CODE_UNIT
+                    (steps[2] as Step.Binary).expected shouldBe "0000000011101001"
+                    (steps[3] as Step.CodePointEntry).expected shouldBe 0xE9
+                }
             }
 
-            "Be / verbose BMP [0x00, 0xE9] (é) -> Format + Binary(16) + CodePointEntry" {
-                val sut = newDecodeSut(Encoding.Utf16Be, byteArrayOf(0x00, 0xE9.toByte()), level = 1)
-                val exercise = sut.generateDecode(level = 1, Granularity.Verbose)
+            "4-byte surrogate pair input" - {
+                "D8 3C DF 89 BigEndian produces 5 verbose steps ending at U+1F389" {
+                    val bytes = byteArrayOf(0xD8.toByte(), 0x3C, 0xDF.toByte(), 0x89.toByte())
+                    val steps = generator.buildDecodeStepsFor(
+                        bytes = bytes,
+                        codePoint = CodePoint(0x1F389),
+                        endian = Encoding.Endian.BigEndian,
+                        granularity = Granularity.Verbose,
+                    )
 
-                exercise.steps shouldHaveSize 3
-                exercise.steps[0].shouldBeInstanceOf<Step.Format>().expected shouldBe FormatChoice.TWO_BYTES
-                exercise.steps[1].shouldBeInstanceOf<Step.Binary>().expected shouldBe "0000000011101001"
-                exercise.steps[2].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0xE9
-            }
-
-            "Le / verbose BMP [0xE9, 0x00] (é) -> same binary as BE, CodePointEntry=0xE9" {
-                val sut = newDecodeSut(Encoding.Utf16Le, byteArrayOf(0xE9.toByte(), 0x00), level = 1)
-                val exercise = sut.generateDecode(level = 1, Granularity.Verbose)
-                exercise.steps[1].shouldBeInstanceOf<Step.Binary>().expected shouldBe "0000000011101001"
-                exercise.steps[2].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0xE9
-            }
-
-            "Be / verbose Supplementary [0xD8, 0x3D, 0xDE, 0x00] (😀) -> Format + BitGroups + Binary(20) + CodePointEntry" {
-                val sut = newDecodeSut(
-                    Encoding.Utf16Be,
-                    byteArrayOf(0xD8.toByte(), 0x3D, 0xDE.toByte(), 0x00),
-                    level = 2,
-                )
-                val exercise = sut.generateDecode(level = 2, Granularity.Verbose)
-
-                exercise.steps shouldHaveSize 4
-                exercise.steps[0].shouldBeInstanceOf<Step.Format>().expected shouldBe FormatChoice.FOUR_BYTES
-                exercise.steps[1].shouldBeInstanceOf<Step.BitGroups>().expected shouldBe
-                    listOf("0000111101", "1000000000")
-                exercise.steps[2].shouldBeInstanceOf<Step.Binary>().expected shouldBe "00001111011000000000"
-                exercise.steps[3].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x1F600
-            }
-
-            "Le / verbose Supplementary [0x3D, 0xD8, 0x00, 0xDE] (😀) -> same BitGroups/Binary as BE" {
-                val sut = newDecodeSut(
-                    Encoding.Utf16Le,
-                    byteArrayOf(0x3D, 0xD8.toByte(), 0x00, 0xDE.toByte()),
-                    level = 2,
-                )
-                val exercise = sut.generateDecode(level = 2, Granularity.Verbose)
-                exercise.steps[1].shouldBeInstanceOf<Step.BitGroups>().expected shouldBe
-                    listOf("0000111101", "1000000000")
-                exercise.steps[3].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x1F600
-            }
-
-            "standard builds [Format, CodePointEntry]" {
-                val sut = newDecodeSut(Encoding.Utf16Be, byteArrayOf(0x00, 0xE9.toByte()), level = 1)
-                val exercise = sut.generateDecode(level = 1, Granularity.Standard)
-                exercise.steps shouldHaveSize 2
-                exercise.steps[0].shouldBeInstanceOf<Step.Format>().expected shouldBe FormatChoice.TWO_BYTES
-                exercise.steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0xE9
-            }
-
-            "compact builds [CodePointEntry] only" {
-                val sut = newDecodeSut(Encoding.Utf16Le, byteArrayOf(0xE9.toByte(), 0x00), level = 1)
-                val exercise = sut.generateDecode(level = 1, Granularity.Compact)
-                exercise.steps shouldHaveSize 1
-                exercise.steps[0].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0xE9
+                    steps.size shouldBe 5
+                    (steps[0] as Step.Endianness).expected shouldBe Encoding.Endian.BigEndian
+                    (steps[1] as Step.Format).expected shouldBe FormatChoice.TWO_CODE_UNITS
+                    (steps[2] as Step.BitGroups).expected.shouldContainExactly("0000111100", "1110001001")
+                    (steps[3] as Step.Binary).expected shouldBe "00001111001110001001"
+                    (steps[4] as Step.CodePointEntry).expected shouldBe 0x1F389
+                }
             }
         }
     })

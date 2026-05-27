@@ -5,6 +5,10 @@
       "2": "2 octets",
       "3": "3 octets",
       "4": "4 octets"
+    },
+    "code-unit": {
+      "1": "1 code unit (2 octets)",
+      "2": "2 code units (4 octets, paire de surrogates)"
     }
   },
   "common": {
@@ -183,6 +187,68 @@
         "bit_groups_desc": "Pour chaque octet, on enlève le marqueur du format (`110`/`1110`/`11110` pour le leader, `10` pour la continuation) - il reste les bits de données.",
         "binary": "Reconstituer le binaire",
         "binary_desc": "On concatène les groupes pour reformer le binaire complet du code point ({bits} bits significatifs).",
+        "code_point": "Convertir en code point",
+        "code_point_desc": "Le binaire vaut `{decimal}` en décimal, soit `{cp}` en notation Unicode."
+      }
+    },
+    "endian_label": "Endianness",
+    "endian_big": "Big Endian (BE)",
+    "endian_little": "Little Endian (LE)",
+    "endian_error_invalid": "Endianness invalide (attendu : `big` ou `little`).",
+    "encode_utf16": {
+      "title": "Sandbox UTF-16 (encodage)",
+      "subtitle": "Convertis un code point Unicode en octets UTF-16, avec choix de l'endianness.",
+      "step": {
+        "endianness": "Choisir l'endianness",
+        "endianness_desc": {
+          "big": "L'octet de poids fort vient en premier dans chaque code unit (`Big Endian`).",
+          "little": "L'octet de poids faible vient en premier dans chaque code unit (`Little Endian`)."
+        },
+        "format": "Choisir le format UTF-16",
+        "format_desc": {
+          "1": "Plage `U+0000` → `U+FFFF` - le [BMP^Basic Multilingual Plane], qui couvre l'essentiel des écritures du monde. 1 code unit de 16 bits suffit, soit 2 octets.",
+          "2": "Plage `U+10000` → `U+10FFFF` - au-delà du [BMP^Basic Multilingual Plane], dans les plans supplémentaires (emojis, scripts historiques, [CJK^Chinois, Japonais, Coréen] rare...). Encodé en paire de surrogates : 2 code units = 4 octets."
+        },
+        "binary": "Convertir en binaire",
+        "binary_desc_1": "Le code point `{cp}` tient sur 16 bits significatifs.",
+        "binary_desc_2": "On retire `0x10000` puis on garde les 20 bits restants.",
+        "bit_groups": "Découper pour les surrogates",
+        "bit_groups_desc": "On découpe les 20 bits en 2 paquets de 10 bits.\nLes 10 bits de gauche (poids forts) forment le high surrogate, les 10 bits de droite (poids faibles) forment le low surrogate.\nChaque paquet de 10 bits représente un entier entre 0 et 1 023 (10 bits = 2¹⁰ = 1 024 valeurs). On l'ajoute à la base du surrogate : `0xD800` pour le high, `0xDC00` pour le low.",
+        "hex": "Convertir en hexadécimal",
+        "hex_desc_1": "L'unique code unit donne 2 octets, ordre déterminé par l'endianness.",
+        "hex_desc_2": "Les 2 code units (high + low surrogate) donnent 4 octets, chaque code unit ordonné selon l'endianness."
+      }
+    },
+    "decode_utf16": {
+      "title": "Sandbox UTF-16 (décodage)",
+      "subtitle": "Convertis une suite d'octets UTF-16 en code point Unicode, en précisant l'endianness.",
+      "input_label": "Octets",
+      "input_placeholder": "00 E9, D8 3C DF 89, ou C3A9",
+      "input_help": "Hex (avec ou sans `0x`). UTF-16 prend 2 ou 4 octets par code point.",
+      "errors": {
+        "empty": "Entre une suite d'octets hex.",
+        "invalid_hex": "Caractères non-hex détectés.",
+        "odd_length": "Le dernier octet est incomplet (nombre impair de chiffres hex).",
+        "too_long": "Trop d'octets : UTF-16 encode un seul code point sur 2 ou 4 octets.",
+        "decoder": "Cette séquence ne forme pas un code point UTF-16 unique. Un même flux d'octets peut donner un code point valide en BE et plusieurs en LE (ou inversement)."
+      },
+      "bytes_label": "Octets",
+      "step": {
+        "endianness": "Endianness précisée",
+        "endianness_desc": {
+          "big": "On lit chaque code unit avec l'octet de poids fort en premier (`Big Endian`).",
+          "little": "On lit chaque code unit avec l'octet de poids faible en premier (`Little Endian`)."
+        },
+        "format": "Identifier le nombre de code units",
+        "format_desc": {
+          "1": "2 octets = 1 code unit dans le [BMP^Basic Multilingual Plane] (plage `U+0000` → `U+FFFF`).",
+          "2": "4 octets = paire de surrogates pour un code point au-delà du [BMP^Basic Multilingual Plane]. Le code unit haut est dans `0xD800` → `0xDBFF`, le code unit bas dans `0xDC00` → `0xDFFF`."
+        },
+        "bit_groups": "Extraire les bits utiles des surrogates",
+        "bit_groups_desc": "Du high surrogate on retire `0xD800` (10 bits hauts), du low surrogate on retire `0xDC00` (10 bits bas).",
+        "binary": "Reconstituer le binaire",
+        "binary_desc_1": "Les 16 bits du code unit constituent directement le code point.",
+        "binary_desc_2": "On concatène les 10 + 10 bits puis on ajoute `0x10000` pour retrouver le code point.",
         "code_point": "Convertir en code point",
         "code_point_desc": "Le binaire vaut `{decimal}` en décimal, soit `{cp}` en notation Unicode."
       }

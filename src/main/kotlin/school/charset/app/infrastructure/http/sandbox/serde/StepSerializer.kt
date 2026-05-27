@@ -1,5 +1,6 @@
 package school.charset.app.infrastructure.http.sandbox.serde
 
+import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Step
 import tools.jackson.core.JsonGenerator
 import tools.jackson.databind.SerializationContext
@@ -16,14 +17,11 @@ import tools.jackson.databind.ValueSerializer
  *   - `Step.BitGroups`      -> {type:"bit-groups", groups:expected}
  *   - `Step.HexBytes`       -> {type:"hex-bytes", bytes:expected}
  *   - `Step.CodePointEntry` -> {type:"code-point", value:expected}
+ *   - `Step.Endianness`     -> {type:"endianness", value:"big"|"little"}
  *
- * `Step.Endianness` is not produced by the UTF-8 encode/decode flows. If
- * it ever reaches this serializer the wire shape is undefined, so we
- * raise `UnsupportedSandboxStepException` (an `IllegalStateException`
- * subtype) - this is an invariant violation, not a business error, and
- * falls through Spring's default 500 handling. No dedicated
- * `@ExceptionHandler` is registered because the situation should never
- * happen at runtime.
+ * All UTF-8 / UTF-16 / UTF-32 sandbox flows are covered. If a future Step
+ * subtype is added without a wire mapping here it will fail-fast at runtime
+ * via the `error()` branch in `when` (exhaustive over sealed `Step`).
  */
 class StepSerializer : ValueSerializer<Step>() {
     override fun serialize(step: Step, gen: JsonGenerator, ctx: SerializationContext) {
@@ -58,7 +56,15 @@ class StepSerializer : ValueSerializer<Step>() {
                 gen.writeNumberProperty("value", step.expected)
             }
 
-            is Step.Endianness -> throw UnsupportedSandboxStepException(step.type)
+            is Step.Endianness -> {
+                gen.writeStringProperty(
+                    "value",
+                    when (step.expected) {
+                        Encoding.Endian.BigEndian -> "big"
+                        Encoding.Endian.LittleEndian -> "little"
+                    },
+                )
+            }
         }
         gen.writeEndObject()
     }

@@ -5,45 +5,48 @@ const { t, te } = useI18n()
 const { $api } = useNuxtApp()
 
 useHead({
-  title: () => t('sandbox.title')
+  title: () => t('sandbox.encode_utf16.title')
 })
+
+type Endian = 'big' | 'little'
 
 type SandboxStep
   = | { type: 'format', choices: string[], value: string }
     | { type: 'binary', value: string, length: number }
     | { type: 'bit-groups', groups: string[] }
     | { type: 'hex-bytes', bytes: number[] }
+    | { type: 'endianness', value: Endian }
 
-type Utf8SandboxResponse = {
+type Utf16EncodeSandboxResponse = {
   codepoint: number
   codepointLabel: string
   glyph: string | null
   label: string | null
+  endian: Endian
   steps: SandboxStep[]
 }
 
-type SandboxParseError = {
-  errorType: 'sandbox.input-invalid'
-  params: {
-    reason: 'empty' | 'unparseable' | 'out_of_range' | 'surrogate'
+type SandboxApiError = {
+  errorType: 'sandbox.input-invalid' | 'sandbox.endian-invalid' | 'encoding.not-encodable'
+  params?: {
+    reason?: string
   }
 }
 
 const route = useRoute()
 const router = useRouter()
-const initialRawInput = (() => {
+const initialInput = (() => {
   const q = route.query.input
-  if (typeof q !== 'string' || q.length === 0) return 'U+00E9'
-  // `+` in query strings is decoded as a literal space per RFC, so a URL
-  // like `?input=U+1F389` (without proper %2B encoding) lands here as
-  // "U 1F389". Browsers often display `%2B` as `+` in the address bar,
-  // making users copy malformed URLs by accident. Repair *only* the
-  // start-of-string `U ` / `u ` pattern (the U+XXXX notation), not every
-  // space - the back trims leading/trailing whitespace from input, so a
-  // blanket replace would corrupt those cases.
+  if (typeof q !== 'string' || q.length === 0) return 'U+1F389'
   return q.replace(/^([Uu]) /, '$1+')
 })()
-const rawInput = ref(initialRawInput)
+const initialEndian: Endian = (() => {
+  const q = route.query.endian
+  return q === 'big' ? 'big' : 'little'
+})()
+
+const rawInput = ref(initialInput)
+const endian = ref<Endian>(initialEndian)
 
 const debouncedInput = ref(rawInput.value)
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -57,45 +60,45 @@ onBeforeUnmount(() => {
   if (debounceTimer) clearTimeout(debounceTimer)
 })
 
-watch(debouncedInput, (v) => {
-  router.replace({ query: { ...route.query, input: v } })
+watch([debouncedInput, endian], ([v, e]) => {
+  router.replace({ query: { ...route.query, input: v, endian: e } })
 })
 
 type EncodeOutcome
-  = | { ok: true, response: Utf8SandboxResponse }
-    | { ok: false, reason: SandboxParseError['params']['reason'] }
+  = | { ok: true, response: Utf16EncodeSandboxResponse }
+    | { ok: false, error: string }
 
 const { data: outcome } = await useAsyncData<EncodeOutcome | null>(
-  'sandbox-utf8',
+  'sandbox-utf16-encode',
   async (): Promise<EncodeOutcome> => {
     try {
-      const result = await $api<Utf8SandboxResponse>(
-        `/sandbox/encode/utf-8?input=${encodeURIComponent(debouncedInput.value)}`
+      const result = await $api<Utf16EncodeSandboxResponse>(
+        `/sandbox/encode/utf-16?input=${encodeURIComponent(debouncedInput.value)}&endian=${endian.value}`
       )
       return { ok: true, response: result }
     } catch (err) {
-      const body = (err as { data?: SandboxParseError } | null | undefined)?.data
+      const body = (err as { data?: SandboxApiError } | null | undefined)?.data
       if (body?.errorType === 'sandbox.input-invalid') {
-        return { ok: false, reason: body.params.reason }
+        return { ok: false, error: body.params?.reason ?? 'unparseable' }
       }
-      return { ok: false, reason: 'unparseable' }
+      if (body?.errorType === 'sandbox.endian-invalid') {
+        return { ok: false, error: 'endian' }
+      }
+      return { ok: false, error: 'unparseable' }
     }
   },
-  { watch: [debouncedInput] }
+  { watch: [debouncedInput, endian] }
 )
 
 const response = computed(() => (outcome.value?.ok ? outcome.value.response : null))
-const apiError = computed(() => (outcome.value && !outcome.value.ok ? outcome.value.reason : null))
+const apiError = computed(() => (outcome.value && !outcome.value.ok ? outcome.value.error : null))
 
 const errorMessage = computed(() => {
   if (!apiError.value) return null
+  if (apiError.value === 'endian') return t('sandbox.endian_error_invalid')
   return t(`sandbox.errors.${apiError.value}`)
 })
 
-// Long-form expansion shown next to the short mnemonic label (e.g. `PUA`
-// -> `Private Use Area`). Falls back to the generic "non imprimable"
-// suffix when no expansion is registered for the label - keeps the UI
-// informative even if we add a new mnemonic and forget to update i18n.
 const labelDescription = computed(() => {
   const short = response.value?.label
   if (!short) return null
@@ -107,29 +110,19 @@ function stepOfType<T extends SandboxStep['type']>(type: T) {
   return (s: SandboxStep): s is Extract<SandboxStep, { type: T }> => s.type === type
 }
 
+const endianStep = computed(() => response.value?.steps.find(stepOfType('endianness')))
 const formatStep = computed(() => response.value?.steps.find(stepOfType('format')))
 const binaryStep = computed(() => response.value?.steps.find(stepOfType('binary')))
 const bitGroupsStep = computed(() => response.value?.steps.find(stepOfType('bit-groups')))
 const hexBytesStep = computed(() => response.value?.steps.find(stepOfType('hex-bytes')))
 
+const codeUnitCount = computed(() => {
+  if (!hexBytesStep.value) return 0
+  return hexBytesStep.value.bytes.length / 2
+})
+
 function byteLabel(n: number): string {
   return n <= 1 ? t('sandbox.byte_singular', { n }) : t('sandbox.byte_plural', { n })
-}
-
-function bitClass(byteIndex: number, bitIndex: number, byteCount: number): string {
-  // Continuation byte: `10` is the full continuation marker (2 bits).
-  if (byteIndex > 0) {
-    return bitIndex < 2 ? 'bit-cont' : 'bit-payload'
-  }
-  // Leader byte marker is the complete pattern, terminator included:
-  //   1-byte = `0`     (1 bit)
-  //   2-byte = `110`   (3 bits)
-  //   3-byte = `1110`  (4 bits)
-  //   4-byte = `11110` (5 bits)
-  // The trailing `0` is what distinguishes e.g. `110` (2-byte) from `111`
-  // (3+ byte) - it belongs to the marker, not to the payload.
-  const markerLen = byteCount === 1 ? 1 : byteCount + 1
-  return bitIndex < markerLen ? 'bit-marker' : 'bit-payload'
 }
 
 const bytesBinary = computed(() => {
@@ -149,14 +142,14 @@ function hexLabel(byte: number): string {
         sandbox
       </p>
       <h1 class="text-3xl font-medium leading-tight tracking-tight mb-2">
-        {{ t('sandbox.title') }}
+        {{ t('sandbox.encode_utf16.title') }}
       </h1>
       <p class="text-sm text-mute leading-relaxed max-w-xl">
-        {{ t('sandbox.subtitle') }}
+        {{ t('sandbox.encode_utf16.subtitle') }}
       </p>
     </header>
 
-    <!-- Input -->
+    <!-- Input + endianness -->
     <section class="surface-subtle p-5 sm:p-6 mb-8">
       <div class="field">
         <label
@@ -187,9 +180,30 @@ function hexLabel(byte: number): string {
           {{ t('sandbox.input_help') }}
         </p>
       </div>
+
+      <div class="field mt-4">
+        <span class="field-label">{{ t('sandbox.endian_label') }}</span>
+        <div class="flex gap-2 flex-wrap">
+          <label class="endian-radio">
+            <input
+              v-model="endian"
+              type="radio"
+              value="big"
+            >
+            <span>{{ t('sandbox.endian_big') }}</span>
+          </label>
+          <label class="endian-radio">
+            <input
+              v-model="endian"
+              type="radio"
+              value="little"
+            >
+            <span>{{ t('sandbox.endian_little') }}</span>
+          </label>
+        </div>
+      </div>
     </section>
 
-    <!-- Result + verbose toggle -->
     <template v-if="response && hexBytesStep">
       <section class="section-card mb-6">
         <div class="flex items-baseline justify-between mb-4 gap-3 flex-wrap">
@@ -246,8 +260,7 @@ function hexLabel(byte: number): string {
                 <span
                   v-for="(bit, bitIdx) in byte"
                   :key="bitIdx"
-                  class="bit bit-sm"
-                  :class="bitClass(byteIdx, bitIdx, bytesBinary.length)"
+                  class="bit bit-sm bit-payload"
                 >
                   {{ bit }}
                 </span>
@@ -257,9 +270,6 @@ function hexLabel(byte: number): string {
         </div>
       </section>
 
-      <!-- Step-by-step timeline (à la theme/encode.html), no success/error
-           icons since there's nothing to validate in the sandbox - just
-           numbered neutral dots. -->
       <section>
         <h2 class="font-mono text-xs uppercase tracking-widest text-mute mb-5">
           {{ t('sandbox.steps_title') }}
@@ -267,7 +277,7 @@ function hexLabel(byte: number): string {
 
         <ol class="flex flex-col gap-0">
           <li
-            v-if="formatStep"
+            v-if="endianStep"
             class="flex gap-5"
           >
             <div class="flex flex-col items-center">
@@ -276,10 +286,33 @@ function hexLabel(byte: number): string {
             </div>
             <div class="flex-1 pb-6">
               <h3 class="text-sm font-medium mb-2 mt-1">
-                {{ t('sandbox.step.format') }}
+                {{ t('sandbox.encode_utf16.step.endianness') }}
               </h3>
               <p class="text-sm text-mute mb-3 leading-relaxed">
-                <InlineDesc :text="t(`sandbox.step.format_desc.${hexBytesStep.bytes.length}`)" />
+                <InlineDesc :text="t(`sandbox.encode_utf16.step.endianness_desc.${endianStep.value}`)" />
+              </p>
+              <div class="surface px-5 py-3 inline-block">
+                <span class="text-base text-accent font-medium">
+                  {{ endianStep.value === 'big' ? t('sandbox.endian_big') : t('sandbox.endian_little') }}
+                </span>
+              </div>
+            </div>
+          </li>
+
+          <li
+            v-if="formatStep"
+            class="flex gap-5"
+          >
+            <div class="flex flex-col items-center">
+              <span class="step-dot">02</span>
+              <span class="step-connector" />
+            </div>
+            <div class="flex-1 pb-6">
+              <h3 class="text-sm font-medium mb-2 mt-1">
+                {{ t('sandbox.encode_utf16.step.format') }}
+              </h3>
+              <p class="text-sm text-mute mb-3 leading-relaxed">
+                <InlineDesc :text="t(`sandbox.encode_utf16.step.format_desc.${codeUnitCount}`)" />
               </p>
               <div class="surface px-5 py-3 inline-block">
                 <span class="text-base text-accent font-medium">{{ t(formatStep.value) }}</span>
@@ -292,15 +325,19 @@ function hexLabel(byte: number): string {
             class="flex gap-5"
           >
             <div class="flex flex-col items-center">
-              <span class="step-dot">02</span>
+              <span class="step-dot">03</span>
               <span class="step-connector" />
             </div>
             <div class="flex-1 pb-6">
               <h3 class="text-sm font-medium mb-2 mt-1">
-                {{ t('sandbox.step.binary') }}
+                {{ t('sandbox.encode_utf16.step.binary') }}
               </h3>
               <p class="text-sm text-mute mb-3 leading-relaxed">
-                <InlineDesc :text="t('sandbox.step.binary_desc', { cp: response.codepointLabel, bits: binaryStep.length })" />
+                <InlineDesc
+                  :text="codeUnitCount === 1
+                    ? t('sandbox.encode_utf16.step.binary_desc_1', { cp: response.codepointLabel })
+                    : t('sandbox.encode_utf16.step.binary_desc_2')"
+                />
               </p>
               <div class="surface px-5 py-3 inline-block">
                 <span class="hex text-base">{{ binaryStep.value }}</span>
@@ -313,56 +350,18 @@ function hexLabel(byte: number): string {
             class="flex gap-5"
           >
             <div class="flex flex-col items-center">
-              <span class="step-dot">03</span>
+              <span class="step-dot">04</span>
               <span class="step-connector" />
             </div>
             <div class="flex-1 pb-6">
               <h3 class="text-sm font-medium mb-2 mt-1">
-                {{ t('sandbox.step.split') }}
+                {{ t('sandbox.encode_utf16.step.bit_groups') }}
               </h3>
               <p class="text-sm text-mute mb-3 leading-relaxed">
-                <InlineDesc :text="t('sandbox.step.split_desc', { slots: bitGroupsStep.groups.map(g => g.length).join(' + ') })" />
+                <InlineDesc :text="t('sandbox.encode_utf16.step.bit_groups_desc')" />
               </p>
               <div class="surface px-5 py-3 inline-block">
                 <span class="hex text-base">{{ bitGroupsStep.groups.join(' | ') }}</span>
-              </div>
-            </div>
-          </li>
-
-          <li class="flex gap-5">
-            <div class="flex flex-col items-center">
-              <span class="step-dot">{{ bitGroupsStep ? '04' : '03' }}</span>
-              <span class="step-connector" />
-            </div>
-            <div class="flex-1 pb-6">
-              <h3 class="text-sm font-medium mb-2 mt-1">
-                {{ t('sandbox.step.markers') }}
-              </h3>
-              <p class="text-sm text-mute mb-3 leading-relaxed">
-                <InlineDesc :text="t(`sandbox.step.markers_desc.${hexBytesStep.bytes.length}`)" />
-              </p>
-              <div class="surface px-5 py-4">
-                <div class="flex flex-col gap-2">
-                  <div
-                    v-for="(byte, byteIdx) in bytesBinary"
-                    :key="byteIdx"
-                    class="flex items-center gap-3 flex-wrap"
-                  >
-                    <span class="font-mono text-xs text-faint min-w-[3.5rem]">
-                      byte {{ byteIdx + 1 }}
-                    </span>
-                    <div class="bit-row bit-row-tight">
-                      <span
-                        v-for="(bit, bitIdx) in byte"
-                        :key="bitIdx"
-                        class="bit bit-sm"
-                        :class="bitClass(byteIdx, bitIdx, bytesBinary.length)"
-                      >
-                        {{ bit }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </li>
@@ -373,10 +372,14 @@ function hexLabel(byte: number): string {
             </div>
             <div class="flex-1 pb-6">
               <h3 class="text-sm font-medium mb-2 mt-1">
-                {{ t('sandbox.step.hex') }}
+                {{ t('sandbox.encode_utf16.step.hex') }}
               </h3>
               <p class="text-sm text-mute mb-3 leading-relaxed">
-                <InlineDesc :text="t(hexBytesStep.bytes.length === 1 ? 'sandbox.step.hex_desc_singular' : 'sandbox.step.hex_desc_plural', { count: hexBytesStep.bytes.length })" />
+                <InlineDesc
+                  :text="codeUnitCount === 1
+                    ? t('sandbox.encode_utf16.step.hex_desc_1')
+                    : t('sandbox.encode_utf16.step.hex_desc_2')"
+                />
               </p>
               <div class="surface px-5 py-3 inline-block">
                 <span class="hex text-base font-medium">{{ hexBytesStep.bytes.map(hexLabel).join(' ') }}</span>

@@ -5,8 +5,10 @@ import org.springframework.context.annotation.Configuration
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.exercise.generator.ByteArrayGenerator
 import school.charset.app.domain.exercise.generator.CodePointGenerator
+import school.charset.app.domain.exercise.generator.Utf16Generator
 import school.charset.app.domain.exercise.generator.Utf8Generator
 import school.charset.app.domain.sandbox.SandboxBytesParser
+import school.charset.app.domain.sandbox.SandboxEndianParser
 import school.charset.app.domain.sandbox.SandboxInputParser
 import school.charset.app.domain.sandbox.SandboxService
 import school.charset.app.infrastructure.http.sandbox.serde.StepSerializer
@@ -39,13 +41,22 @@ class SandboxConfig {
     ): Utf8Generator = Utf8Generator(codec, codePointGenerator, byteArrayGenerator)
 
     @Bean
-    fun sandboxService(utf8Generator: Utf8Generator): SandboxService = SandboxService(utf8Generator)
+    fun utf16Generator(codec: Codec): Utf16Generator = Utf16Generator(codec)
+
+    @Bean
+    fun sandboxService(
+        utf8Generator: Utf8Generator,
+        utf16Generator: Utf16Generator,
+    ): SandboxService = SandboxService(utf8Generator, utf16Generator)
 
     @Bean
     fun sandboxInputParser(): SandboxInputParser = SandboxInputParser()
 
     @Bean
     fun sandboxBytesParser(): SandboxBytesParser = SandboxBytesParser()
+
+    @Bean
+    fun sandboxEndianParser(): SandboxEndianParser = SandboxEndianParser()
 
     @Bean
     fun sandboxJacksonModule(): JacksonModule = SimpleModule().apply {

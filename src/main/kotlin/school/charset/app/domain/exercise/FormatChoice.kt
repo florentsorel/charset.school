@@ -19,4 +19,9 @@ object FormatChoice {
     const val TWO_BYTES = "format-choice.byte-count.2"
     const val THREE_BYTES = "format-choice.byte-count.3"
     const val FOUR_BYTES = "format-choice.byte-count.4"
+
+    // Code-unit count choices used by UTF-16 (1 or 2 code units). A UTF-16
+    // code unit is 16 bits (2 bytes); surrogate pairs span 2 units = 4 bytes.
+    const val ONE_CODE_UNIT = "format-choice.code-unit.1"
+    const val TWO_CODE_UNITS = "format-choice.code-unit.2"
 }
