@@ -36,9 +36,48 @@ class CodePointLabelsTest :
             CodePointLabels.lookup(0x7E) shouldBe null // '~'
         }
 
-        test("returns null for code points above the C1 range") {
-            CodePointLabels.lookup(0xA0) shouldBe null // NBSP
+        test("returns named short labels for common format/invisible chars") {
+            CodePointLabels.lookup(0x00A0) shouldBe "NBSP"
+            CodePointLabels.lookup(0x00AD) shouldBe "SHY"
+            CodePointLabels.lookup(0x200B) shouldBe "ZWSP"
+            CodePointLabels.lookup(0x200D) shouldBe "ZWJ"
+            CodePointLabels.lookup(0x200E) shouldBe "LRM"
+            CodePointLabels.lookup(0x2028) shouldBe "LSEP"
+            CodePointLabels.lookup(0x2029) shouldBe "PSEP"
+            CodePointLabels.lookup(0x2060) shouldBe "WJ"
+            CodePointLabels.lookup(0xFEFF) shouldBe "BOM"
+        }
+
+        test("returns PUA for Private Use Area code points") {
+            CodePointLabels.lookup(0xE000) shouldBe "PUA"
+            CodePointLabels.lookup(0xF389) shouldBe "PUA"
+            CodePointLabels.lookup(0xF8FF) shouldBe "PUA"
+            CodePointLabels.lookup(0xF0000) shouldBe "PUA"
+            CodePointLabels.lookup(0x100000) shouldBe "PUA"
+        }
+
+        test("returns NONCHAR for Unicode non-characters") {
+            CodePointLabels.lookup(0xFDD0) shouldBe "NONCHAR"
+            CodePointLabels.lookup(0xFDEF) shouldBe "NONCHAR"
+            CodePointLabels.lookup(0xFFFE) shouldBe "NONCHAR"
+            CodePointLabels.lookup(0xFFFF) shouldBe "NONCHAR"
+            CodePointLabels.lookup(0x1FFFE) shouldBe "NONCHAR"
+            CodePointLabels.lookup(0x10FFFF) shouldBe "NONCHAR"
+        }
+
+        test("returns COMBINING for combining marks (would render on dotted circle in isolation)") {
+            CodePointLabels.lookup(0x0301) shouldBe "COMBINING" // combining acute accent
+            CodePointLabels.lookup(0x0308) shouldBe "COMBINING" // combining diaeresis
+        }
+
+        test("returns WHITESPACE for non-ASCII space separators") {
+            CodePointLabels.lookup(0x2003) shouldBe "WHITESPACE" // em space
+            CodePointLabels.lookup(0x202F) shouldBe "WHITESPACE" // narrow no-break space
+        }
+
+        test("returns null for printable letters and symbols above C1") {
             CodePointLabels.lookup(0xE9) shouldBe null // 'é'
+            CodePointLabels.lookup(0x4E2D) shouldBe null // '中'
             CodePointLabels.lookup(0x1F389) shouldBe null // '🎉'
         }
     })

@@ -124,6 +124,43 @@ class SandboxControllerTest(
     }
 
     @Test
+    fun `private use area gets null glyph and label PUA`() {
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+F389"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.glyph").doesNotExist())
+            .andExpect(jsonPath("$.label").value("PUA"))
+    }
+
+    @Test
+    fun `non-character gets null glyph and label NONCHAR`() {
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+FFFE"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.glyph").doesNotExist())
+            .andExpect(jsonPath("$.label").value("NONCHAR"))
+    }
+
+    @Test
+    fun `named invisible chars get their short mnemonic (BOM, ZWJ)`() {
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+FEFF"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.glyph").doesNotExist())
+            .andExpect(jsonPath("$.label").value("BOM"))
+
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+200D"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.glyph").doesNotExist())
+            .andExpect(jsonPath("$.label").value("ZWJ"))
+    }
+
+    @Test
+    fun `combining mark gets null glyph and label COMBINING`() {
+        mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+0301")) // combining acute accent
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.glyph").doesNotExist())
+            .andExpect(jsonPath("$.label").value("COMBINING"))
+    }
+
+    @Test
     fun `returns 422 when input is empty`() {
         mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", ""))
             .andExpect(status().isUnprocessableContent)

@@ -35,15 +35,15 @@ class SandboxController(
 
     /**
      * Returns the printable glyph for the code point, or `null` when the
-     * glyph would be invisible / non-visual:
-     *   - C0 controls (0x00-0x1F), DEL (0x7F), C1 controls (0x80-0x9F)
-     *   - U+0020 SPACE (renders as a literal blank)
+     * glyph would be invisible / absent (controls, whitespace, PUA,
+     * format chars, combining marks, non-characters, unassigned slots).
      *
-     * For these cases `CodePointLabels.lookup` returns a human-readable
-     * label that the front displays in place of the empty glyph.
+     * Delegates the "is this code point displayable?" decision to
+     * `CodePointLabels.lookup`: a non-null label means the front renders
+     * the label instead of an empty/tofu glyph.
      */
     private fun glyphOf(value: Int): String? {
-        if (value < 0x21 || value in 0x7F..0x9F) return null
+        if (CodePointLabels.lookup(value) != null) return null
         return String(Character.toChars(value))
     }
 }

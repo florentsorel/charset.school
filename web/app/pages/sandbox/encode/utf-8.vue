@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ auth: false, layout: 'sandbox' })
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const { $api } = useNuxtApp()
 
 useHead({
@@ -33,7 +33,8 @@ const route = useRoute()
 const router = useRouter()
 const initialRawInput = (() => {
   const q = route.query.input
-  return typeof q === 'string' && q.length > 0 ? q : 'U+00E9'
+  if (typeof q !== 'string' || q.length === 0) return 'U+00E9'
+  return q.replace(/ /g, '+')
 })()
 const rawInput = ref(initialRawInput)
 
@@ -78,6 +79,17 @@ const { data: response } = await useAsyncData<Utf8SandboxResponse | null>(
 const errorMessage = computed(() => {
   if (!apiError.value) return null
   return t(`sandbox.errors.${apiError.value}`)
+})
+
+// Long-form expansion shown next to the short mnemonic label (e.g. `PUA`
+// -> `Private Use Area`). Falls back to the generic "non imprimable"
+// suffix when no expansion is registered for the label - keeps the UI
+// informative even if we add a new mnemonic and forget to update i18n.
+const labelDescription = computed(() => {
+  const short = response.value?.label
+  if (!short) return null
+  const key = `sandbox.labels.${short}`
+  return te(key) ? t(key) : t('sandbox.non_printable')
 })
 
 function stepOfType<T extends SandboxStep['type']>(type: T) {
@@ -182,10 +194,10 @@ function hexLabel(byte: number): string {
             </span>
             <span
               v-else-if="response.label"
-              class="text-mute flex items-baseline gap-2"
+              class="text-mute flex items-baseline gap-2 flex-wrap"
             >
               <span class="font-mono font-medium text-xl">{{ response.label }}</span>
-              <span class="text-xs text-faint">({{ t('sandbox.non_printable') }})</span>
+              <span class="text-xs text-faint">({{ labelDescription }})</span>
             </span>
           </div>
           <span class="font-mono text-xs uppercase tracking-widest text-faint">
@@ -194,6 +206,14 @@ function hexLabel(byte: number): string {
         </div>
 
         <div class="flex flex-col gap-3">
+          <div>
+            <p class="font-mono text-xs uppercase tracking-widest text-faint mb-1.5">
+              {{ t('sandbox.decimal_label') }}
+            </p>
+            <p class="hex text-xl font-medium">
+              {{ response.codepoint }}
+            </p>
+          </div>
           <div>
             <p class="font-mono text-xs uppercase tracking-widest text-faint mb-1.5">
               {{ t('sandbox.hex_label') }}
