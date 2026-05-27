@@ -103,6 +103,52 @@ class SandboxController(
         )
     }
 
+    @GetMapping("/encode/utf-32")
+    fun encodeUtf32(
+        @RequestParam(defaultValue = "") input: String,
+        @RequestParam(defaultValue = "little") endian: String,
+    ): ResponseEntity<Utf32EncodeSandboxResponse> {
+        val codePoint = sandboxInputParser.parse(input)
+        val parsedEndian = sandboxEndianParser.parse(endian)
+        val steps = sandboxService.encodeUtf32Verbose(codePoint, parsedEndian)
+        return ResponseEntity.ok(
+            Utf32EncodeSandboxResponse(
+                codepoint = codePoint.value,
+                codepointLabel = codePoint.toString(),
+                glyph = glyphOf(codePoint.value),
+                label = CodePointLabels.lookup(codePoint.value),
+                endian = parsedEndian.wireValue(),
+                steps = steps,
+            ),
+        )
+    }
+
+    @GetMapping("/decode/utf-32")
+    fun decodeUtf32(
+        @RequestParam(defaultValue = "") bytes: String,
+        @RequestParam(defaultValue = "little") endian: String,
+    ): ResponseEntity<Utf32DecodeSandboxResponse> {
+        val raw = sandboxBytesParser.parse(bytes)
+        val parsedEndian = sandboxEndianParser.parse(endian)
+        val utf32Encoding = when (parsedEndian) {
+            Encoding.Endian.BigEndian -> Encoding.Utf32Be
+            Encoding.Endian.LittleEndian -> Encoding.Utf32Le
+        }
+        val codePoint = codec.decode(raw, utf32Encoding)
+        val steps = sandboxService.decodeUtf32Verbose(raw, codePoint, parsedEndian)
+        return ResponseEntity.ok(
+            Utf32DecodeSandboxResponse(
+                bytes = raw.map { it.toInt() and 0xFF },
+                codepoint = codePoint.value,
+                codepointLabel = codePoint.toString(),
+                glyph = glyphOf(codePoint.value),
+                label = CodePointLabels.lookup(codePoint.value),
+                endian = parsedEndian.wireValue(),
+                steps = steps,
+            ),
+        )
+    }
+
     private fun Encoding.Endian.wireValue(): String = when (this) {
         Encoding.Endian.BigEndian -> "big"
         Encoding.Endian.LittleEndian -> "little"

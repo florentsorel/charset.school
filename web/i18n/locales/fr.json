@@ -55,7 +55,7 @@
       "utf16-encode": { "title": "Encoder en UTF-16",       "subtitle": "endianness + BOM" },
       "utf16-decode": { "title": "Décoder UTF-16",          "subtitle": "surrogate pairs inclus" },
       "utf32-encode": { "title": "Encoder en UTF-32",       "subtitle": "4 octets fixes, padding" },
-      "utf32-decode": { "title": "Décoder UTF-32",          "subtitle": "4 octets + BOM → code point" },
+      "utf32-decode": { "title": "Décoder UTF-32",          "subtitle": "endianness explicite, 4 octets → code point" },
       "latin1":         { "title": "Latin-1 / Windows-1252", "subtitle": "tables 8 bits, pièges" },
       "latin1-encode":      { "title": "Encoder en Latin-1",      "subtitle": "code point → octet" },
       "latin1-decode":      { "title": "Décoder Latin-1",         "subtitle": "octet → code point" },
@@ -249,6 +249,47 @@
         "binary": "Reconstituer le binaire",
         "binary_desc_1": "Les 16 bits du code unit constituent directement le code point.",
         "binary_desc_2": "On concatène les 10 + 10 bits puis on ajoute `0x10000` pour retrouver le code point.",
+        "code_point": "Convertir en code point",
+        "code_point_desc": "Le binaire vaut `{decimal}` en décimal, soit `{cp}` en notation Unicode."
+      }
+    },
+    "encode_utf32": {
+      "title": "Sandbox UTF-32 (encodage)",
+      "subtitle": "Convertis un code point Unicode en 4 octets UTF-32, avec choix de l'endianness.",
+      "step": {
+        "endianness": "Choisir l'endianness",
+        "endianness_desc": {
+          "big": "L'octet de poids fort vient en premier (`Big Endian`). Les 4 octets s'écrivent dans l'ordre naturel du nombre.",
+          "little": "L'octet de poids faible vient en premier (`Little Endian`). Les 4 octets s'écrivent dans l'ordre inverse du nombre."
+        },
+        "binary": "Convertir en binaire sur 32 bits",
+        "binary_desc": "UTF-32 utilise toujours 32 bits, peu importe le code point.\nLe code point `{cp}` tient sur 21 bits utiles au maximum (plafond Unicode `U+10FFFF`), donc les 11 bits hauts sont toujours à zéro.\nC'est ce padding qui rend UTF-32 simple : pas de format à deviner, pas de marqueur, juste le code point dans ses 32 bits.",
+        "hex": "Convertir en hexadécimal",
+        "hex_desc": "On découpe le binaire en 4 paquets de 8 bits, puis on écrit chaque paquet en hex.\nL'ordre des 4 octets dépend de l'endianness choisie."
+      }
+    },
+    "decode_utf32": {
+      "title": "Sandbox UTF-32 (décodage)",
+      "subtitle": "Convertis 4 octets UTF-32 en code point Unicode, en précisant l'endianness.",
+      "input_label": "Octets",
+      "input_placeholder": "00 00 00 E9, 89 F3 01 00, ou 000000E9",
+      "input_help": "Hex (avec ou sans `0x`). UTF-32 prend exactement 4 octets par code point.",
+      "errors": {
+        "empty": "Entre une suite d'octets hex.",
+        "invalid_hex": "Caractères non-hex détectés.",
+        "odd_length": "Le dernier octet est incomplet (nombre impair de chiffres hex).",
+        "too_long": "Trop d'octets : UTF-32 encode un seul code point sur exactement 4 octets.",
+        "decoder": "Cette séquence ne forme pas un code point UTF-32 valide. Il faut exactement 4 octets, et la valeur doit être dans `U+0000` → `U+10FFFF` hors surrogates."
+      },
+      "bytes_label": "Octets",
+      "step": {
+        "endianness": "Endianness précisée",
+        "endianness_desc": {
+          "big": "On lit les 4 octets avec l'octet de poids fort en premier (`Big Endian`).",
+          "little": "On lit les 4 octets avec l'octet de poids faible en premier (`Little Endian`). On inverse mentalement l'ordre des octets avant d'assembler le nombre."
+        },
+        "binary": "Reconstituer le binaire",
+        "binary_desc": "On concatène les 4 octets (réordonnés en Big Endian) pour reformer le binaire complet sur 32 bits.\nEn UTF-32 ce binaire EST le code point - pas de marqueur à retirer, pas de surrogate à recombiner.",
         "code_point": "Convertir en code point",
         "code_point_desc": "Le binaire vaut `{decimal}` en décimal, soit `{cp}` en notation Unicode."
       }
