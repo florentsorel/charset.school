@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
+import school.charset.app.domain.sandbox.SandboxBytesParseException
 import school.charset.app.domain.sandbox.SandboxBytesParser
 import school.charset.app.domain.sandbox.SandboxEndianParser
 import school.charset.app.domain.sandbox.SandboxInputParser
@@ -179,6 +180,44 @@ class SandboxController(
         val steps = sandboxService.decodeWindows1252Verbose(raw, codePoint)
         return ResponseEntity.ok(
             Windows1252DecodeSandboxResponse(
+                bytes = raw.map { it.toInt() and 0xFF },
+                codepoint = codePoint.value,
+                codepointLabel = codePoint.toString(),
+                glyph = glyphOf(codePoint.value),
+                label = CodePointLabels.lookup(codePoint.value),
+                steps = steps,
+            ),
+        )
+    }
+
+    @GetMapping("/encode/latin1")
+    fun encodeLatin1(@RequestParam(defaultValue = "") input: String): ResponseEntity<Latin1EncodeSandboxResponse> {
+        val codePoint = sandboxInputParser.parse(input)
+        val steps = sandboxService.encodeLatin1Verbose(codePoint)
+        return ResponseEntity.ok(
+            Latin1EncodeSandboxResponse(
+                codepoint = codePoint.value,
+                codepointLabel = codePoint.toString(),
+                glyph = glyphOf(codePoint.value),
+                label = CodePointLabels.lookup(codePoint.value),
+                steps = steps,
+            ),
+        )
+    }
+
+    @GetMapping("/decode/latin1")
+    fun decodeLatin1(@RequestParam(defaultValue = "") bytes: String): ResponseEntity<Latin1DecodeSandboxResponse> {
+        val raw = sandboxBytesParser.parse(bytes)
+        // Latin-1 is fixed-width: exactly one byte encodes one code point.
+        // The shared bytes parser accepts up to 4 bytes (for the UTF-8/16
+        // sandbox), so enforce the Latin-1 narrower bound here. Surface it
+        // as a `too_long` parse error to reuse the existing wire shape and
+        // i18n key set.
+        if (raw.size != 1) throw SandboxBytesParseException(SandboxBytesParser.REASON_TOO_LONG)
+        val codePoint = codec.decode(raw, Encoding.Latin1)
+        val steps = sandboxService.decodeLatin1Verbose(raw)
+        return ResponseEntity.ok(
+            Latin1DecodeSandboxResponse(
                 bytes = raw.map { it.toInt() and 0xFF },
                 codepoint = codePoint.value,
                 codepointLabel = codePoint.toString(),
