@@ -20,7 +20,7 @@ export function useSandboxModules() {
     { id: 'utf-16', to: '/sandbox/encode/utf-16', catalogKey: 'utf16-encode', available: true },
     { id: 'utf-32', to: '/sandbox/encode/utf-32', catalogKey: 'utf32-encode', available: true },
     { id: 'latin1', to: '/sandbox/encode/latin1', catalogKey: 'latin1-encode', available: false },
-    { id: 'windows-1252', to: '/sandbox/encode/windows-1252', catalogKey: 'windows1252-encode', available: false }
+    { id: 'windows-1252', to: '/sandbox/encode/windows-1252', catalogKey: 'windows1252-encode', available: true }
   ]
 
   const decodeModules: SandboxModule[] = [
@@ -28,7 +28,7 @@ export function useSandboxModules() {
     { id: 'utf-16', to: '/sandbox/decode/utf-16', catalogKey: 'utf16-decode', available: true },
     { id: 'utf-32', to: '/sandbox/decode/utf-32', catalogKey: 'utf32-decode', available: true },
     { id: 'latin1', to: '/sandbox/decode/latin1', catalogKey: 'latin1-decode', available: false },
-    { id: 'windows-1252', to: '/sandbox/decode/windows-1252', catalogKey: 'windows1252-decode', available: false }
+    { id: 'windows-1252', to: '/sandbox/decode/windows-1252', catalogKey: 'windows1252-decode', available: true }
   ]
 
   const otherModules: SandboxModule[] = [

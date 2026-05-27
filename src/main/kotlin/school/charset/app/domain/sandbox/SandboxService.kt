@@ -7,11 +7,13 @@ import school.charset.app.domain.exercise.Step
 import school.charset.app.domain.exercise.generator.Utf16Generator
 import school.charset.app.domain.exercise.generator.Utf32Generator
 import school.charset.app.domain.exercise.generator.Utf8Generator
+import school.charset.app.domain.exercise.generator.Windows1252Generator
 
 class SandboxService(
     private val utf8Generator: Utf8Generator,
     private val utf16Generator: Utf16Generator,
     private val utf32Generator: Utf32Generator,
+    private val windows1252Generator: Windows1252Generator,
 ) {
     fun encodeUtf8Verbose(codePoint: CodePoint): List<Step> = utf8Generator.buildEncodeStepsFor(codePoint, Granularity.Verbose)
 
@@ -24,4 +26,8 @@ class SandboxService(
     fun encodeUtf32Verbose(codePoint: CodePoint, endian: Encoding.Endian): List<Step> = utf32Generator.buildEncodeStepsFor(codePoint, endian, Granularity.Verbose)
 
     fun decodeUtf32Verbose(bytes: ByteArray, codePoint: CodePoint, endian: Encoding.Endian): List<Step> = utf32Generator.buildDecodeStepsFor(bytes, codePoint, endian, Granularity.Verbose)
+
+    fun encodeWindows1252Verbose(codePoint: CodePoint): List<Step> = windows1252Generator.buildEncodeStepsFor(codePoint, Granularity.Verbose)
+
+    fun decodeWindows1252Verbose(bytes: ByteArray, codePoint: CodePoint): List<Step> = windows1252Generator.buildDecodeStepsFor(bytes, codePoint, Granularity.Verbose)
 }

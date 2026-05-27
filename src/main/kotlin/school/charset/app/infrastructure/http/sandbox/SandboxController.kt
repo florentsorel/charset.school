@@ -149,6 +149,46 @@ class SandboxController(
         )
     }
 
+    @GetMapping("/encode/windows-1252")
+    fun encodeWindows1252(@RequestParam(defaultValue = "") input: String): ResponseEntity<Windows1252EncodeSandboxResponse> {
+        val codePoint = sandboxInputParser.parse(input)
+        // Encode upfront so an unencodable code point (e.g. U+0100 not in
+        // the CP1252 table) raises EncoderException now and bubbles up to
+        // a 422 `encoding.not-encodable` response, instead of leaking
+        // through to step generation.
+        codec.encode(codePoint, Encoding.Windows1252)
+        val steps = sandboxService.encodeWindows1252Verbose(codePoint)
+        return ResponseEntity.ok(
+            Windows1252EncodeSandboxResponse(
+                codepoint = codePoint.value,
+                codepointLabel = codePoint.toString(),
+                glyph = glyphOf(codePoint.value),
+                label = CodePointLabels.lookup(codePoint.value),
+                steps = steps,
+            ),
+        )
+    }
+
+    @GetMapping("/decode/windows-1252")
+    fun decodeWindows1252(@RequestParam(defaultValue = "") bytes: String): ResponseEntity<Windows1252DecodeSandboxResponse> {
+        val raw = sandboxBytesParser.parse(bytes)
+        // Decode here so multi-byte inputs and unassigned bytes (0x81, 0x8D,
+        // 0x8F, 0x90, 0x9D) raise DecoderException, surfacing as a 422
+        // `encoding.not-decodable` response.
+        val codePoint = codec.decode(raw, Encoding.Windows1252)
+        val steps = sandboxService.decodeWindows1252Verbose(raw, codePoint)
+        return ResponseEntity.ok(
+            Windows1252DecodeSandboxResponse(
+                bytes = raw.map { it.toInt() and 0xFF },
+                codepoint = codePoint.value,
+                codepointLabel = codePoint.toString(),
+                glyph = glyphOf(codePoint.value),
+                label = CodePointLabels.lookup(codePoint.value),
+                steps = steps,
+            ),
+        )
+    }
+
     private fun Encoding.Endian.wireValue(): String = when (this) {
         Encoding.Endian.BigEndian -> "big"
         Encoding.Endian.LittleEndian -> "little"

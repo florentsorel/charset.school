@@ -8,6 +8,7 @@ import school.charset.app.domain.exercise.generator.CodePointGenerator
 import school.charset.app.domain.exercise.generator.Utf16Generator
 import school.charset.app.domain.exercise.generator.Utf32Generator
 import school.charset.app.domain.exercise.generator.Utf8Generator
+import school.charset.app.domain.exercise.generator.Windows1252Generator
 import school.charset.app.domain.sandbox.SandboxBytesParser
 import school.charset.app.domain.sandbox.SandboxEndianParser
 import school.charset.app.domain.sandbox.SandboxInputParser
@@ -48,11 +49,19 @@ class SandboxConfig {
     fun utf32Generator(codec: Codec): Utf32Generator = Utf32Generator(codec)
 
     @Bean
+    fun windows1252Generator(
+        codec: Codec,
+        codePointGenerator: CodePointGenerator,
+        byteArrayGenerator: ByteArrayGenerator,
+    ): Windows1252Generator = Windows1252Generator(codec, codePointGenerator, byteArrayGenerator)
+
+    @Bean
     fun sandboxService(
         utf8Generator: Utf8Generator,
         utf16Generator: Utf16Generator,
         utf32Generator: Utf32Generator,
-    ): SandboxService = SandboxService(utf8Generator, utf16Generator, utf32Generator)
+        windows1252Generator: Windows1252Generator,
+    ): SandboxService = SandboxService(utf8Generator, utf16Generator, utf32Generator, windows1252Generator)
 
     @Bean
     fun sandboxInputParser(): SandboxInputParser = SandboxInputParser()
