@@ -77,13 +77,18 @@ class StepSerializerTest :
             )
         }
 
-        test("Step.CodePointEntry is rejected (not part of sandbox UTF-8 encode wire format)") {
-            shouldThrow<UnsupportedSandboxStepException> {
-                mapper.writeValueAsString(Step.CodePointEntry(expected = 0xE9))
-            }
+        test("Step.CodePointEntry -> {type, value}") {
+            Step.CodePointEntry(expected = 0xE9).serializeAndAssert(
+                """
+                {
+                    "type": "code-point",
+                    "value": 233
+                }
+                """,
+            )
         }
 
-        test("Step.Endianness is rejected (not part of sandbox UTF-8 encode wire format)") {
+        test("Step.Endianness is rejected (not part of sandbox UTF-8 flows)") {
             shouldThrow<UnsupportedSandboxStepException> {
                 mapper.writeValueAsString(Step.Endianness(expected = Encoding.Endian.BigEndian))
             }

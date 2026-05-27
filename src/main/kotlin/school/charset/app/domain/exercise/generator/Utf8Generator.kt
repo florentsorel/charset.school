@@ -25,6 +25,8 @@ class Utf8Generator(
 
     fun buildEncodeStepsFor(codePoint: CodePoint, granularity: Granularity): List<Step> = codePoint.buildEncodeSteps(granularity)
 
+    fun buildDecodeStepsFor(bytes: ByteArray, granularity: Granularity): List<Step> = bytes.buildDecodeSteps(granularity)
+
     override fun generateDecode(level: Int, granularity: Granularity): Exercise.Decode {
         val utf8Level = parseLevel(level)
         val bytes = byteArrayGenerator.randomUtf8(utf8Level)

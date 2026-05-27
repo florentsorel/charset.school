@@ -6,6 +6,10 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import school.charset.app.domain.encoding.CodePoint
+import school.charset.app.domain.encoding.Codec
+import school.charset.app.domain.encoding.Encoding
+import school.charset.app.domain.sandbox.SandboxBytesParser
 import school.charset.app.domain.sandbox.SandboxInputParser
 import school.charset.app.domain.sandbox.SandboxService
 
@@ -17,6 +21,8 @@ import school.charset.app.domain.sandbox.SandboxService
 class SandboxController(
     private val sandboxService: SandboxService,
     private val sandboxInputParser: SandboxInputParser,
+    private val sandboxBytesParser: SandboxBytesParser,
+    private val codec: Codec,
 ) {
     @GetMapping("/encode/utf-8")
     fun encodeUtf8(@RequestParam(defaultValue = "") input: String): ResponseEntity<Utf8SandboxResponse> {
@@ -24,6 +30,23 @@ class SandboxController(
         val steps = sandboxService.encodeUtf8Verbose(codePoint)
         return ResponseEntity.ok(
             Utf8SandboxResponse(
+                codepoint = codePoint.value,
+                codepointLabel = codePoint.toString(),
+                glyph = glyphOf(codePoint.value),
+                label = CodePointLabels.lookup(codePoint.value),
+                steps = steps,
+            ),
+        )
+    }
+
+    @GetMapping("/decode/utf-8")
+    fun decodeUtf8(@RequestParam(defaultValue = "") bytes: String): ResponseEntity<Utf8DecodeSandboxResponse> {
+        val raw = sandboxBytesParser.parse(bytes)
+        val codePoint: CodePoint = codec.decode(raw, Encoding.Utf8)
+        val steps = sandboxService.decodeUtf8Verbose(raw)
+        return ResponseEntity.ok(
+            Utf8DecodeSandboxResponse(
+                bytes = raw.map { it.toInt() and 0xFF },
                 codepoint = codePoint.value,
                 codepointLabel = codePoint.toString(),
                 glyph = glyphOf(codePoint.value),

@@ -9,4 +9,6 @@ class SandboxService(
     private val utf8Generator: Utf8Generator,
 ) {
     fun encodeUtf8Verbose(codePoint: CodePoint): List<Step> = utf8Generator.buildEncodeStepsFor(codePoint, Granularity.Verbose)
+
+    fun decodeUtf8Verbose(bytes: ByteArray): List<Step> = utf8Generator.buildDecodeStepsFor(bytes, Granularity.Verbose)
 }

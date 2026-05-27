@@ -5,6 +5,22 @@ import tools.jackson.core.JsonGenerator
 import tools.jackson.databind.SerializationContext
 import tools.jackson.databind.ValueSerializer
 
+/**
+ * Sandbox wire shape for a domain `Step`. The sandbox is a visualisation
+ * tool (not an exercise), so the value carried in `expected` is
+ * intentionally exposed - renamed to a context-appropriate field name on
+ * the wire:
+ *
+ *   - `Step.Format`         -> {type:"format", choices:[...], value:expected}
+ *   - `Step.Binary`         -> {type:"binary", value:expected, length}
+ *   - `Step.BitGroups`      -> {type:"bit-groups", groups:expected}
+ *   - `Step.HexBytes`       -> {type:"hex-bytes", bytes:expected}
+ *   - `Step.CodePointEntry` -> {type:"code-point", value:expected}
+ *
+ * `Step.Endianness` is not produced by the UTF-8 encode/decode flows and
+ * emitting it is a wire-format error surfaced as a runtime exception
+ * caught by `GlobalExceptionHandler`.
+ */
 class StepSerializer : ValueSerializer<Step>() {
     override fun serialize(step: Step, gen: JsonGenerator, ctx: SerializationContext) {
         gen.writeStartObject()
@@ -34,9 +50,11 @@ class StepSerializer : ValueSerializer<Step>() {
                 gen.writeEndArray()
             }
 
-            is Step.CodePointEntry,
-            is Step.Endianness,
-            -> throw UnsupportedSandboxStepException(step.type)
+            is Step.CodePointEntry -> {
+                gen.writeNumberProperty("value", step.expected)
+            }
+
+            is Step.Endianness -> throw UnsupportedSandboxStepException(step.type)
         }
         gen.writeEndObject()
     }

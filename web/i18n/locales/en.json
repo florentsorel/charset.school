@@ -79,7 +79,7 @@
       "section_other": "Other",
       "coming_soon": "Coming soon"
     },
-    "title": "UTF-8 sandbox",
+    "title": "UTF-8 sandbox (encode)",
     "subtitle": "Convert a Unicode code point to UTF-8.",
     "input_label": "Code point",
     "input_placeholder": "U+00E9, 0xE9, 233 or the character itself",
@@ -156,6 +156,35 @@
       "hex": "Convert to hexadecimal",
       "hex_desc_singular": "Each binary byte becomes its hex value on `1` digit.",
       "hex_desc_plural": "Each binary byte becomes its hex value on `{count}` digits."
+    },
+    "decode_utf8": {
+      "title": "UTF-8 sandbox (decode)",
+      "subtitle": "Convert a sequence of UTF-8 bytes into a Unicode code point.",
+      "input_label": "Bytes",
+      "input_placeholder": "C3 A9, 0xC3 0xA9, or C3A9",
+      "input_help": "Hex (with or without `0x`), separated by spaces / commas / no separator.",
+      "errors": {
+        "empty": "Enter a hex byte sequence.",
+        "invalid_hex": "Non-hex characters detected.",
+        "odd_length": "Last byte is incomplete (odd number of hex digits).",
+        "decoder": "This byte sequence is not valid UTF-8."
+      },
+      "bytes_label": "Bytes",
+      "step": {
+        "format": "Identify the byte count",
+        "format_desc": {
+          "1": "First byte `0xxxxxxx` (high bit `0`) - plain ASCII, 1 byte only.",
+          "2": "First byte `110xxxxx` (two `1`s then `0`) - 2-byte form.",
+          "3": "First byte `1110xxxx` (three `1`s then `0`) - 3-byte form.",
+          "4": "First byte `11110xxx` (four `1`s then `0`) - 4-byte form."
+        },
+        "bit_groups": "Extract the data bits",
+        "bit_groups_desc": "For each byte, strip the format marker (`110`/`1110`/`11110` on the leader, `10` on continuations) - what remains are the data bits.",
+        "binary": "Reassemble the binary",
+        "binary_desc": "Concatenate the groups to rebuild the code point's binary ({bits} significant bits).",
+        "code_point": "Convert to a code point",
+        "code_point_desc": "The binary equals `{decimal}` in decimal, i.e. `{cp}` in Unicode notation."
+      }
     }
   },
   "profile": {
