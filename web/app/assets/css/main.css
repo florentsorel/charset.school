@@ -177,8 +177,6 @@ abbr[title] {
   cursor: help;
 }
 
-
-
 /* Sandbox sidebar: sticky offset = natural rest position, so the sidebar
    doesn't visually shift on first scroll. Position = AppHeader height +
    layout top padding on lg+ (3.5rem from `md:py-14`). Keep in sync if

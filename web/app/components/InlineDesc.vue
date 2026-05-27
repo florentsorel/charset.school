@@ -70,7 +70,7 @@ const tokens = computed(() => tokenize(props.text))
         v-else-if="token.kind === 'abbr'"
         :title="token.title"
       >{{ token.value }}</abbr>
-      <span v-else>{{ token.value }}</span>
+      <template v-else>{{ token.value }}</template>
     </template>
   </span>
 </template>
