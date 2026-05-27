@@ -52,11 +52,23 @@ class Utf32Generator(
         endian: Encoding.Endian,
         granularity: Granularity,
     ): List<Step> {
+        // Derive the 32-bit binary from the user-provided bytes after
+        // applying endianness: BE keeps the byte order as-is, LE flips it
+        // so the high-order byte ends up first. This makes the Binary step
+        // pedagogically faithful to what the decoder reads from the input
+        // (instead of recomputing from the already-decoded code point) and
+        // guarantees the displayed binary cannot drift from the actual
+        // byte sequence.
+        val orderedBytes = when (endian) {
+            Encoding.Endian.BigEndian -> bytes
+            Encoding.Endian.LittleEndian -> bytes.reversedArray()
+        }
+        val binary = orderedBytes.joinToString("") {
+            (it.toInt() and 0xFF).toString(2).padStart(8, '0')
+        }
+
         val endianStep = Step.Endianness(expected = endian)
-        val binaryStep = Step.Binary(
-            expected = codePoint.value.toString(2).padStart(UTF32_BITS, '0'),
-            length = UTF32_BITS,
-        )
+        val binaryStep = Step.Binary(expected = binary, length = UTF32_BITS)
         val codePointStep = Step.CodePointEntry(expected = codePoint.value)
 
         return when (granularity) {

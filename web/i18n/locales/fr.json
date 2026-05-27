@@ -55,7 +55,7 @@
       "utf16-encode": { "title": "Encoder en UTF-16",       "subtitle": "endianness + BOM" },
       "utf16-decode": { "title": "Décoder UTF-16",          "subtitle": "surrogate pairs inclus" },
       "utf32-encode": { "title": "Encoder en UTF-32",       "subtitle": "4 octets fixes, padding" },
-      "utf32-decode": { "title": "Décoder UTF-32",          "subtitle": "4 octets + BOM → code point" },
+      "utf32-decode": { "title": "Décoder UTF-32",          "subtitle": "endianness explicite, 4 octets → code point" },
       "latin1":         { "title": "Latin-1 / Windows-1252", "subtitle": "tables 8 bits, pièges" },
       "latin1-encode":      { "title": "Encoder en Latin-1",      "subtitle": "code point → octet" },
       "latin1-decode":      { "title": "Décoder Latin-1",         "subtitle": "octet → code point" },
@@ -263,7 +263,7 @@
           "little": "L'octet de poids faible vient en premier (`Little Endian`). Les 4 octets s'écrivent dans l'ordre inverse du nombre."
         },
         "binary": "Convertir en binaire sur 32 bits",
-        "binary_desc": "UTF-32 utilise toujours 32 bits, peu importe le code point.\nLe code point `{cp}` tient sur 21 bits utiles au maximum (plafond Unicode `U+10FFFF`), donc les 11 bits hauts sont toujours à zéro.\nC'est ce paddage qui rend UTF-32 simple : pas de format à deviner, pas de marqueur, juste le code point dans ses 32 bits.",
+        "binary_desc": "UTF-32 utilise toujours 32 bits, peu importe le code point.\nLe code point `{cp}` tient sur 21 bits utiles au maximum (plafond Unicode `U+10FFFF`), donc les 11 bits hauts sont toujours à zéro.\nC'est ce padding qui rend UTF-32 simple : pas de format à deviner, pas de marqueur, juste le code point dans ses 32 bits.",
         "hex": "Convertir en hexadécimal",
         "hex_desc": "On découpe le binaire en 4 paquets de 8 bits, puis on écrit chaque paquet en hex.\nL'ordre des 4 octets dépend de l'endianness choisie."
       }
