@@ -5,6 +5,10 @@
       "2": "2 bytes",
       "3": "3 bytes",
       "4": "4 bytes"
+    },
+    "code-unit": {
+      "1": "1 code unit (2 bytes)",
+      "2": "2 code units (4 bytes, surrogate pair)"
     }
   },
   "common": {
@@ -183,6 +187,68 @@
         "bit_groups_desc": "For each byte, strip the format marker (`110`/`1110`/`11110` on the leader, `10` on continuations) - what remains are the data bits.",
         "binary": "Reassemble the binary",
         "binary_desc": "Concatenate the groups to rebuild the code point's binary ({bits} significant bits).",
+        "code_point": "Convert to a code point",
+        "code_point_desc": "The binary equals `{decimal}` in decimal, i.e. `{cp}` in Unicode notation."
+      }
+    },
+    "endian_label": "Endianness",
+    "endian_big": "Big Endian (BE)",
+    "endian_little": "Little Endian (LE)",
+    "endian_error_invalid": "Invalid endianness (expected `big` or `little`).",
+    "encode_utf16": {
+      "title": "UTF-16 sandbox (encode)",
+      "subtitle": "Convert a Unicode code point into UTF-16 bytes, with a chosen endianness.",
+      "step": {
+        "endianness": "Pick the endianness",
+        "endianness_desc": {
+          "big": "The high-order byte of each code unit comes first (`Big Endian`).",
+          "little": "The low-order byte of each code unit comes first (`Little Endian`)."
+        },
+        "format": "Pick the UTF-16 form",
+        "format_desc": {
+          "1": "Range `U+0000` → `U+FFFF` - the [BMP^Basic Multilingual Plane], which covers most of the world's scripts. Fits in a single 16-bit code unit, 2 bytes.",
+          "2": "Range `U+10000` → `U+10FFFF` - beyond the [BMP^Basic Multilingual Plane], in the supplementary planes (emojis, historic scripts, rare [CJK^Chinese, Japanese, Korean]...). Encoded as a surrogate pair: 2 code units = 4 bytes."
+        },
+        "binary": "Convert to binary",
+        "binary_desc_1": "Code point `{cp}` fits in 16 significant bits.",
+        "binary_desc_2": "Subtract `0x10000` and keep the remaining 20 bits.",
+        "bit_groups": "Split for the surrogates",
+        "bit_groups_desc": "Split the 20 bits into 2 packets of 10 bits.\nThe left 10 bits (high-order) form the high surrogate, the right 10 bits (low-order) form the low surrogate.\nEach 10-bit packet represents an integer between 0 and 1,023 (10 bits = 2¹⁰ = 1,024 values). Add it to the surrogate base: `0xD800` for the high, `0xDC00` for the low.",
+        "hex": "Convert to hexadecimal",
+        "hex_desc_1": "The single code unit yields 2 bytes, ordered by endianness.",
+        "hex_desc_2": "The 2 code units (high + low surrogate) yield 4 bytes, each code unit ordered by endianness."
+      }
+    },
+    "decode_utf16": {
+      "title": "UTF-16 sandbox (decode)",
+      "subtitle": "Convert a sequence of UTF-16 bytes into a Unicode code point, given the endianness.",
+      "input_label": "Bytes",
+      "input_placeholder": "00 E9, D8 3C DF 89, or C3A9",
+      "input_help": "Hex (with or without `0x`). UTF-16 takes 2 or 4 bytes per code point.",
+      "errors": {
+        "empty": "Enter a hex byte sequence.",
+        "invalid_hex": "Non-hex characters detected.",
+        "odd_length": "Last byte is incomplete (odd number of hex digits).",
+        "too_long": "Too many bytes: UTF-16 encodes a single code point in 2 or 4 bytes.",
+        "decoder": "This sequence doesn't form a single UTF-16 code point. The same byte stream can be one valid code point in BE and multiple in LE (or vice versa)."
+      },
+      "bytes_label": "Bytes",
+      "step": {
+        "endianness": "Given endianness",
+        "endianness_desc": {
+          "big": "Each code unit is read high-order byte first (`Big Endian`).",
+          "little": "Each code unit is read low-order byte first (`Little Endian`)."
+        },
+        "format": "Identify the code unit count",
+        "format_desc": {
+          "1": "2 bytes = 1 code unit in the [BMP^Basic Multilingual Plane] (range `U+0000` → `U+FFFF`).",
+          "2": "4 bytes = surrogate pair for a code point beyond the [BMP^Basic Multilingual Plane]. The high code unit is in `0xD800` → `0xDBFF`, the low one in `0xDC00` → `0xDFFF`."
+        },
+        "bit_groups": "Extract the useful bits from each surrogate",
+        "bit_groups_desc": "Subtract `0xD800` from the high surrogate (10 high bits) and `0xDC00` from the low surrogate (10 low bits).",
+        "binary": "Reassemble the binary",
+        "binary_desc_1": "The 16 bits of the code unit are the code point.",
+        "binary_desc_2": "Concatenate the 10 + 10 bits then add `0x10000` to recover the code point.",
         "code_point": "Convert to a code point",
         "code_point_desc": "The binary equals `{decimal}` in decimal, i.e. `{cp}` in Unicode notation."
       }

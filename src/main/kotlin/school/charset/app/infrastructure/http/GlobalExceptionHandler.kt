@@ -16,6 +16,7 @@ import school.charset.app.domain.profile.CurrentPasswordMismatchException
 import school.charset.app.domain.profile.PasswordConfirmationMismatchException
 import school.charset.app.domain.profile.ProfileValidationKey
 import school.charset.app.domain.sandbox.SandboxBytesParseException
+import school.charset.app.domain.sandbox.SandboxEndianParseException
 import school.charset.app.domain.sandbox.SandboxParseException
 import school.charset.app.domain.user.EmailAlreadyTakenException
 
@@ -81,6 +82,16 @@ class GlobalExceptionHandler {
         .body(
             ErrorResponse(
                 errorType = "sandbox.bytes-invalid",
+                params = mapOf("reason" to ex.reason),
+            ),
+        )
+
+    @ExceptionHandler(SandboxEndianParseException::class)
+    fun handleSandboxEndianParse(ex: SandboxEndianParseException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(
+            ErrorResponse(
+                errorType = "sandbox.endian-invalid",
                 params = mapOf("reason" to ex.reason),
             ),
         )

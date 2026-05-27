@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.sandbox.SandboxBytesParser
+import school.charset.app.domain.sandbox.SandboxEndianParser
 import school.charset.app.domain.sandbox.SandboxInputParser
 import school.charset.app.domain.sandbox.SandboxService
 
@@ -21,6 +22,7 @@ class SandboxController(
     private val sandboxService: SandboxService,
     private val sandboxInputParser: SandboxInputParser,
     private val sandboxBytesParser: SandboxBytesParser,
+    private val sandboxEndianParser: SandboxEndianParser,
     private val codec: Codec,
 ) {
     @GetMapping("/encode/utf-8")
@@ -53,6 +55,57 @@ class SandboxController(
                 steps = steps,
             ),
         )
+    }
+
+    @GetMapping("/encode/utf-16")
+    fun encodeUtf16(
+        @RequestParam(defaultValue = "") input: String,
+        @RequestParam(defaultValue = "little") endian: String,
+    ): ResponseEntity<Utf16EncodeSandboxResponse> {
+        val codePoint = sandboxInputParser.parse(input)
+        val parsedEndian = sandboxEndianParser.parse(endian)
+        val steps = sandboxService.encodeUtf16Verbose(codePoint, parsedEndian)
+        return ResponseEntity.ok(
+            Utf16EncodeSandboxResponse(
+                codepoint = codePoint.value,
+                codepointLabel = codePoint.toString(),
+                glyph = glyphOf(codePoint.value),
+                label = CodePointLabels.lookup(codePoint.value),
+                endian = parsedEndian.wireValue(),
+                steps = steps,
+            ),
+        )
+    }
+
+    @GetMapping("/decode/utf-16")
+    fun decodeUtf16(
+        @RequestParam(defaultValue = "") bytes: String,
+        @RequestParam(defaultValue = "little") endian: String,
+    ): ResponseEntity<Utf16DecodeSandboxResponse> {
+        val raw = sandboxBytesParser.parse(bytes)
+        val parsedEndian = sandboxEndianParser.parse(endian)
+        val utf16Encoding = when (parsedEndian) {
+            Encoding.Endian.BigEndian -> Encoding.Utf16Be
+            Encoding.Endian.LittleEndian -> Encoding.Utf16Le
+        }
+        val codePoint = codec.decode(raw, utf16Encoding)
+        val steps = sandboxService.decodeUtf16Verbose(raw, codePoint, parsedEndian)
+        return ResponseEntity.ok(
+            Utf16DecodeSandboxResponse(
+                bytes = raw.map { it.toInt() and 0xFF },
+                codepoint = codePoint.value,
+                codepointLabel = codePoint.toString(),
+                glyph = glyphOf(codePoint.value),
+                label = CodePointLabels.lookup(codePoint.value),
+                endian = parsedEndian.wireValue(),
+                steps = steps,
+            ),
+        )
+    }
+
+    private fun Encoding.Endian.wireValue(): String = when (this) {
+        Encoding.Endian.BigEndian -> "big"
+        Encoding.Endian.LittleEndian -> "little"
     }
 
     /**

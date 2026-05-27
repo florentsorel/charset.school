@@ -59,32 +59,34 @@ watch(debouncedBytes, (v) => {
   router.replace({ query: { ...route.query, bytes: v } })
 })
 
-// `parseReason` covers both byte-parse failures (empty / invalid_hex /
-// odd_length) and UTF-8 decode failures (encoder-side), surfaced via two
-// distinct errorTypes on the wire.
-const apiError = ref<{ kind: 'bytes' | 'decoder', reason: string } | null>(null)
+type DecodeOutcome
+  = | { ok: true, response: Utf8DecodeSandboxResponse }
+    | { ok: false, error: { kind: 'bytes' | 'decoder', reason: string } }
 
-const { data: response } = await useAsyncData<Utf8DecodeSandboxResponse | null>(
+const { data: outcome } = await useAsyncData<DecodeOutcome | null>(
   'sandbox-utf8-decode',
-  async () => {
+  async (): Promise<DecodeOutcome> => {
     try {
       const result = await $api<Utf8DecodeSandboxResponse>(
         `/sandbox/decode/utf-8?bytes=${encodeURIComponent(debouncedBytes.value)}`
       )
-      apiError.value = null
-      return result
+      return { ok: true, response: result }
     } catch (err) {
       const body = (err as { data?: DecodeParseError } | null | undefined)?.data
       if (body?.errorType === 'sandbox.bytes-invalid') {
-        apiError.value = { kind: 'bytes', reason: body.params?.reason ?? 'invalid_hex' }
-      } else if (body?.errorType === 'encoding.not-decodable') {
-        apiError.value = { kind: 'decoder', reason: 'decoder' }
+        return { ok: false, error: { kind: 'bytes', reason: body.params?.reason ?? 'invalid_hex' } }
       }
-      return null
+      if (body?.errorType === 'encoding.not-decodable') {
+        return { ok: false, error: { kind: 'decoder', reason: 'decoder' } }
+      }
+      return { ok: false, error: { kind: 'decoder', reason: 'decoder' } }
     }
   },
   { watch: [debouncedBytes] }
 )
+
+const response = computed(() => (outcome.value?.ok ? outcome.value.response : null))
+const apiError = computed(() => (outcome.value && !outcome.value.ok ? outcome.value.error : null))
 
 const errorMessage = computed(() => {
   if (!apiError.value) return null
