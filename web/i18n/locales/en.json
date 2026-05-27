@@ -252,6 +252,47 @@
         "code_point": "Convert to a code point",
         "code_point_desc": "The binary equals `{decimal}` in decimal, i.e. `{cp}` in Unicode notation."
       }
+    },
+    "encode_utf32": {
+      "title": "UTF-32 sandbox (encode)",
+      "subtitle": "Convert a Unicode code point into 4 UTF-32 bytes, with a chosen endianness.",
+      "step": {
+        "endianness": "Pick the endianness",
+        "endianness_desc": {
+          "big": "The high-order byte comes first (`Big Endian`). The 4 bytes are written in the natural order of the number.",
+          "little": "The low-order byte comes first (`Little Endian`). The 4 bytes are written in reverse order from the number."
+        },
+        "binary": "Convert to 32-bit binary",
+        "binary_desc": "UTF-32 always uses 32 bits, regardless of the code point.\nCode point `{cp}` fits in at most 21 significant bits (Unicode caps at `U+10FFFF`), so the 11 high bits are always zero.\nThis padding is what makes UTF-32 simple: no format to guess, no marker, just the code point in its 32 bits.",
+        "hex": "Convert to hexadecimal",
+        "hex_desc": "Split the binary into 4 packets of 8 bits, then write each packet in hex.\nThe order of the 4 bytes depends on the chosen endianness."
+      }
+    },
+    "decode_utf32": {
+      "title": "UTF-32 sandbox (decode)",
+      "subtitle": "Convert 4 UTF-32 bytes into a Unicode code point, given the endianness.",
+      "input_label": "Bytes",
+      "input_placeholder": "00 00 00 E9, 89 F3 01 00, or 000000E9",
+      "input_help": "Hex (with or without `0x`). UTF-32 takes exactly 4 bytes per code point.",
+      "errors": {
+        "empty": "Enter a hex byte sequence.",
+        "invalid_hex": "Non-hex characters detected.",
+        "odd_length": "Last byte is incomplete (odd number of hex digits).",
+        "too_long": "Too many bytes: UTF-32 encodes a single code point in exactly 4 bytes.",
+        "decoder": "This sequence doesn't form a valid UTF-32 code point. It needs exactly 4 bytes, and the value must be in `U+0000` → `U+10FFFF` excluding surrogates."
+      },
+      "bytes_label": "Bytes",
+      "step": {
+        "endianness": "Given endianness",
+        "endianness_desc": {
+          "big": "The 4 bytes are read high-order byte first (`Big Endian`).",
+          "little": "The 4 bytes are read low-order byte first (`Little Endian`). Mentally reverse the byte order before assembling the number."
+        },
+        "binary": "Reassemble the binary",
+        "binary_desc": "Concatenate the 4 bytes (reordered as Big Endian) to reform the full 32-bit binary.\nIn UTF-32 this binary IS the code point - no marker to strip, no surrogate to recombine.",
+        "code_point": "Convert to a code point",
+        "code_point_desc": "The binary equals `{decimal}` in decimal, i.e. `{cp}` in Unicode notation."
+      }
     }
   },
   "profile": {

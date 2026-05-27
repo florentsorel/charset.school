@@ -6,6 +6,7 @@ import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.exercise.generator.ByteArrayGenerator
 import school.charset.app.domain.exercise.generator.CodePointGenerator
 import school.charset.app.domain.exercise.generator.Utf16Generator
+import school.charset.app.domain.exercise.generator.Utf32Generator
 import school.charset.app.domain.exercise.generator.Utf8Generator
 import school.charset.app.domain.sandbox.SandboxBytesParser
 import school.charset.app.domain.sandbox.SandboxEndianParser
@@ -44,10 +45,14 @@ class SandboxConfig {
     fun utf16Generator(codec: Codec): Utf16Generator = Utf16Generator(codec)
 
     @Bean
+    fun utf32Generator(codec: Codec): Utf32Generator = Utf32Generator(codec)
+
+    @Bean
     fun sandboxService(
         utf8Generator: Utf8Generator,
         utf16Generator: Utf16Generator,
-    ): SandboxService = SandboxService(utf8Generator, utf16Generator)
+        utf32Generator: Utf32Generator,
+    ): SandboxService = SandboxService(utf8Generator, utf16Generator, utf32Generator)
 
     @Bean
     fun sandboxInputParser(): SandboxInputParser = SandboxInputParser()

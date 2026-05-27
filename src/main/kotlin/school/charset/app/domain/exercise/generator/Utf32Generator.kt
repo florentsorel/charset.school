@@ -3,120 +3,80 @@ package school.charset.app.domain.exercise.generator
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
-import school.charset.app.domain.exercise.Exercise
-import school.charset.app.domain.exercise.ExerciseGenerationException
-import school.charset.app.domain.exercise.FormatChoice
 import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
+/**
+ * UTF-32 step generator for the sandbox. The simplest of the Unicode
+ * transformation formats on paper: every code point takes exactly 4
+ * bytes, with no variable-length encoding and no surrogate pairs. The
+ * only nuance is endianness - the same 4 bytes can be laid out
+ * high-order first (BE) or low-order first (LE).
+ *
+ * For now this is a plain class (no `EncodingExerciseGenerator`
+ * implementation) - exercise generation will be wired in Phase 5.
+ */
 class Utf32Generator(
     private val codec: Codec,
-    private val codePointGenerator: CodePointGenerator,
-    private val byteArrayGenerator: ByteArrayGenerator,
-    override val encoding: Encoding,
-) : EncodingExerciseGenerator {
-    init {
-        require(encoding in SUPPORTED_ENCODINGS) {
-            "Utf32Generator handles only ${SUPPORTED_ENCODINGS.joinToString { it.id }}, got ${encoding.id}"
-        }
-    }
-
-    override fun generateEncode(level: Int, granularity: Granularity): Exercise.Encode {
-        val utf32Level = parseLevel(level)
-        val codePoint = codePointGenerator.randomUtf32(utf32Level)
-        val steps = codePoint.buildEncodeSteps(granularity)
-        return Exercise.Encode(codePoint, encoding, level, granularity, steps)
-    }
-
-    override fun generateDecode(level: Int, granularity: Granularity): Exercise.Decode {
-        val utf32Level = parseLevel(level)
-        val bytes = byteArrayGenerator.randomUtf32(utf32Level, encoding)
-        val steps = bytes.buildDecodeSteps(granularity)
-        return Exercise.Decode(bytes, encoding, level, granularity, steps)
-    }
-
-    private fun parseLevel(level: Int): Utf32Level = Utf32Level.fromNumber(level)
-        ?: throw ExerciseGenerationException(
-            encoding = encoding,
-            level = level,
-            reason = "level must be one of: ${Utf32Level.validNumbers}",
-        )
-
-    private fun CodePoint.buildEncodeSteps(granularity: Granularity): List<Step> {
-        val bytes = codec.encode(this, encoding)
+) {
+    fun buildEncodeStepsFor(
+        codePoint: CodePoint,
+        endian: Encoding.Endian,
+        granularity: Granularity,
+    ): List<Step> {
+        // Re-use Codec for the actual encode work; derive the pedagogical
+        // binary form by padding the code point's bits to a full 32-bit
+        // width (the top 11 bits are always zero since Unicode caps at
+        // U+10FFFF = 21 bits).
+        val encoding = endian.toUtf32Encoding()
+        val bytes = codec.encode(codePoint, encoding)
         val hexBytes = bytes.map { it.toInt() and 0xFF }
-        val formatStep = Step.Format(choices = FORMAT_CHOICES, expected = FormatChoice.FOUR_BYTES)
+
+        val endianStep = Step.Endianness(expected = endian)
+        val binaryStep = Step.Binary(
+            expected = codePoint.value.toString(2).padStart(UTF32_BITS, '0'),
+            length = UTF32_BITS,
+        )
         val hexStep = Step.HexBytes(expected = hexBytes)
 
         return when (granularity) {
-            Granularity.Verbose -> verboseEncodeSteps(formatStep, hexStep)
-            Granularity.Standard -> listOf(formatStep, hexStep)
+            Granularity.Verbose -> listOf(endianStep, binaryStep, hexStep)
+            Granularity.Standard -> listOf(endianStep, hexStep)
             Granularity.Compact -> listOf(hexStep)
         }
     }
 
-    private fun CodePoint.verboseEncodeSteps(
-        formatStep: Step.Format,
-        hexStep: Step.HexBytes,
+    fun buildDecodeStepsFor(
+        bytes: ByteArray,
+        codePoint: CodePoint,
+        endian: Encoding.Endian,
+        granularity: Granularity,
     ): List<Step> {
-        // The code point fits in 21 bits but UTF-32 always uses 32 bits - pad
-        // explicitly so the BitGroups split into 4×8 is mechanical.
-        val binary = value.toString(2).padStart(32, '0')
-        val bitGroups = splitIntoBytes(binary)
-        return listOf(
-            formatStep,
-            Step.Binary(expected = binary, length = 32),
-            Step.BitGroups(expected = bitGroups),
-            hexStep,
+        val endianStep = Step.Endianness(expected = endian)
+        val binaryStep = Step.Binary(
+            expected = codePoint.value.toString(2).padStart(UTF32_BITS, '0'),
+            length = UTF32_BITS,
         )
-    }
-
-    private fun ByteArray.buildDecodeSteps(granularity: Granularity): List<Step> {
-        // Decode flow: combine the 4 bytes (per endianness) into a 32-bit value
-        // - that value IS the code point.
-        val codePoint = codec.decode(this, encoding).value
-        val formatStep = Step.Format(choices = FORMAT_CHOICES, expected = FormatChoice.FOUR_BYTES)
-        val codePointStep = Step.CodePointEntry(expected = codePoint)
+        val codePointStep = Step.CodePointEntry(expected = codePoint.value)
 
         return when (granularity) {
-            Granularity.Verbose -> verboseDecodeSteps(codePoint, formatStep, codePointStep)
-            Granularity.Standard -> listOf(formatStep, codePointStep)
+            Granularity.Verbose -> listOf(endianStep, binaryStep, codePointStep)
+            Granularity.Standard -> listOf(endianStep, codePointStep)
             Granularity.Compact -> listOf(codePointStep)
         }
     }
 
-    private fun verboseDecodeSteps(
-        codePoint: Int,
-        formatStep: Step.Format,
-        codePointStep: Step.CodePointEntry,
-    ): List<Step> {
-        val binary = codePoint.toString(2).padStart(32, '0')
-        val bitGroups = splitIntoBytes(binary)
-        return listOf(
-            formatStep,
-            Step.BitGroups(expected = bitGroups),
-            Step.Binary(expected = binary, length = 32),
-            codePointStep,
-        )
+    private fun Encoding.Endian.toUtf32Encoding(): Encoding = when (this) {
+        Encoding.Endian.BigEndian -> Encoding.Utf32Be
+        Encoding.Endian.LittleEndian -> Encoding.Utf32Le
     }
 
-    private fun splitIntoBytes(binary32: String): List<String> = listOf(
-        binary32.substring(0, 8),
-        binary32.substring(8, 16),
-        binary32.substring(16, 24),
-        binary32.substring(24, 32),
-    )
-
     private companion object {
-        // Same 4 byte-count choices as UTF-8 - for UTF-32 the right answer is always
-        // FOUR_BYTES; the other options are pedagogical decoys (force the user to
-        // actively confirm that UTF-32 is fixed-width).
-        private val FORMAT_CHOICES = listOf(
-            FormatChoice.ONE_BYTE,
-            FormatChoice.TWO_BYTES,
-            FormatChoice.THREE_BYTES,
-            FormatChoice.FOUR_BYTES,
-        )
-        private val SUPPORTED_ENCODINGS = setOf(Encoding.Utf32Be, Encoding.Utf32Le)
+        // UTF-32 always uses 32 bits regardless of code point magnitude.
+        // The top 11 bits are always zero (max valid code point is
+        // U+10FFFF = 21 bits), which makes the padding pedagogically
+        // visible: it shows the format's fixed width and where the
+        // significant data lives.
+        private const val UTF32_BITS = 32
     }
 }
