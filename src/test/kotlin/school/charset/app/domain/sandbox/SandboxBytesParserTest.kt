@@ -56,4 +56,13 @@ class SandboxBytesParserTest :
             shouldThrow<SandboxBytesParseException> { parser.parse("C3A") }.reason shouldBe "odd_length"
             shouldThrow<SandboxBytesParseException> { parser.parse("C3 A") }.reason shouldBe "odd_length"
         }
+
+        test("accepts up to 4 bytes (UTF-8 max per code point)") {
+            parser.parse("F09F8E89").asUnsignedInts() shouldBe listOf(0xF0, 0x9F, 0x8E, 0x89)
+        }
+
+        test("rejects inputs larger than 4 bytes") {
+            shouldThrow<SandboxBytesParseException> { parser.parse("AA BB CC DD EE") }.reason shouldBe "too_long"
+            shouldThrow<SandboxBytesParseException> { parser.parse("00".repeat(100)) }.reason shouldBe "too_long"
+        }
     })

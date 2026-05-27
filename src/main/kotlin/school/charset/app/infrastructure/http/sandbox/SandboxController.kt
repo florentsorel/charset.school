@@ -42,8 +42,8 @@ class SandboxController(
     @GetMapping("/decode/utf-8")
     fun decodeUtf8(@RequestParam(defaultValue = "") bytes: String): ResponseEntity<Utf8DecodeSandboxResponse> {
         val raw = sandboxBytesParser.parse(bytes)
-        val codePoint: CodePoint = codec.decode(raw, Encoding.Utf8)
-        val steps = sandboxService.decodeUtf8Verbose(raw)
+        val codePoint = codec.decode(raw, Encoding.Utf8)
+        val steps = sandboxService.decodeUtf8Verbose(raw, codePoint)
         return ResponseEntity.ok(
             Utf8DecodeSandboxResponse(
                 bytes = raw.map { it.toInt() and 0xFF },

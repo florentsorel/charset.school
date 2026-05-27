@@ -25,12 +25,13 @@ class Utf8Generator(
 
     fun buildEncodeStepsFor(codePoint: CodePoint, granularity: Granularity): List<Step> = codePoint.buildEncodeSteps(granularity)
 
-    fun buildDecodeStepsFor(bytes: ByteArray, granularity: Granularity): List<Step> = bytes.buildDecodeSteps(granularity)
+    fun buildDecodeStepsFor(bytes: ByteArray, codePoint: CodePoint, granularity: Granularity): List<Step> = bytes.buildDecodeSteps(codePoint, granularity)
 
     override fun generateDecode(level: Int, granularity: Granularity): Exercise.Decode {
         val utf8Level = parseLevel(level)
         val bytes = byteArrayGenerator.randomUtf8(utf8Level)
-        val steps = bytes.buildDecodeSteps(granularity)
+        val codePoint = codec.decode(bytes, Encoding.Utf8)
+        val steps = bytes.buildDecodeSteps(codePoint, granularity)
         return Exercise.Decode(bytes, Encoding.Utf8, level, granularity, steps)
     }
 
@@ -75,19 +76,20 @@ class Utf8Generator(
         }
     }
 
-    private fun ByteArray.buildDecodeSteps(granularity: Granularity): List<Step> {
-        // Decode flow: delegate to Codec.decode for the actual code point and
-        // derive the pedagogical artefacts (bit groups, combined binary) from
-        // it. Conceptually this mirrors the encode flow (inspect leading byte
-        // for byte count, strip markers per byte, combine into the code point's
-        // binary), but the math is done in Codec.decode rather than here.
+    private fun ByteArray.buildDecodeSteps(codePoint: CodePoint, granularity: Granularity): List<Step> {
+        // Build the pedagogical artefacts (bit groups, combined binary)
+        // from an already-decoded code point. The caller decodes once via
+        // `Codec.decode` and passes the result, so we don't double-decode
+        // here. Conceptually this mirrors the encode flow (inspect leading
+        // byte for byte count, strip markers per byte, combine into the
+        // code point's binary), but the math was already done in Codec.
         val byteCount = size
-        val codePoint = codec.decode(this, Encoding.Utf8).value
+        val codePointValue = codePoint.value
         val dataBits = dataBitsForByteCount(byteCount)
-        val combinedBinary = codePoint.toString(2).padStart(dataBits, '0')
+        val combinedBinary = codePointValue.toString(2).padStart(dataBits, '0')
         val byteCountLabel = FORMAT_CHOICES[byteCount - 1]
         val formatStep = Step.Format(choices = FORMAT_CHOICES, expected = byteCountLabel)
-        val codePointStep = Step.CodePointEntry(expected = codePoint)
+        val codePointStep = Step.CodePointEntry(expected = codePointValue)
 
         return when (granularity) {
             Granularity.Verbose -> verboseDecodeSteps(byteCount, combinedBinary, dataBits, formatStep, codePointStep)

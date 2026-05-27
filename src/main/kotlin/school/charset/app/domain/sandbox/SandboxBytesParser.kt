@@ -42,6 +42,9 @@ class SandboxBytesParser {
         if (normalized.length % 2 != 0) {
             throw SandboxBytesParseException(REASON_ODD_LENGTH)
         }
+        if (normalized.length / 2 > MAX_BYTES) {
+            throw SandboxBytesParseException(REASON_TOO_LONG)
+        }
 
         return ByteArray(normalized.length / 2) { i ->
             normalized.substring(i * 2, i * 2 + 2).toInt(16).toByte()
@@ -49,9 +52,11 @@ class SandboxBytesParser {
     }
 
     companion object {
+        const val MAX_BYTES = 4
         const val REASON_EMPTY = "empty"
         const val REASON_INVALID_HEX = "invalid_hex"
         const val REASON_ODD_LENGTH = "odd_length"
+        const val REASON_TOO_LONG = "too_long"
     }
 }
 

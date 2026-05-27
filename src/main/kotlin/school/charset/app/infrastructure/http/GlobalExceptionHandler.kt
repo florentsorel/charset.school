@@ -91,7 +91,7 @@ class GlobalExceptionHandler {
         .body(
             ErrorResponse(
                 errorType = "encoding.not-encodable",
-                params = mapOf("reason" to (ex.message ?: "")),
+                params = mapOf("reason" to ex.reason),
             ),
         )
 
@@ -101,7 +101,7 @@ class GlobalExceptionHandler {
         .body(
             ErrorResponse(
                 errorType = "encoding.not-decodable",
-                params = mapOf("reason" to (ex.message ?: "")),
+                params = mapOf("reason" to ex.reason),
             ),
         )
 

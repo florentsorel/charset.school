@@ -167,6 +167,7 @@
         "empty": "Entre une suite d'octets hex.",
         "invalid_hex": "Caractères non-hex détectés.",
         "odd_length": "Le dernier octet est incomplet (nombre impair de chiffres hex).",
+        "too_long": "Trop d'octets : UTF-8 encode un seul code point sur 4 octets maximum.",
         "decoder": "Cette séquence d'octets ne forme pas un UTF-8 valide."
       },
       "bytes_label": "Octets",

@@ -128,5 +128,16 @@ class DecodeUtf8ControllerTest(
         mockMvc.perform(get("/api/sandbox/decode/utf-8").param("bytes", "C3"))
             .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.errorType").value("encoding.not-decodable"))
+            // The reason field surfaces a short stable code (not the
+            // verbose exception message which embeds the raw bytes).
+            .andExpect(jsonPath("$.params.reason").isString)
+    }
+
+    @Test
+    fun `returns 422 when bytes input exceeds 4 bytes (UTF-8 max per code point)`() {
+        mockMvc.perform(get("/api/sandbox/decode/utf-8").param("bytes", "AA BB CC DD EE"))
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("$.errorType").value("sandbox.bytes-invalid"))
+            .andExpect(jsonPath("$.params.reason").value("too_long"))
     }
 }

@@ -167,6 +167,7 @@
         "empty": "Enter a hex byte sequence.",
         "invalid_hex": "Non-hex characters detected.",
         "odd_length": "Last byte is incomplete (odd number of hex digits).",
+        "too_long": "Too many bytes: UTF-8 encodes a single code point in at most 4 bytes.",
         "decoder": "This byte sequence is not valid UTF-8."
       },
       "bytes_label": "Bytes",

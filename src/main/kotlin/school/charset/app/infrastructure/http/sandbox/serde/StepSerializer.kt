@@ -17,9 +17,13 @@ import tools.jackson.databind.ValueSerializer
  *   - `Step.HexBytes`       -> {type:"hex-bytes", bytes:expected}
  *   - `Step.CodePointEntry` -> {type:"code-point", value:expected}
  *
- * `Step.Endianness` is not produced by the UTF-8 encode/decode flows and
- * emitting it is a wire-format error surfaced as a runtime exception
- * caught by `GlobalExceptionHandler`.
+ * `Step.Endianness` is not produced by the UTF-8 encode/decode flows. If
+ * it ever reaches this serializer the wire shape is undefined, so we
+ * raise `UnsupportedSandboxStepException` (an `IllegalStateException`
+ * subtype) - this is an invariant violation, not a business error, and
+ * falls through Spring's default 500 handling. No dedicated
+ * `@ExceptionHandler` is registered because the situation should never
+ * happen at runtime.
  */
 class StepSerializer : ValueSerializer<Step>() {
     override fun serialize(step: Step, gen: JsonGenerator, ctx: SerializationContext) {
