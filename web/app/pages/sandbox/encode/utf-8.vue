@@ -34,7 +34,14 @@ const router = useRouter()
 const initialRawInput = (() => {
   const q = route.query.input
   if (typeof q !== 'string' || q.length === 0) return 'U+00E9'
-  return q.replace(/ /g, '+')
+  // `+` in query strings is decoded as a literal space per RFC, so a URL
+  // like `?input=U+1F389` (without proper %2B encoding) lands here as
+  // "U 1F389". Browsers often display `%2B` as `+` in the address bar,
+  // making users copy malformed URLs by accident. Repair *only* the
+  // start-of-string `U ` / `u ` pattern (the U+XXXX notation), not every
+  // space - the back trims leading/trailing whitespace from input, so a
+  // blanket replace would corrupt those cases.
+  return q.replace(/^([Uu]) /, '$1+')
 })()
 const rawInput = ref(initialRawInput)
 
