@@ -6,6 +6,7 @@ import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.exercise.generator.ByteArrayGenerator
 import school.charset.app.domain.exercise.generator.CodePointGenerator
 import school.charset.app.domain.exercise.generator.Utf8Generator
+import school.charset.app.domain.sandbox.SandboxBytesParser
 import school.charset.app.domain.sandbox.SandboxInputParser
 import school.charset.app.domain.sandbox.SandboxService
 import school.charset.app.infrastructure.http.sandbox.serde.StepSerializer
@@ -42,6 +43,9 @@ class SandboxConfig {
 
     @Bean
     fun sandboxInputParser(): SandboxInputParser = SandboxInputParser()
+
+    @Bean
+    fun sandboxBytesParser(): SandboxBytesParser = SandboxBytesParser()
 
     @Bean
     fun sandboxJacksonModule(): JacksonModule = SimpleModule().apply {

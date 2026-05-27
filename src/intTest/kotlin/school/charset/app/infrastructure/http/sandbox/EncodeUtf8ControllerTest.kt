@@ -19,7 +19,7 @@ import school.charset.app.config.ApplicationConfigTest
 @AutoConfigureMockMvc
 @Import(ApplicationConfigTest::class)
 @Testcontainers
-class SandboxControllerTest(
+class EncodeUtf8ControllerTest(
     private val mockMvc: MockMvc,
 ) {
     companion object {
@@ -39,7 +39,7 @@ class SandboxControllerTest(
     }
 
     @Test
-    fun `encode-utf8 is publicly accessible without auth`() {
+    fun `is publicly accessible without auth`() {
         mockMvc.perform(get("/api/sandbox/encode/utf-8").param("input", "U+0041"))
             .andExpect(status().isOk)
     }

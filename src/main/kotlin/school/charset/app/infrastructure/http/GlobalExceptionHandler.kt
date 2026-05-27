@@ -10,10 +10,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import school.charset.app.domain.auth.AuthErrorType
 import school.charset.app.domain.auth.OrphanedSessionException
+import school.charset.app.domain.encoding.DecoderException
 import school.charset.app.domain.encoding.EncoderException
 import school.charset.app.domain.profile.CurrentPasswordMismatchException
 import school.charset.app.domain.profile.PasswordConfirmationMismatchException
 import school.charset.app.domain.profile.ProfileValidationKey
+import school.charset.app.domain.sandbox.SandboxBytesParseException
 import school.charset.app.domain.sandbox.SandboxParseException
 import school.charset.app.domain.user.EmailAlreadyTakenException
 
@@ -73,13 +75,33 @@ class GlobalExceptionHandler {
             ),
         )
 
+    @ExceptionHandler(SandboxBytesParseException::class)
+    fun handleSandboxBytesParse(ex: SandboxBytesParseException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(
+            ErrorResponse(
+                errorType = "sandbox.bytes-invalid",
+                params = mapOf("reason" to ex.reason),
+            ),
+        )
+
     @ExceptionHandler(EncoderException::class)
     fun handleEncoderException(ex: EncoderException): ResponseEntity<ErrorResponse> = ResponseEntity
-        .status(HttpStatus.BAD_REQUEST)
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
         .body(
             ErrorResponse(
                 errorType = "encoding.not-encodable",
-                params = mapOf("reason" to (ex.message ?: "")),
+                params = mapOf("reason" to ex.reason),
+            ),
+        )
+
+    @ExceptionHandler(DecoderException::class)
+    fun handleDecoderException(ex: DecoderException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(
+            ErrorResponse(
+                errorType = "encoding.not-decodable",
+                params = mapOf("reason" to ex.reason),
             ),
         )
 

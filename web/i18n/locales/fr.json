@@ -79,7 +79,7 @@
       "section_other": "Autres",
       "coming_soon": "Bientôt"
     },
-    "title": "Sandbox UTF-8",
+    "title": "Sandbox UTF-8 (encodage)",
     "subtitle": "Convertis un code point Unicode en UTF-8.",
     "input_label": "Code point",
     "input_placeholder": "U+00E9, 0xE9, 233 ou directement le caractère",
@@ -156,6 +156,36 @@
       "hex": "Convertir en hexadécimal",
       "hex_desc_singular": "Chaque octet binaire devient sa valeur hex sur `1` chiffre.",
       "hex_desc_plural": "Chaque octet binaire devient sa valeur hex sur `{count}` chiffres."
+    },
+    "decode_utf8": {
+      "title": "Sandbox UTF-8 (décodage)",
+      "subtitle": "Convertis une suite d'octets UTF-8 en code point Unicode.",
+      "input_label": "Octets",
+      "input_placeholder": "C3 A9, 0xC3 0xA9, ou C3A9",
+      "input_help": "Hex (avec ou sans `0x`), séparé par espaces / virgules / sans séparateur.",
+      "errors": {
+        "empty": "Entre une suite d'octets hex.",
+        "invalid_hex": "Caractères non-hex détectés.",
+        "odd_length": "Le dernier octet est incomplet (nombre impair de chiffres hex).",
+        "too_long": "Trop d'octets : UTF-8 encode un seul code point sur 4 octets maximum.",
+        "decoder": "Cette séquence d'octets ne forme pas un UTF-8 valide."
+      },
+      "bytes_label": "Octets",
+      "step": {
+        "format": "Identifier le nombre d'octets",
+        "format_desc": {
+          "1": "Premier octet `0xxxxxxx` (bit haut à `0`) - format ASCII pur, 1 octet seulement.",
+          "2": "Premier octet `110xxxxx` (deux `1` puis `0`) - format 2 octets.",
+          "3": "Premier octet `1110xxxx` (trois `1` puis `0`) - format 3 octets.",
+          "4": "Premier octet `11110xxx` (quatre `1` puis `0`) - format 4 octets."
+        },
+        "bit_groups": "Extraire les bits de données",
+        "bit_groups_desc": "Pour chaque octet, on enlève le marqueur du format (`110`/`1110`/`11110` pour le leader, `10` pour la continuation) - il reste les bits de données.",
+        "binary": "Reconstituer le binaire",
+        "binary_desc": "On concatène les groupes pour reformer le binaire complet du code point ({bits} bits significatifs).",
+        "code_point": "Convertir en code point",
+        "code_point_desc": "Le binaire vaut `{decimal}` en décimal, soit `{cp}` en notation Unicode."
+      }
     }
   },
   "profile": {
