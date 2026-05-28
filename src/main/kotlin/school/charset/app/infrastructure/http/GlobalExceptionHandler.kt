@@ -12,6 +12,12 @@ import school.charset.app.domain.auth.AuthErrorType
 import school.charset.app.domain.auth.OrphanedSessionException
 import school.charset.app.domain.encoding.DecoderException
 import school.charset.app.domain.encoding.EncoderException
+import school.charset.app.domain.exercise.AttemptAlreadyFinalizedException
+import school.charset.app.domain.exercise.AttemptNotFoundException
+import school.charset.app.domain.exercise.ExerciseGenerationException
+import school.charset.app.domain.exercise.RevealNotAllowedException
+import school.charset.app.domain.exercise.StepAlreadyResolvedException
+import school.charset.app.domain.exercise.StepNotFoundException
 import school.charset.app.domain.profile.CurrentPasswordMismatchException
 import school.charset.app.domain.profile.PasswordConfirmationMismatchException
 import school.charset.app.domain.profile.ProfileValidationKey
@@ -19,6 +25,9 @@ import school.charset.app.domain.sandbox.SandboxBytesParseException
 import school.charset.app.domain.sandbox.SandboxEndianParseException
 import school.charset.app.domain.sandbox.SandboxParseException
 import school.charset.app.domain.user.EmailAlreadyTakenException
+import school.charset.app.infrastructure.http.exercise.InvalidAnswerPayloadException
+import school.charset.app.infrastructure.http.exercise.UnknownGranularityException
+import school.charset.app.infrastructure.http.exercise.UnknownModuleException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -113,6 +122,92 @@ class GlobalExceptionHandler {
             ErrorResponse(
                 errorType = "encoding.not-decodable",
                 params = mapOf("reason" to ex.reason),
+            ),
+        )
+
+    @ExceptionHandler(UnknownModuleException::class)
+    fun handleUnknownModule(ex: UnknownModuleException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(ErrorResponse(errorType = "exercise.unknown-module", params = mapOf("moduleId" to ex.moduleId)))
+
+    @ExceptionHandler(UnknownGranularityException::class)
+    fun handleUnknownGranularity(ex: UnknownGranularityException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(ErrorResponse(errorType = "exercise.unknown-granularity", params = mapOf("granularity" to ex.granularity)))
+
+    @ExceptionHandler(AttemptNotFoundException::class)
+    fun handleAttemptNotFound(ex: AttemptNotFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.NOT_FOUND)
+        .body(ErrorResponse(errorType = "exercise.attempt-not-found", params = mapOf("attemptId" to ex.attemptId.toString())))
+
+    @ExceptionHandler(StepNotFoundException::class)
+    fun handleStepNotFound(ex: StepNotFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.NOT_FOUND)
+        .body(
+            ErrorResponse(
+                errorType = "exercise.step-not-found",
+                params = mapOf(
+                    "attemptId" to ex.attemptId.toString(),
+                    "stepIndex" to ex.stepIndex.toString(),
+                ),
+            ),
+        )
+
+    @ExceptionHandler(AttemptAlreadyFinalizedException::class)
+    fun handleAttemptAlreadyFinalized(ex: AttemptAlreadyFinalizedException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(ErrorResponse(errorType = "exercise.attempt-already-finalized", params = mapOf("attemptId" to ex.attemptId.toString())))
+
+    @ExceptionHandler(StepAlreadyResolvedException::class)
+    fun handleStepAlreadyResolved(ex: StepAlreadyResolvedException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(
+            ErrorResponse(
+                errorType = "exercise.step-already-resolved",
+                params = mapOf(
+                    "attemptId" to ex.attemptId.toString(),
+                    "stepIndex" to ex.stepIndex.toString(),
+                ),
+            ),
+        )
+
+    @ExceptionHandler(InvalidAnswerPayloadException::class)
+    fun handleInvalidAnswerPayload(ex: InvalidAnswerPayloadException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(
+            ErrorResponse(
+                errorType = "exercise.invalid-answer-payload",
+                params = mapOf(
+                    "answerType" to ex.answerType,
+                    "reason" to ex.reason,
+                ),
+            ),
+        )
+
+    @ExceptionHandler(RevealNotAllowedException::class)
+    fun handleRevealNotAllowed(ex: RevealNotAllowedException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(
+            ErrorResponse(
+                errorType = "exercise.reveal-not-allowed",
+                params = mapOf(
+                    "attempts" to ex.currentAttempts.toString(),
+                    "threshold" to ex.threshold.toString(),
+                ),
+            ),
+        )
+
+    @ExceptionHandler(ExerciseGenerationException::class)
+    fun handleExerciseGeneration(ex: ExerciseGenerationException): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.UNPROCESSABLE_CONTENT)
+        .body(
+            ErrorResponse(
+                errorType = "exercise.generation-failed",
+                params = mapOf(
+                    "encoding" to ex.encoding.id,
+                    "level" to ex.level.toString(),
+                    "reason" to ex.reason,
+                ),
             ),
         )
 

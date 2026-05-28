@@ -2,9 +2,6 @@ package school.charset.app.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import school.charset.app.domain.encoding.Codec
-import school.charset.app.domain.exercise.generator.ByteArrayGenerator
-import school.charset.app.domain.exercise.generator.CodePointGenerator
 import school.charset.app.domain.exercise.generator.Latin1Generator
 import school.charset.app.domain.exercise.generator.Utf16Generator
 import school.charset.app.domain.exercise.generator.Utf32Generator
@@ -17,47 +14,9 @@ import school.charset.app.domain.sandbox.SandboxService
 import school.charset.app.infrastructure.http.sandbox.serde.StepSerializer
 import tools.jackson.databind.JacksonModule
 import tools.jackson.databind.module.SimpleModule
-import kotlin.random.Random
 
 @Configuration
 class SandboxConfig {
-    @Bean
-    fun codec(): Codec = Codec()
-
-    @Bean
-    fun random(): Random = Random.Default
-
-    @Bean
-    fun codePointGenerator(random: Random): CodePointGenerator = CodePointGenerator(random)
-
-    @Bean
-    fun byteArrayGenerator(
-        codec: Codec,
-        codePointGenerator: CodePointGenerator,
-    ): ByteArrayGenerator = ByteArrayGenerator(codec, codePointGenerator)
-
-    @Bean
-    fun utf8Generator(
-        codec: Codec,
-        codePointGenerator: CodePointGenerator,
-        byteArrayGenerator: ByteArrayGenerator,
-    ): Utf8Generator = Utf8Generator(codec, codePointGenerator, byteArrayGenerator)
-
-    @Bean
-    fun utf16Generator(codec: Codec): Utf16Generator = Utf16Generator(codec)
-
-    @Bean
-    fun utf32Generator(codec: Codec): Utf32Generator = Utf32Generator(codec)
-
-    @Bean
-    fun windows1252Generator(
-        codec: Codec,
-        codePointGenerator: CodePointGenerator,
-        byteArrayGenerator: ByteArrayGenerator,
-    ): Windows1252Generator = Windows1252Generator(codec, codePointGenerator, byteArrayGenerator)
-
-    @Bean
-    fun latin1Generator(codec: Codec): Latin1Generator = Latin1Generator(codec)
 
     @Bean
     fun sandboxService(

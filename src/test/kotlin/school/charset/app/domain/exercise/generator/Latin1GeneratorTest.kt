@@ -14,7 +14,9 @@ import school.charset.app.domain.exercise.Step
 class Latin1GeneratorTest :
     FreeSpec({
         val codec = Codec()
-        val sut = Latin1Generator(codec)
+        val codePointGenerator = CodePointGenerator(kotlin.random.Random.Default)
+        val byteArrayGenerator = ByteArrayGenerator(codec, codePointGenerator)
+        val sut = Latin1Generator(codec, codePointGenerator, byteArrayGenerator)
 
         "buildEncodeStepsFor" - {
             "ASCII U+0041 (A) verbose: Binary(8)=01000001, HexBytes=[0x41]" {

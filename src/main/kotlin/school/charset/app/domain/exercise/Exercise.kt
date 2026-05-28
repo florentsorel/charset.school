@@ -22,13 +22,14 @@ import school.charset.app.domain.encoding.Encoding
  * answer against `Step.expected`).
  */
 sealed class Exercise {
+    abstract val codePoint: CodePoint
     abstract val encoding: Encoding
     abstract val level: Int
     abstract val granularity: Granularity
     abstract val steps: List<Step>
 
     data class Encode(
-        val codePoint: CodePoint,
+        override val codePoint: CodePoint,
         override val encoding: Encoding,
         override val level: Int,
         override val granularity: Granularity,
@@ -37,17 +38,17 @@ sealed class Exercise {
 
     data class Decode(
         val bytes: ByteArray,
+        override val codePoint: CodePoint,
         override val encoding: Encoding,
         override val level: Int,
         override val granularity: Granularity,
         override val steps: List<Step>,
     ) : Exercise() {
-        // ByteArray has reference-based equality by default; override to support
-        // structural equality (needed by tests that compare exercises with shouldBe).
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is Decode) return false
             return bytes.contentEquals(other.bytes) &&
+                codePoint == other.codePoint &&
                 encoding == other.encoding &&
                 level == other.level &&
                 granularity == other.granularity &&
@@ -56,6 +57,7 @@ sealed class Exercise {
 
         override fun hashCode(): Int {
             var result = bytes.contentHashCode()
+            result = 31 * result + codePoint.hashCode()
             result = 31 * result + encoding.hashCode()
             result = 31 * result + level.hashCode()
             result = 31 * result + granularity.hashCode()

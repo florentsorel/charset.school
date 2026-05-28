@@ -25,8 +25,9 @@ class AsciiGenerator(
     override fun generateDecode(level: Int, granularity: Granularity): Exercise.Decode {
         val asciiLevel = parseLevel(level)
         val bytes = byteArrayGenerator.randomAscii(asciiLevel)
+        val codePoint = codec.decode(bytes, Encoding.Ascii)
         val steps = bytes.buildDecodeSteps(granularity)
-        return Exercise.Decode(bytes, Encoding.Ascii, level, granularity, steps)
+        return Exercise.Decode(bytes, codePoint, Encoding.Ascii, level, granularity, steps)
     }
 
     private fun parseLevel(level: Int): AsciiLevel = AsciiLevel.fromNumber(level)
