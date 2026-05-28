@@ -347,6 +347,40 @@
           "latin1": "L'octet vaut `{decimal}` en décimal, identique à son code point (plage Latin-1 : pure identité). Soit `{cp}` en notation Unicode."
         }
       }
+    },
+    "encode_latin1": {
+      "title": "Sandbox Latin-1 (encodage)",
+      "subtitle": "Convertis un code point Unicode en octet Latin-1 (ISO 8859-1). Mapping 1:1 sur la plage `U+0000` → `U+00FF`.",
+      "errors": {
+        "not_encodable": "Code point hors plage Latin-1 (au-delà de `U+00FF`)."
+      },
+      "step": {
+        "binary": "Convertir en binaire",
+        "binary_desc": "Le code point `{cp}` tient sur 8 bits exactement. Latin-1 fait coïncider la valeur du code point avec celle de l'octet : pas de marqueur, pas de découpe.",
+        "hex": "Convertir en hexadécimal",
+        "hex_desc": "Les 8 bits forment un seul octet, soit `2` chiffres hexadécimaux."
+      }
+    },
+    "decode_latin1": {
+      "title": "Sandbox Latin-1 (décodage)",
+      "subtitle": "Convertis un octet Latin-1 (ISO 8859-1) en code point Unicode. Mapping 1:1, identité parfaite sur `0x00` → `0xFF`.",
+      "input_label": "Octet",
+      "input_placeholder": "E9, 0xE9, ou 41",
+      "input_help": "Un seul octet hex (avec ou sans `0x`). Latin-1 est strictement 1 octet = 1 code point.",
+      "errors": {
+        "empty": "Entre un octet hex.",
+        "invalid_hex": "Caractères non-hex détectés.",
+        "odd_length": "L'octet est incomplet (nombre impair de chiffres hex).",
+        "too_long": "Trop d'octets : Latin-1 encode un code point sur exactement 1 octet.",
+        "decoder": "Cet octet ne forme pas un Latin-1 valide."
+      },
+      "bytes_label": "Octet",
+      "step": {
+        "binary": "Lire les bits de l'octet",
+        "binary_desc": "L'octet vaut directement les 8 bits du code point (pas de marqueur à retirer).",
+        "code_point": "Convertir en code point",
+        "code_point_desc": "L'octet vaut `{decimal}` en décimal, soit `{cp}` en notation Unicode. Latin-1 fait coïncider valeur d'octet et code point sur toute la plage."
+      }
     }
   },
   "profile": {

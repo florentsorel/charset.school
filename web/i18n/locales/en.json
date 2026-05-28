@@ -347,6 +347,40 @@
           "latin1": "The byte is `{decimal}` in decimal, identical to its code point (Latin-1 range: pure identity). That's `{cp}` in Unicode notation."
         }
       }
+    },
+    "encode_latin1": {
+      "title": "Latin-1 sandbox (encode)",
+      "subtitle": "Convert a Unicode code point to a Latin-1 (ISO 8859-1) byte. 1:1 mapping over the `U+0000` → `U+00FF` range.",
+      "errors": {
+        "not_encodable": "Code point outside the Latin-1 range (beyond `U+00FF`)."
+      },
+      "step": {
+        "binary": "Convert to binary",
+        "binary_desc": "Code point `{cp}` fits in exactly 8 bits. Latin-1 makes the code point value coincide with the byte value: no marker, no splitting.",
+        "hex": "Convert to hexadecimal",
+        "hex_desc": "The 8 bits form a single byte, i.e. `2` hex digits."
+      }
+    },
+    "decode_latin1": {
+      "title": "Latin-1 sandbox (decode)",
+      "subtitle": "Convert a Latin-1 (ISO 8859-1) byte into a Unicode code point. 1:1 mapping, perfect identity over `0x00` → `0xFF`.",
+      "input_label": "Byte",
+      "input_placeholder": "E9, 0xE9, or 41",
+      "input_help": "A single hex byte (with or without `0x`). Latin-1 is strictly 1 byte = 1 code point.",
+      "errors": {
+        "empty": "Enter a hex byte.",
+        "invalid_hex": "Non-hex characters detected.",
+        "odd_length": "The byte is incomplete (odd number of hex digits).",
+        "too_long": "Too many bytes: Latin-1 encodes a code point in exactly 1 byte.",
+        "decoder": "This byte is not a valid Latin-1 byte."
+      },
+      "bytes_label": "Byte",
+      "step": {
+        "binary": "Read the byte's bits",
+        "binary_desc": "The byte is directly the 8 bits of the code point (no marker to strip).",
+        "code_point": "Convert to a code point",
+        "code_point_desc": "The byte equals `{decimal}` in decimal, i.e. `{cp}` in Unicode notation. Latin-1 makes the byte value and the code point coincide over the whole range."
+      }
     }
   },
   "profile": {

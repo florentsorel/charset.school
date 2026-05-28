@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.exercise.generator.ByteArrayGenerator
 import school.charset.app.domain.exercise.generator.CodePointGenerator
+import school.charset.app.domain.exercise.generator.Latin1Generator
 import school.charset.app.domain.exercise.generator.Utf16Generator
 import school.charset.app.domain.exercise.generator.Utf32Generator
 import school.charset.app.domain.exercise.generator.Utf8Generator
@@ -56,12 +57,16 @@ class SandboxConfig {
     ): Windows1252Generator = Windows1252Generator(codec, codePointGenerator, byteArrayGenerator)
 
     @Bean
+    fun latin1Generator(codec: Codec): Latin1Generator = Latin1Generator(codec)
+
+    @Bean
     fun sandboxService(
         utf8Generator: Utf8Generator,
         utf16Generator: Utf16Generator,
         utf32Generator: Utf32Generator,
         windows1252Generator: Windows1252Generator,
-    ): SandboxService = SandboxService(utf8Generator, utf16Generator, utf32Generator, windows1252Generator)
+        latin1Generator: Latin1Generator,
+    ): SandboxService = SandboxService(utf8Generator, utf16Generator, utf32Generator, windows1252Generator, latin1Generator)
 
     @Bean
     fun sandboxInputParser(): SandboxInputParser = SandboxInputParser()
