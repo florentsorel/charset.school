@@ -27,7 +27,7 @@ class Windows1252Generator(
         val bytes = byteArrayGenerator.randomWindows1252(windows1252Level)
         val codePoint = codec.decode(bytes, Encoding.Windows1252)
         val steps = bytes.buildDecodeSteps(codePoint, granularity)
-        return Exercise.Decode(bytes, Encoding.Windows1252, level, granularity, steps)
+        return Exercise.Decode(bytes, codePoint, Encoding.Windows1252, level, granularity, steps)
     }
 
     /**

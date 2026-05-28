@@ -32,7 +32,7 @@ class Utf8Generator(
         val bytes = byteArrayGenerator.randomUtf8(utf8Level)
         val codePoint = codec.decode(bytes, Encoding.Utf8)
         val steps = bytes.buildDecodeSteps(codePoint, granularity)
-        return Exercise.Decode(bytes, Encoding.Utf8, level, granularity, steps)
+        return Exercise.Decode(bytes, codePoint, Encoding.Utf8, level, granularity, steps)
     }
 
     private fun parseLevel(level: Int): Utf8Level = Utf8Level.fromNumber(level)

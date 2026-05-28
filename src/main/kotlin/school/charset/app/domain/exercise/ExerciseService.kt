@@ -1,0 +1,149 @@
+package school.charset.app.domain.exercise
+
+import school.charset.app.domain.encoding.Encoding
+import school.charset.app.domain.exercise.generator.ExerciseGenerator
+import school.charset.app.domain.progress.ProgressService
+import kotlin.random.Random
+
+class ExerciseService(
+    private val exerciseGenerator: ExerciseGenerator,
+    private val attemptRepository: ExerciseAttemptRepository,
+    private val answerValidator: AnswerValidator,
+    private val progressService: ProgressService,
+    private val random: Random,
+) {
+
+    fun generate(
+        userId: Long,
+        module: ExerciseModule,
+        level: Int,
+        granularity: Granularity,
+    ): ExerciseAttempt {
+        val encoding = pickEncoding(module)
+        val exercise = when (module.direction) {
+            ExerciseModule.Direction.Encode -> exerciseGenerator.generateEncode(encoding, level, granularity)
+            ExerciseModule.Direction.Decode -> exerciseGenerator.generateDecode(encoding, level, granularity)
+        }
+        return attemptRepository.create(
+            userId = userId,
+            module = module,
+            level = level,
+            granularity = granularity,
+            codePoint = exercise.codePoint,
+            encoding = exercise.encoding,
+            steps = exercise.steps,
+        )
+    }
+
+    fun validateStep(
+        userId: Long,
+        attemptId: Long,
+        stepIndex: Int,
+        answer: Answer,
+    ): StepSubmissionOutcome {
+        val attempt = loadAttempt(userId, attemptId)
+        val targetStep = attempt.steps.getOrNull(stepIndex)
+            ?: throw StepNotFoundException(attemptId, stepIndex)
+
+        val result = answerValidator.validate(targetStep.step, answer)
+        val updatedStep = attemptRepository.recordStepSubmission(
+            stepId = targetStep.id,
+            userAnswer = answer,
+            correct = result.ok,
+            errorType = result.errorType,
+        )
+
+        val refreshed = attemptRepository.findById(attemptId)
+            ?: error("Attempt $attemptId disappeared after step submission")
+        val finalized = maybeFinalize(refreshed)
+
+        return StepSubmissionOutcome(
+            validation = result,
+            step = updatedStep,
+            attempt = finalized ?: refreshed,
+            finalized = finalized != null,
+        )
+    }
+
+    fun revealStep(
+        userId: Long,
+        attemptId: Long,
+        stepIndex: Int,
+    ): StepRevealOutcome {
+        val attempt = loadAttempt(userId, attemptId)
+        val targetStep = attempt.steps.getOrNull(stepIndex)
+            ?: throw StepNotFoundException(attemptId, stepIndex)
+
+        if (targetStep.attempts < REVEAL_THRESHOLD) {
+            throw RevealNotAllowedException(attemptId, stepIndex, targetStep.attempts, REVEAL_THRESHOLD)
+        }
+
+        val revealedStep = attemptRepository.markStepRevealed(targetStep.id)
+        val refreshed = attemptRepository.findById(attemptId)
+            ?: error("Attempt $attemptId disappeared after reveal")
+
+        return StepRevealOutcome(
+            step = revealedStep,
+            attempt = refreshed,
+            expected = targetStep.step,
+        )
+    }
+
+    private fun loadAttempt(userId: Long, attemptId: Long): ExerciseAttempt {
+        val attempt = attemptRepository.findById(attemptId) ?: throw AttemptNotFoundException(attemptId)
+        if (attempt.userId != userId) throw AttemptNotFoundException(attemptId)
+        return attempt
+    }
+
+    private fun maybeFinalize(attempt: ExerciseAttempt): ExerciseAttempt? {
+        if (attempt.correct) return null
+
+        val allSubmitted = attempt.steps.all { it.correct || it.revealed }
+        if (!allSubmitted) return null
+
+        val attemptCorrect = attempt.steps.all { it.correct } && attempt.steps.none { it.revealed }
+        val finalized = attemptRepository.finalize(attempt.id, correct = attemptCorrect, durationMs = null)
+        progressService.recordCompletion(attempt.userId, attempt.module, attemptCorrect)
+        return finalized
+    }
+
+    private fun pickEncoding(module: ExerciseModule): Encoding = when (module) {
+        ExerciseModule.Utf8Encode, ExerciseModule.Utf8Decode -> Encoding.Utf8
+        ExerciseModule.Latin1Encode, ExerciseModule.Latin1Decode -> Encoding.Latin1
+        ExerciseModule.Windows1252Encode, ExerciseModule.Windows1252Decode -> Encoding.Windows1252
+        ExerciseModule.Utf16Encode, ExerciseModule.Utf16Decode ->
+            if (random.nextBoolean()) Encoding.Utf16Be else Encoding.Utf16Le
+        ExerciseModule.Utf32Encode, ExerciseModule.Utf32Decode ->
+            if (random.nextBoolean()) Encoding.Utf32Be else Encoding.Utf32Le
+    }
+
+    companion object {
+        const val REVEAL_THRESHOLD: Int = 3
+    }
+}
+
+data class StepSubmissionOutcome(
+    val validation: ValidationResult,
+    val step: AttemptStep,
+    val attempt: ExerciseAttempt,
+    val finalized: Boolean,
+)
+
+data class StepRevealOutcome(
+    val step: AttemptStep,
+    val attempt: ExerciseAttempt,
+    val expected: Step,
+)
+
+class AttemptNotFoundException(val attemptId: Long) : RuntimeException("Exercise attempt $attemptId not found")
+
+class StepNotFoundException(val attemptId: Long, val stepIndex: Int) : RuntimeException("Step at index $stepIndex not found in attempt $attemptId")
+
+class RevealNotAllowedException(
+    val attemptId: Long,
+    val stepIndex: Int,
+    val currentAttempts: Int,
+    val threshold: Int,
+) : RuntimeException(
+    "Cannot reveal step $stepIndex of attempt $attemptId: needs $threshold submissions, got $currentAttempts",
+)

@@ -59,6 +59,7 @@ class ExerciseGeneratorTest :
                 val asciiGenerator = mockGenerator(Encoding.Ascii)
                 val expected = Exercise.Decode(
                     bytes = byteArrayOf(0x41),
+                    codePoint = school.charset.app.domain.encoding.CodePoint(0x41),
                     encoding = Encoding.Ascii,
                     level = 1,
                     granularity = Granularity.Verbose,

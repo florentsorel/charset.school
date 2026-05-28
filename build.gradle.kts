@@ -12,6 +12,7 @@ plugins {
 kotlin {
     compilerOptions {
         freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
         jvmTarget.set(JvmTarget.JVM_25)
     }
     jvmToolchain { languageVersion.set(JavaLanguageVersion.of(25)) }
