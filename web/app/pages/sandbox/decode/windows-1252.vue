@@ -237,7 +237,7 @@ const byteRange = computed<'ascii' | 'special' | 'latin1' | null>(() => {
           </div>
           <div v-if="byteRange">
             <p class="font-mono text-xs uppercase tracking-widest text-faint mb-1.5">
-              {{ t('sandbox.decode_windows1252.range_label') }}
+              <InlineDesc :text="t('sandbox.decode_windows1252.range_label')" />
             </p>
             <p class="text-sm text-mute">
               <InlineDesc :text="t(`sandbox.decode_windows1252.range_desc.${byteRange}`)" />
