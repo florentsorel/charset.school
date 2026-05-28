@@ -24,6 +24,7 @@ object ExerciseAttemptsTable : Table("exercise_attempts") {
         unwrap = { it.id },
     )
     val correct = bool("correct")
+    val finalized = bool("finalized")
     val durationMs = integer("duration_ms").nullable()
     val createdAt = timestamp("created_at")
 

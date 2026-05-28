@@ -130,7 +130,7 @@ class ExposedExerciseAttemptRepositoryTest(
     }
 
     @Test
-    fun `finalize updates the attempt's correct flag`() {
+    fun `finalize sets correct, finalized and durationMs`() {
         val userId = createUser()
         val attempt = repository.create(
             userId = userId,
@@ -146,6 +146,7 @@ class ExposedExerciseAttemptRepositoryTest(
 
         val finalized = repository.findById(attempt.id)!!
         finalized.correct shouldBe true
+        finalized.finalized shouldBe true
         finalized.durationMs shouldBe 1234
     }
 

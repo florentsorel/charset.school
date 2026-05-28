@@ -41,6 +41,7 @@ class ExposedExerciseAttemptRepository(
             it[ExerciseAttemptsTable.codePoint] = codePoint.value
             it[ExerciseAttemptsTable.encoding] = encoding
             it[correct] = false
+            it[finalized] = false
             it[createdAt] = now
         } get ExerciseAttemptsTable.id
 
@@ -78,6 +79,7 @@ class ExposedExerciseAttemptRepository(
             codePoint = codePoint,
             encoding = encoding,
             correct = false,
+            finalized = false,
             durationMs = null,
             steps = attemptSteps,
             createdAt = now,
@@ -106,6 +108,7 @@ class ExposedExerciseAttemptRepository(
             codePoint = CodePoint(attemptRow[ExerciseAttemptsTable.codePoint]),
             encoding = attemptRow[ExerciseAttemptsTable.encoding],
             correct = attemptRow[ExerciseAttemptsTable.correct],
+            finalized = attemptRow[ExerciseAttemptsTable.finalized],
             durationMs = attemptRow[ExerciseAttemptsTable.durationMs],
             steps = steps,
             createdAt = attemptRow[ExerciseAttemptsTable.createdAt],
@@ -145,6 +148,7 @@ class ExposedExerciseAttemptRepository(
     override fun finalize(attemptId: Long, correct: Boolean, durationMs: Int?): ExerciseAttempt = transaction {
         ExerciseAttemptsTable.update({ ExerciseAttemptsTable.id eq attemptId }) {
             it[ExerciseAttemptsTable.correct] = correct
+            it[finalized] = true
             it[ExerciseAttemptsTable.durationMs] = durationMs
         }
         findById(attemptId) ?: error("Attempt $attemptId disappeared after finalize")

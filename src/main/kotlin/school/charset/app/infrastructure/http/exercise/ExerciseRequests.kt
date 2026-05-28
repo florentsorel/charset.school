@@ -43,18 +43,23 @@ data class AnswerWire(
     val codePoint: Int? = null,
 ) {
     fun toDomain(): Answer = when (type) {
-        "format" -> Answer.FormatChoice(requireNotNull(value) { "format answer requires 'value'" })
-        "binary" -> Answer.BinaryValue(requireNotNull(bits) { "binary answer requires 'bits'" })
-        "bit-groups" -> Answer.BitGroupsValue(requireNotNull(groups) { "bit-groups answer requires 'groups'" })
-        "hex-bytes" -> Answer.HexBytesValue(requireNotNull(bytes) { "hex-bytes answer requires 'bytes'" })
-        "code-point" -> Answer.CodePointValue(requireNotNull(codePoint) { "code-point answer requires 'codePoint'" })
+        "format" -> Answer.FormatChoice(value ?: missing("value"))
+        "binary" -> Answer.BinaryValue(bits ?: missing("bits"))
+        "bit-groups" -> Answer.BitGroupsValue(groups ?: missing("groups"))
+        "hex-bytes" -> Answer.HexBytesValue(bytes ?: missing("bytes"))
+        "code-point" -> Answer.CodePointValue(codePoint ?: missing("codePoint"))
         "endianness" -> Answer.EndiannessChoice(
             when (value) {
                 "big" -> Encoding.Endian.BigEndian
                 "little" -> Encoding.Endian.LittleEndian
-                else -> error("endianness answer requires value 'big' or 'little'")
+                null -> missing("value")
+                else -> throw InvalidAnswerPayloadException(type, "value must be 'big' or 'little', got '$value'")
             },
         )
-        else -> error("unknown answer type: $type")
+        else -> throw InvalidAnswerPayloadException(type, "unknown answer type")
     }
+
+    private fun missing(field: String): Nothing = throw InvalidAnswerPayloadException(type, "missing required field '$field'")
 }
+
+class InvalidAnswerPayloadException(val answerType: String, val reason: String) : RuntimeException("Invalid answer payload (type=$answerType): $reason")

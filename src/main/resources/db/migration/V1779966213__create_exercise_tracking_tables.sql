@@ -16,6 +16,7 @@ CREATE TABLE exercise_attempts (
     code_point   INT          NOT NULL,
     encoding     VARCHAR(16)  NOT NULL,
     correct      BOOLEAN      NOT NULL DEFAULT FALSE,
+    finalized    BOOLEAN      NOT NULL DEFAULT FALSE,
     duration_ms  INT,
     created_at   TIMESTAMP    NOT NULL DEFAULT NOW()
 );

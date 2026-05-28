@@ -42,8 +42,12 @@ class ExerciseService(
         answer: Answer,
     ): StepSubmissionOutcome {
         val attempt = loadAttempt(userId, attemptId)
+        if (attempt.finalized) throw AttemptAlreadyFinalizedException(attemptId)
         val targetStep = attempt.steps.getOrNull(stepIndex)
             ?: throw StepNotFoundException(attemptId, stepIndex)
+        if (targetStep.correct || targetStep.revealed) {
+            throw StepAlreadyResolvedException(attemptId, stepIndex)
+        }
 
         val result = answerValidator.validate(targetStep.step, answer)
         val updatedStep = attemptRepository.recordStepSubmission(
@@ -71,8 +75,12 @@ class ExerciseService(
         stepIndex: Int,
     ): StepRevealOutcome {
         val attempt = loadAttempt(userId, attemptId)
+        if (attempt.finalized) throw AttemptAlreadyFinalizedException(attemptId)
         val targetStep = attempt.steps.getOrNull(stepIndex)
             ?: throw StepNotFoundException(attemptId, stepIndex)
+        if (targetStep.correct || targetStep.revealed) {
+            throw StepAlreadyResolvedException(attemptId, stepIndex)
+        }
 
         if (targetStep.attempts < REVEAL_THRESHOLD) {
             throw RevealNotAllowedException(attemptId, stepIndex, targetStep.attempts, REVEAL_THRESHOLD)
@@ -81,10 +89,11 @@ class ExerciseService(
         val revealedStep = attemptRepository.markStepRevealed(targetStep.id)
         val refreshed = attemptRepository.findById(attemptId)
             ?: error("Attempt $attemptId disappeared after reveal")
+        val finalized = maybeFinalize(refreshed)
 
         return StepRevealOutcome(
             step = revealedStep,
-            attempt = refreshed,
+            attempt = finalized ?: refreshed,
             expected = targetStep.step,
         )
     }
@@ -96,15 +105,15 @@ class ExerciseService(
     }
 
     private fun maybeFinalize(attempt: ExerciseAttempt): ExerciseAttempt? {
-        if (attempt.correct) return null
+        if (attempt.finalized) return null
 
         val allSubmitted = attempt.steps.all { it.correct || it.revealed }
         if (!allSubmitted) return null
 
         val attemptCorrect = attempt.steps.all { it.correct } && attempt.steps.none { it.revealed }
-        val finalized = attemptRepository.finalize(attempt.id, correct = attemptCorrect, durationMs = null)
+        val result = attemptRepository.finalize(attempt.id, correct = attemptCorrect, durationMs = null)
         progressService.recordCompletion(attempt.userId, attempt.module, attemptCorrect)
-        return finalized
+        return result
     }
 
     private fun pickEncoding(module: ExerciseModule): Encoding = when (module) {
@@ -136,6 +145,10 @@ data class StepRevealOutcome(
 )
 
 class AttemptNotFoundException(val attemptId: Long) : RuntimeException("Exercise attempt $attemptId not found")
+
+class AttemptAlreadyFinalizedException(val attemptId: Long) : RuntimeException("Exercise attempt $attemptId is already finalized")
+
+class StepAlreadyResolvedException(val attemptId: Long, val stepIndex: Int) : RuntimeException("Step $stepIndex of attempt $attemptId is already resolved (correct or revealed)")
 
 class StepNotFoundException(val attemptId: Long, val stepIndex: Int) : RuntimeException("Step at index $stepIndex not found in attempt $attemptId")
 

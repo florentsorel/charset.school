@@ -13,6 +13,7 @@ data class ExerciseAttempt(
     val codePoint: CodePoint,
     val encoding: Encoding,
     val correct: Boolean,
+    val finalized: Boolean,
     val durationMs: Int?,
     val steps: List<AttemptStep>,
     val createdAt: Instant,

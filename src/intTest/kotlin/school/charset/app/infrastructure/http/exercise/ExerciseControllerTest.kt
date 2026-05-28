@@ -127,6 +127,17 @@ class ExerciseControllerTest(
     }
 
     @Test
+    fun `validate with missing answer field returns 422 invalid-answer-payload`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin()
+        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode", level = 1)
+        val attemptId = (attempt["attemptId"] as Number).toLong()
+
+        validate(sessionCookie, xsrfCookie, attemptId, stepIndex = 0, body = """{"type":"binary"}""")
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("$.errorType").value("exercise.invalid-answer-payload"))
+    }
+
+    @Test
     fun `GET progress returns empty list before any exercise`() {
         val (sessionCookie, _) = registerAndLogin()
 
