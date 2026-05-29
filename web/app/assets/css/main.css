@@ -281,12 +281,49 @@ abbr[title] {
   border: 1px solid var(--color-rule);
   transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
 }
+.step-dot-done {
+  background: var(--color-ok);
+  color: var(--color-surface);
+  border-color: var(--color-ok);
+}
+.step-dot-active {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 4px var(--color-accent-soft);
+}
+.step-dot-error {
+  background: var(--color-bad);
+  color: var(--color-surface);
+  border-color: var(--color-bad);
+}
+.step-dot-todo {
+  background: var(--color-subtle);
+  color: var(--color-mute);
+  border-color: var(--color-rule);
+}
 .step-connector {
   width: 2px;
   flex: 1;
   background: var(--color-rule);
   margin-top: 4px;
   margin-bottom: 4px;
+}
+.step-connector-done { background: var(--color-ok); }
+
+.meter {
+  display: inline-block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-subtle);
+  overflow: hidden;
+  vertical-align: middle;
+}
+.meter > span {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+  transition: width 220ms ease;
 }
 
 .surface {

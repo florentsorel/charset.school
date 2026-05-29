@@ -130,6 +130,92 @@ class ExposedExerciseAttemptRepositoryTest(
     }
 
     @Test
+    fun `UsefulBitCount step persists and round-trips`() {
+        val userId = createUser()
+        val attempt = repository.create(
+            userId = userId,
+            module = ExerciseModule.Utf8Encode,
+            level = 2,
+            granularity = Granularity.Verbose,
+            codePoint = CodePoint(0xE9),
+            encoding = Encoding.Utf8,
+            steps = listOf(Step.UsefulBitCount(expected = 11)),
+        )
+        val stepId = attempt.steps[0].id
+
+        repository.recordStepSubmission(
+            stepId = stepId,
+            userAnswer = Answer.UsefulBitCountValue(11),
+            correct = true,
+            errorType = null,
+        )
+
+        val reloaded = repository.findById(attempt.id)!!
+        val step = reloaded.steps.single()
+        step.step shouldBe Step.UsefulBitCount(expected = 11)
+        step.correct shouldBe true
+        step.userAnswer shouldBe Answer.UsefulBitCountValue(11)
+    }
+
+    @Test
+    fun `findLatestUnfinalizedByUserAndModule returns null when no attempt exists`() {
+        val userId = createUser()
+        repository.findLatestUnfinalizedByUserAndModule(userId, ExerciseModule.Utf8Encode) shouldBe null
+    }
+
+    @Test
+    fun `findLatestUnfinalizedByUserAndModule returns the in-progress attempt`() {
+        val userId = createUser()
+        val attempt = repository.create(
+            userId = userId,
+            module = ExerciseModule.Utf8Encode,
+            level = 1,
+            granularity = Granularity.Verbose,
+            codePoint = CodePoint(0x41),
+            encoding = Encoding.Utf8,
+            steps = listOf(Step.Binary(expected = "01000001", length = 8)),
+        )
+
+        val found = repository.findLatestUnfinalizedByUserAndModule(userId, ExerciseModule.Utf8Encode)!!
+        found.id shouldBe attempt.id
+    }
+
+    @Test
+    fun `findLatestUnfinalizedByUserAndModule excludes finalized attempts`() {
+        val userId = createUser()
+        val attempt = repository.create(
+            userId = userId,
+            module = ExerciseModule.Utf8Encode,
+            level = 1,
+            granularity = Granularity.Verbose,
+            codePoint = CodePoint(0x41),
+            encoding = Encoding.Utf8,
+            steps = listOf(Step.Binary(expected = "01000001", length = 8)),
+        )
+        repository.finalize(attempt.id, correct = true, durationMs = 0)
+
+        repository.findLatestUnfinalizedByUserAndModule(userId, ExerciseModule.Utf8Encode) shouldBe null
+    }
+
+    @Test
+    fun `findLatestUnfinalizedByUserAndModule scopes by user and module`() {
+        val ownerId = createUser()
+        val otherId = createUser()
+        repository.create(
+            userId = ownerId,
+            module = ExerciseModule.Utf8Encode,
+            level = 1,
+            granularity = Granularity.Verbose,
+            codePoint = CodePoint(0x41),
+            encoding = Encoding.Utf8,
+            steps = listOf(Step.Binary(expected = "01000001", length = 8)),
+        )
+
+        repository.findLatestUnfinalizedByUserAndModule(otherId, ExerciseModule.Utf8Encode) shouldBe null
+        repository.findLatestUnfinalizedByUserAndModule(ownerId, ExerciseModule.Utf8Decode) shouldBe null
+    }
+
+    @Test
     fun `finalize sets correct, finalized and durationMs`() {
         val userId = createUser()
         val attempt = repository.create(

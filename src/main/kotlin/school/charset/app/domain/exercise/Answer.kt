@@ -8,5 +8,6 @@ sealed class Answer {
     data class BitGroupsValue(val groups: List<String>) : Answer()
     data class HexBytesValue(val bytes: List<Int>) : Answer()
     data class CodePointValue(val value: Int) : Answer()
+    data class UsefulBitCountValue(val value: Int) : Answer()
     data class EndiannessChoice(val value: Encoding.Endian) : Answer()
 }

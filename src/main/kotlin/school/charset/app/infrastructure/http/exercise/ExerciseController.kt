@@ -4,9 +4,11 @@ import jakarta.validation.Valid
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.exercise.ExerciseModule
@@ -23,6 +25,25 @@ class ExerciseController(
     private val exerciseService: ExerciseService,
     private val codec: Codec,
 ) {
+
+    @GetMapping("/current")
+    fun current(
+        authentication: Authentication,
+        @RequestParam moduleId: String,
+    ): ResponseEntity<CurrentExerciseResponse> {
+        val userId = authentication.requireUserDetailsAdapter().userId
+        val module = ExerciseModule.fromId(moduleId) ?: throw UnknownModuleException(moduleId)
+
+        val attempt = exerciseService.findResumable(userId, module)
+            ?: return ResponseEntity.ok(CurrentExerciseResponse(attempt = null))
+
+        val decodeBytes = if (module.direction == ExerciseModule.Direction.Decode) {
+            codec.encode(attempt.codePoint, attempt.encoding).map { it.toInt() and 0xFF }
+        } else {
+            null
+        }
+        return ResponseEntity.ok(CurrentExerciseResponse(attempt = attempt.toResumeResponse(decodeBytes)))
+    }
 
     @PostMapping("/generate", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun generate(

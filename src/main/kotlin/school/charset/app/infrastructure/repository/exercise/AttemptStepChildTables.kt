@@ -45,6 +45,14 @@ object AttemptStepCodePointTable : Table("attempt_step_code_point") {
     override val primaryKey = PrimaryKey(stepId)
 }
 
+object AttemptStepUsefulBitCountTable : Table("attempt_step_useful_bit_count") {
+    val stepId = long("step_id").references(AttemptStepsTable.id)
+    val expected = short("expected")
+    val userAnswer = short("user_answer").nullable()
+
+    override val primaryKey = PrimaryKey(stepId)
+}
+
 object AttemptStepEndiannessTable : Table("attempt_step_endianness") {
     val stepId = long("step_id").references(AttemptStepsTable.id)
     val expected = varchar("expected", 16).transform(

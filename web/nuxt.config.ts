@@ -8,6 +8,10 @@ export default defineNuxtConfig({
     'nuxt-skill-hub'
   ],
 
+  // Drop the path-based prefix on auto-imports: `components/exercise/BitInput.vue`
+  // resolves as `<BitInput>` instead of `<ExerciseBitInput>`.
+  components: [{ path: '~/components', pathPrefix: false }],
+
   devtools: {
     enabled: true
   },

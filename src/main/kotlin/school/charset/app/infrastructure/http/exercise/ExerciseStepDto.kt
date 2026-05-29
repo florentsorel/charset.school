@@ -25,6 +25,10 @@ sealed class ExerciseStepDto {
         override val type: String = "code-point"
     }
 
+    data object UsefulBitCount : ExerciseStepDto() {
+        override val type: String = "useful-bit-count"
+    }
+
     data object Endianness : ExerciseStepDto() {
         override val type: String = "endianness"
     }
@@ -36,5 +40,6 @@ fun Step.toDto(): ExerciseStepDto = when (this) {
     is Step.BitGroups -> ExerciseStepDto.BitGroups(groupLengths = expected.map { it.length })
     is Step.HexBytes -> ExerciseStepDto.HexBytes(byteCount = expected.size)
     is Step.CodePointEntry -> ExerciseStepDto.CodePointEntry
+    is Step.UsefulBitCount -> ExerciseStepDto.UsefulBitCount
     is Step.Endianness -> ExerciseStepDto.Endianness
 }

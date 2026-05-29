@@ -1,14 +1,14 @@
 {
   "format-choice": {
     "byte-count": {
-      "1": "1 octet",
-      "2": "2 octets",
-      "3": "3 octets",
-      "4": "4 octets"
+      "1": "1 octet · U+0000 → U+007F",
+      "2": "2 octets · U+0080 → U+07FF",
+      "3": "3 octets · U+0800 → U+FFFF",
+      "4": "4 octets · U+10000 → U+10FFFF"
     },
     "code-unit": {
-      "1": "1 code unit (2 octets)",
-      "2": "2 code units (4 octets, paire de surrogates)"
+      "1": "1 code unit · BMP",
+      "2": "2 code units · paire de surrogates"
     }
   },
   "common": {
@@ -458,5 +458,103 @@
       },
       "unknown": "Une erreur est survenue."
     }
+  },
+  "exercise": {
+    "breadcrumb_label": "Fil d'Ariane",
+    "breadcrumb_root": "Exercices",
+    "breadcrumb_level": "niveau {n}",
+    "streak": "Série {n}j",
+    "skip_button": "Passer",
+    "level_label": "Niveau",
+    "level_option": "Niveau {n}",
+    "level_suggested": "Niveau {n} suggéré (suite de réussites)",
+    "granularity_label": "Granularité",
+    "granularity": {
+      "verbose": "Pas à pas",
+      "standard": "Standard",
+      "compact": "Express"
+    },
+    "prompt_label": "Exercice",
+    "code_point_label": "Code point",
+    "code_point_input_label": "Saisis le code point en hexadécimal",
+    "bytes_label": "Octets",
+    "submit_button": "Soumettre",
+    "next_button": "Exercice suivant",
+    "step_title": {
+      "format": "Choisir le format",
+      "binary": "Convertir en binaire",
+      "bit-groups": "Découper les bits utiles (MSB / LSB)",
+      "hex-bytes": "Convertir en hexadécimal",
+      "code-point": "Identifier le code point",
+      "useful-bit-count": "Combien de bits utiles ?",
+      "endianness": "Choisir l'endianness"
+    },
+    "useful_bit_count_input_label": "Nombre de bits utiles",
+    "useful_bit_count_suffix": "bits utiles",
+    "step_progress_label": "Progression des étapes",
+    "step_state": {
+      "done": "Étape {n} - validée",
+      "active": "Étape {n} - en cours",
+      "error": "Étape {n} - erreur",
+      "todo": "Étape {n} - à venir"
+    },
+    "step": {
+      "solved": "Validée",
+      "revealed": "Révélée"
+    },
+    "feedback": {
+      "try": "Essai {n}/{threshold}",
+      "reveal_button": "Donne-moi la réponse"
+    },
+    "finalized": {
+      "success": "Bien joué ! Exercice complété sans aide.",
+      "failed": "Exercice terminé. Au prochain essai sans révéler !",
+      "change_settings": "Changer le niveau / la granularité",
+      "start_with_settings": "Commencer",
+      "level_up_nudge": "Tu enchaînes les bonnes réponses. Prêt pour le niveau {n} ?",
+      "level_up_button": "Niveau {n}"
+    },
+    "resume": {
+      "banner_label": "Exercice en cours",
+      "message": "Tu as un exercice en cours - niveau {level}, {granularity}, étape {done}/{total}.",
+      "continue_button": "Reprendre",
+      "new_button": "Nouvel exercice"
+    },
+    "module": {
+      "utf8-encode": {
+        "title": "Charset Playground - Encoder UTF-8",
+        "prompt": "Encode ce code point en UTF-8."
+      },
+      "utf8-decode": {
+        "title": "Charset Playground - Décoder UTF-8",
+        "prompt": "Décode ces octets UTF-8 en code point."
+      }
+    }
+  },
+  "feedback": {
+    "default": "La réponse n'est pas correcte. Réessaie.",
+    "format.unknown-choice": "Le choix `{got}` n'est pas dans les options proposées.",
+    "format.wrong-choice": "Ce n'est pas le bon format. Regarde la plage de valeurs où tombe le code point.",
+    "binary.empty": "Saisis une suite de bits.",
+    "binary.invalid-character": "Tu as saisi `{got}` - seuls `0` et `1` sont attendus.",
+    "binary.too-few-bits": "Il manque des bits : tu en as `{got-length}` sur `{expected-length}` attendus. Pense au padding par zéros en tête si la valeur est plus petite que la largeur.",
+    "binary.too-many-bits": "Tu as `{got-length}` bits, mais on attend exactement `{expected-length}`. Retire les zéros de tête en trop.",
+    "binary.wrong-value": "Le nombre de bits est bon mais la valeur ne correspond pas. Vérifie ta conversion décimal → binaire (puissances de 2).",
+    "bit-groups.empty": "Saisis les groupes de bits.",
+    "bit-groups.wrong-group-count": "Tu as `{got-count}` groupe(s), `{expected-count}` attendu(s).",
+    "bit-groups.wrong-group-length": "Le groupe à la position `{position}` a `{got-length}` bits, on en attend `{expected-length}`.",
+    "bit-groups.invalid-character": "Le groupe à la position `{position}` contient des caractères autres que `0` et `1`.",
+    "bit-groups.wrong-value": "Les groupes ont la bonne taille mais le contenu ne correspond pas. Vérifie que tu as bien réparti les bits du code point dans le format.",
+    "hex-bytes.empty": "Saisis les octets en hexadécimal.",
+    "hex-bytes.wrong-byte-count": "Tu as saisi `{got-count}` octet(s), `{expected-count}` attendu(s).",
+    "hex-bytes.invalid-byte": "L'octet à la position `{position}` (`{got}`) n'est pas valide (0..255).",
+    "hex-bytes.wrong-value": "Le nombre d'octets est bon mais la valeur ne correspond pas. Recompose les bits du format en hex (4 bits par chiffre).",
+    "code-point.empty": "Saisis le code point.",
+    "code-point.out-of-range": "`{got}` est hors de la plage Unicode (`U+0000` → `U+10FFFF`).",
+    "code-point.surrogate": "`{got}` est dans la plage des surrogates (`U+D800` → `U+DFFF`), interdite en Unicode.",
+    "code-point.wrong-value": "Code point incorrect. Vérifie ta conversion binaire → décimal puis décimal → hex.",
+    "endianness.wrong-choice": "Mauvaise endianness. Compare l'ordre des octets attendu à l'ordre des octets natifs du format.",
+    "useful-bit-count.non-positive": "`{got}` n'est pas un nombre positif. Compte les bits qui portent réellement de l'information.",
+    "useful-bit-count.wrong-value": "`{got}` n'est pas le bon nombre de bits utiles. Rappel : `1 byte = 7`, `2 bytes = 11`, `3 bytes = 16`, `4 bytes = 21`."
   }
 }

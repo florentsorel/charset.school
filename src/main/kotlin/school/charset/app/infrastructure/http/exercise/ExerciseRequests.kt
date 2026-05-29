@@ -41,6 +41,7 @@ data class AnswerWire(
     val groups: List<String>? = null,
     val bytes: List<Int>? = null,
     val codePoint: Int? = null,
+    val count: Int? = null,
 ) {
     fun toDomain(): Answer = when (type) {
         "format" -> Answer.FormatChoice(value ?: missing("value"))
@@ -48,6 +49,7 @@ data class AnswerWire(
         "bit-groups" -> Answer.BitGroupsValue(groups ?: missing("groups"))
         "hex-bytes" -> Answer.HexBytesValue(bytes ?: missing("bytes"))
         "code-point" -> Answer.CodePointValue(codePoint ?: missing("codePoint"))
+        "useful-bit-count" -> Answer.UsefulBitCountValue(count ?: missing("count"))
         "endianness" -> Answer.EndiannessChoice(
             when (value) {
                 "big" -> Encoding.Endian.BigEndian

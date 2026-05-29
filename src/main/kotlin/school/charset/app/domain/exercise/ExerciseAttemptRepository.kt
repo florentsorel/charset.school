@@ -13,6 +13,8 @@ interface ExerciseAttemptRepository {
 
     fun findById(attemptId: Long): ExerciseAttempt?
 
+    fun findLatestUnfinalizedByUserAndModule(userId: Long, module: ExerciseModule): ExerciseAttempt?
+
     fun recordStepSubmission(
         stepId: Long,
         userAnswer: Answer,

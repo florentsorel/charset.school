@@ -6,6 +6,7 @@ enum class StepType(val id: String) {
     BitGroups("bit-groups"),
     HexBytes("hex-bytes"),
     CodePointEntry("code-point"),
+    UsefulBitCount("useful-bit-count"),
     Endianness("endianness"),
     ;
 
