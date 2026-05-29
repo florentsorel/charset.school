@@ -1,20 +1,24 @@
 <script setup lang="ts">
-const props = withDefaults(
-  defineProps<{
-    modelValue: string
-    length: number
-    boundaryEvery?: number
-    wrapEvery?: number
-    disabled?: boolean
-  }>(),
-  {
-    wrapEvery: 16
-  }
-)
+const props = defineProps<{
+  modelValue: string
+  length: number
+  boundaryEvery?: number
+  wrapEvery?: number
+  disabled?: boolean
+}>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
+
+// Default: 8 bits per row on narrow viewports, 16 once 685px is reached
+// (= width below which 16 bits + container padding overflow the input box).
+// Caller can override via `wrapEvery` prop if needed.
+const fitsWide = useFitsWideBitRow()
+const effectiveWrap = computed(() => {
+  if (props.wrapEvery && props.wrapEvery > 0) return props.wrapEvery
+  return fitsWide.value ? 16 : 8
+})
 
 const cells = computed(() => {
   const padded = props.modelValue.padEnd(props.length, ' ')
@@ -22,7 +26,7 @@ const cells = computed(() => {
 })
 
 const rows = computed(() => {
-  const size = props.wrapEvery > 0 ? props.wrapEvery : props.length
+  const size = effectiveWrap.value
   const out: number[][] = []
   for (let start = 0; start < props.length; start += size) {
     const end = Math.min(start + size, props.length)
@@ -88,7 +92,7 @@ function focusPrev(index: number) {
     <span
       v-for="(row, ri) in rows"
       :key="ri"
-      class="bit-row"
+      class="bit-row bit-row-nowrap"
     >
       <template
         v-for="(i, k) in row"
@@ -120,6 +124,9 @@ function focusPrev(index: number) {
   display: inline-flex;
   flex-direction: column;
   gap: 0.4rem;
+}
+.bit-row-nowrap {
+  flex-wrap: nowrap;
 }
 .bit-input {
   text-align: center;

@@ -463,7 +463,7 @@
     "breadcrumb_label": "Breadcrumb",
     "breadcrumb_root": "Exercises",
     "breadcrumb_level": "level {n}",
-    "streak": "{n}d streak",
+    "streak": "Streak {n}",
     "skip_button": "Skip",
     "level_label": "Level",
     "level_option": "Level {n}",
