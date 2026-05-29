@@ -6,7 +6,6 @@ import io.kotest.matchers.shouldBe
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
-import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
 class Utf32GeneratorTest :
@@ -16,11 +15,10 @@ class Utf32GeneratorTest :
 
         "encode" - {
             "small code point (U+00E9 'é')" - {
-                "BigEndian produces 3 verbose steps ending in 00 00 00 E9" {
+                "BigEndian produces 3 steps ending in 00 00 00 E9" {
                     val steps = generator.buildEncodeStepsFor(
                         codePoint = CodePoint(0xE9),
                         endian = Encoding.Endian.BigEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     steps.size shouldBe 3
@@ -34,7 +32,6 @@ class Utf32GeneratorTest :
                     val steps = generator.buildEncodeStepsFor(
                         codePoint = CodePoint(0xE9),
                         endian = Encoding.Endian.LittleEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     (steps.last() as Step.HexBytes).expected.shouldContainExactly(0xE9, 0x00, 0x00, 0x00)
@@ -42,11 +39,10 @@ class Utf32GeneratorTest :
             }
 
             "supplementary code point (U+1F389 'tada')" - {
-                "BigEndian produces 3 verbose steps ending in 00 01 F3 89" {
+                "BigEndian produces 3 steps ending in 00 01 F3 89" {
                     val steps = generator.buildEncodeStepsFor(
                         codePoint = CodePoint(0x1F389),
                         endian = Encoding.Endian.BigEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     steps.size shouldBe 3
@@ -60,7 +56,6 @@ class Utf32GeneratorTest :
                     val steps = generator.buildEncodeStepsFor(
                         codePoint = CodePoint(0x1F389),
                         endian = Encoding.Endian.LittleEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     (steps.last() as Step.HexBytes).expected.shouldContainExactly(0x89, 0xF3, 0x01, 0x00)
@@ -72,47 +67,22 @@ class Utf32GeneratorTest :
                     val steps = generator.buildEncodeStepsFor(
                         codePoint = CodePoint(0x10FFFF),
                         endian = Encoding.Endian.BigEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     (steps[1] as Step.Binary).expected shouldBe "00000000000100001111111111111111"
                     (steps.last() as Step.HexBytes).expected.shouldContainExactly(0x00, 0x10, 0xFF, 0xFF)
                 }
             }
-
-            "Standard granularity drops the binary step" {
-                val steps = generator.buildEncodeStepsFor(
-                    codePoint = CodePoint(0xE9),
-                    endian = Encoding.Endian.BigEndian,
-                    granularity = Granularity.Standard,
-                )
-
-                steps.size shouldBe 2
-                (steps[0] as Step.Endianness).expected shouldBe Encoding.Endian.BigEndian
-                (steps[1] as Step.HexBytes).expected.shouldContainExactly(0x00, 0x00, 0x00, 0xE9)
-            }
-
-            "Compact granularity keeps only the hex bytes" {
-                val steps = generator.buildEncodeStepsFor(
-                    codePoint = CodePoint(0xE9),
-                    endian = Encoding.Endian.BigEndian,
-                    granularity = Granularity.Compact,
-                )
-
-                steps.size shouldBe 1
-                (steps[0] as Step.HexBytes).expected.shouldContainExactly(0x00, 0x00, 0x00, 0xE9)
-            }
         }
 
         "decode" - {
             "small code point input" - {
-                "00 00 00 E9 BigEndian produces 3 verbose steps ending at U+00E9" {
+                "00 00 00 E9 BigEndian produces 3 steps ending at U+00E9" {
                     val bytes = byteArrayOf(0x00, 0x00, 0x00, 0xE9.toByte())
                     val steps = generator.buildDecodeStepsFor(
                         bytes = bytes,
                         codePoint = CodePoint(0xE9),
                         endian = Encoding.Endian.BigEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     steps.size shouldBe 3
@@ -128,7 +98,6 @@ class Utf32GeneratorTest :
                         bytes = bytes,
                         codePoint = CodePoint(0xE9),
                         endian = Encoding.Endian.LittleEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     (steps[0] as Step.Endianness).expected shouldBe Encoding.Endian.LittleEndian
@@ -137,13 +106,12 @@ class Utf32GeneratorTest :
             }
 
             "supplementary code point input" - {
-                "00 01 F3 89 BigEndian produces 3 verbose steps ending at U+1F389" {
+                "00 01 F3 89 BigEndian produces 3 steps ending at U+1F389" {
                     val bytes = byteArrayOf(0x00, 0x01, 0xF3.toByte(), 0x89.toByte())
                     val steps = generator.buildDecodeStepsFor(
                         bytes = bytes,
                         codePoint = CodePoint(0x1F389),
                         endian = Encoding.Endian.BigEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     steps.size shouldBe 3
@@ -158,38 +126,10 @@ class Utf32GeneratorTest :
                         bytes = bytes,
                         codePoint = CodePoint(0x1F389),
                         endian = Encoding.Endian.LittleEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     (steps.last() as Step.CodePointEntry).expected shouldBe 0x1F389
                 }
-            }
-
-            "Standard granularity drops the binary step" {
-                val bytes = byteArrayOf(0x00, 0x00, 0x00, 0xE9.toByte())
-                val steps = generator.buildDecodeStepsFor(
-                    bytes = bytes,
-                    codePoint = CodePoint(0xE9),
-                    endian = Encoding.Endian.BigEndian,
-                    granularity = Granularity.Standard,
-                )
-
-                steps.size shouldBe 2
-                (steps[0] as Step.Endianness).expected shouldBe Encoding.Endian.BigEndian
-                (steps[1] as Step.CodePointEntry).expected shouldBe 0xE9
-            }
-
-            "Compact granularity keeps only the code point entry" {
-                val bytes = byteArrayOf(0x00, 0x00, 0x00, 0xE9.toByte())
-                val steps = generator.buildDecodeStepsFor(
-                    bytes = bytes,
-                    codePoint = CodePoint(0xE9),
-                    endian = Encoding.Endian.BigEndian,
-                    granularity = Granularity.Compact,
-                )
-
-                steps.size shouldBe 1
-                (steps[0] as Step.CodePointEntry).expected shouldBe 0xE9
             }
         }
     })

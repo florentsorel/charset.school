@@ -10,7 +10,6 @@ import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Exercise
 import school.charset.app.domain.exercise.ExerciseGenerationException
-import school.charset.app.domain.exercise.Granularity
 
 class ExerciseGeneratorTest :
     FreeSpec({
@@ -30,24 +29,23 @@ class ExerciseGeneratorTest :
                     codePoint = CodePoint(0x41),
                     encoding = Encoding.Ascii,
                     level = 1,
-                    granularity = Granularity.Verbose,
                     steps = emptyList(),
                 )
                 every {
-                    asciiGenerator.generateEncode(level = 1, Granularity.Verbose)
+                    asciiGenerator.generateEncode(level = 1)
                 } returns expected
 
                 val sut = ExerciseGenerator(setOf(asciiGenerator))
-                val result = sut.generateEncode(Encoding.Ascii, level = 1, Granularity.Verbose)
+                val result = sut.generateEncode(Encoding.Ascii, level = 1)
 
                 result shouldBe expected
-                verify(exactly = 1) { asciiGenerator.generateEncode(1, Granularity.Verbose) }
+                verify(exactly = 1) { asciiGenerator.generateEncode(1) }
             }
 
             "unsupported encoding throws ExerciseGenerationException" {
                 val sut = ExerciseGenerator(setOf(mockGenerator(Encoding.Ascii)))
                 val exception = shouldThrow<ExerciseGenerationException> {
-                    sut.generateEncode(Encoding.Utf8, level = 1, Granularity.Verbose)
+                    sut.generateEncode(Encoding.Utf8, level = 1)
                 }
                 exception.encoding shouldBe Encoding.Utf8
                 exception.level shouldBe 1
@@ -62,24 +60,23 @@ class ExerciseGeneratorTest :
                     codePoint = school.charset.app.domain.encoding.CodePoint(0x41),
                     encoding = Encoding.Ascii,
                     level = 1,
-                    granularity = Granularity.Verbose,
                     steps = emptyList(),
                 )
                 every {
-                    asciiGenerator.generateDecode(level = 1, Granularity.Verbose)
+                    asciiGenerator.generateDecode(level = 1)
                 } returns expected
 
                 val sut = ExerciseGenerator(setOf(asciiGenerator))
-                val result = sut.generateDecode(Encoding.Ascii, level = 1, Granularity.Verbose)
+                val result = sut.generateDecode(Encoding.Ascii, level = 1)
 
                 result shouldBe expected
-                verify(exactly = 1) { asciiGenerator.generateDecode(1, Granularity.Verbose) }
+                verify(exactly = 1) { asciiGenerator.generateDecode(1) }
             }
 
             "unsupported encoding throws ExerciseGenerationException" {
                 val sut = ExerciseGenerator(setOf(mockGenerator(Encoding.Ascii)))
                 val exception = shouldThrow<ExerciseGenerationException> {
-                    sut.generateDecode(Encoding.Utf8, level = 1, Granularity.Verbose)
+                    sut.generateDecode(Encoding.Utf8, level = 1)
                 }
                 exception.encoding shouldBe Encoding.Utf8
             }
@@ -88,10 +85,10 @@ class ExerciseGeneratorTest :
         "empty generator set - every request throws" {
             val sut = ExerciseGenerator(generators = emptySet())
             shouldThrow<ExerciseGenerationException> {
-                sut.generateEncode(Encoding.Ascii, level = 1, Granularity.Verbose)
+                sut.generateEncode(Encoding.Ascii, level = 1)
             }
             shouldThrow<ExerciseGenerationException> {
-                sut.generateDecode(Encoding.Ascii, level = 1, Granularity.Verbose)
+                sut.generateDecode(Encoding.Ascii, level = 1)
             }
         }
 

@@ -468,12 +468,6 @@
     "level_label": "Niveau",
     "level_option": "Niveau {n}",
     "level_suggested": "Niveau {n} suggéré (suite de réussites)",
-    "granularity_label": "Granularité",
-    "granularity": {
-      "verbose": "Pas à pas",
-      "standard": "Standard",
-      "compact": "Express"
-    },
     "prompt_label": "Exercice",
     "code_point_label": "Code point",
     "code_point_input_label": "Saisis le code point en hexadécimal",
@@ -511,14 +505,14 @@
     "finalized": {
       "success": "Bien joué ! Exercice complété sans aide.",
       "failed": "Exercice terminé. Au prochain essai sans révéler !",
-      "change_settings": "Changer le niveau / la granularité",
+      "change_settings": "Changer le niveau",
       "start_with_settings": "Commencer",
       "level_up_nudge": "Tu enchaînes les bonnes réponses. Prêt pour le niveau {n} ?",
       "level_up_button": "Niveau {n}"
     },
     "resume": {
       "banner_label": "Exercice en cours",
-      "message": "Tu as un exercice en cours - niveau {level}, {granularity}, étape {done}/{total}.",
+      "message": "Tu as un exercice en cours - niveau {level}, étape {done}/{total}.",
       "continue_button": "Reprendre",
       "new_button": "Nouvel exercice"
     },

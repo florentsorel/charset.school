@@ -5,7 +5,6 @@ interface ExerciseAttemptRepository {
         userId: Long,
         module: ExerciseModule,
         level: Int,
-        granularity: Granularity,
         codePoint: school.charset.app.domain.encoding.CodePoint,
         encoding: school.charset.app.domain.encoding.Encoding,
         steps: List<Step>,

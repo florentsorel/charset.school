@@ -11,7 +11,6 @@ import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.ExerciseGenerationException
-import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
 class Windows1252GeneratorTest :
@@ -30,14 +29,13 @@ class Windows1252GeneratorTest :
             sut.encoding shouldBe Encoding.Windows1252
         }
 
-        "verbose with Euro U+20AC produces byte 0x80 = 10000000" {
+        "Euro U+20AC produces byte 0x80 = 10000000" {
             val sut = newSut(CodePoint(0x20AC))
 
-            val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
+            val exercise = sut.generateEncode(level = 1)
 
             exercise.encoding shouldBe Encoding.Windows1252
             exercise.level shouldBe 1
-            exercise.granularity shouldBe Granularity.Verbose
             exercise.codePoint shouldBe CodePoint(0x20AC)
             exercise.steps shouldHaveSize 2
 
@@ -49,62 +47,46 @@ class Windows1252GeneratorTest :
             hex.expected shouldBe listOf(0x80)
         }
 
-        "verbose with Œ U+0152 produces byte 0x8C = 10001100" {
+        "Œ U+0152 produces byte 0x8C = 10001100" {
             val sut = newSut(CodePoint(0x0152))
-            val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
+            val exercise = sut.generateEncode(level = 1)
             val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
             val hex = exercise.steps[1].shouldBeInstanceOf<Step.HexBytes>()
             binary.expected shouldBe "10001100"
             hex.expected shouldBe listOf(0x8C)
         }
 
-        "verbose with Ÿ U+0178 produces byte 0x9F = 10011111" {
+        "Ÿ U+0178 produces byte 0x9F = 10011111" {
             val sut = newSut(CodePoint(0x0178))
-            val exercise = sut.generateEncode(level = 1, Granularity.Verbose)
+            val exercise = sut.generateEncode(level = 1)
             val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
             val hex = exercise.steps[1].shouldBeInstanceOf<Step.HexBytes>()
             binary.expected shouldBe "10011111"
             hex.expected shouldBe listOf(0x9F)
         }
 
-        "verbose with ASCII identity U+0041 (A) produces byte 0x41 = 01000001 (level 2)" {
+        "ASCII identity U+0041 (A) produces byte 0x41 = 01000001 (level 2)" {
             val sut = newSut(CodePoint(0x41), level = 2)
-            val exercise = sut.generateEncode(level = 2, Granularity.Verbose)
+            val exercise = sut.generateEncode(level = 2)
             val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
             val hex = exercise.steps[1].shouldBeInstanceOf<Step.HexBytes>()
             binary.expected shouldBe "01000001"
             hex.expected shouldBe listOf(0x41)
         }
 
-        "verbose with Latin-1 identity U+00E9 (é) produces byte 0xE9 = 11101001 (level 2)" {
+        "Latin-1 identity U+00E9 (é) produces byte 0xE9 = 11101001 (level 2)" {
             val sut = newSut(CodePoint(0xE9), level = 2)
-            val exercise = sut.generateEncode(level = 2, Granularity.Verbose)
+            val exercise = sut.generateEncode(level = 2)
             val binary = exercise.steps[0].shouldBeInstanceOf<Step.Binary>()
             val hex = exercise.steps[1].shouldBeInstanceOf<Step.HexBytes>()
             binary.expected shouldBe "11101001"
             hex.expected shouldBe listOf(0xE9)
         }
 
-        "standard builds [HexBytes(1)] only" {
-            val sut = newSut(CodePoint(0x20AC))
-            val exercise = sut.generateEncode(level = 1, Granularity.Standard)
-
-            exercise.steps shouldHaveSize 1
-            exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x80)
-        }
-
-        "compact builds [HexBytes(1)] only" {
-            val sut = newSut(CodePoint(0x20AC))
-            val exercise = sut.generateEncode(level = 1, Granularity.Compact)
-
-            exercise.steps shouldHaveSize 1
-            exercise.steps[0].shouldBeInstanceOf<Step.HexBytes>().expected shouldBe listOf(0x80)
-        }
-
         "invalid level (encode) throws ExerciseGenerationException" {
             val sut = Windows1252Generator(codec, mockk(), mockk())
             val exception = shouldThrow<ExerciseGenerationException> {
-                sut.generateEncode(level = 99, Granularity.Verbose)
+                sut.generateEncode(level = 99)
             }
             exception.encoding shouldBe Encoding.Windows1252
             exception.level shouldBe 99
@@ -115,7 +97,7 @@ class Windows1252GeneratorTest :
             val sut = Windows1252Generator(codec, mockk(), mockk())
 
             "ASCII identity U+0041 (A) -> byte 0x41" {
-                val steps = sut.buildEncodeStepsFor(CodePoint(0x41), Granularity.Verbose)
+                val steps = sut.buildEncodeStepsFor(CodePoint(0x41))
                 steps shouldHaveSize 2
                 val binary = steps[0].shouldBeInstanceOf<Step.Binary>()
                 val hex = steps[1].shouldBeInstanceOf<Step.HexBytes>()
@@ -125,7 +107,7 @@ class Windows1252GeneratorTest :
             }
 
             "Latin-1 identity U+00E9 (e acute) -> byte 0xE9" {
-                val steps = sut.buildEncodeStepsFor(CodePoint(0xE9), Granularity.Verbose)
+                val steps = sut.buildEncodeStepsFor(CodePoint(0xE9))
                 val binary = steps[0].shouldBeInstanceOf<Step.Binary>()
                 val hex = steps[1].shouldBeInstanceOf<Step.HexBytes>()
                 binary.expected shouldBe "11101001"
@@ -133,7 +115,7 @@ class Windows1252GeneratorTest :
             }
 
             "Microsoft extension U+20AC (Euro) -> byte 0x80" {
-                val steps = sut.buildEncodeStepsFor(CodePoint(0x20AC), Granularity.Verbose)
+                val steps = sut.buildEncodeStepsFor(CodePoint(0x20AC))
                 val binary = steps[0].shouldBeInstanceOf<Step.Binary>()
                 val hex = steps[1].shouldBeInstanceOf<Step.HexBytes>()
                 binary.expected shouldBe "10000000"
@@ -141,26 +123,26 @@ class Windows1252GeneratorTest :
             }
 
             "Microsoft extension U+2014 (em dash) -> byte 0x97" {
-                val steps = sut.buildEncodeStepsFor(CodePoint(0x2014), Granularity.Verbose)
+                val steps = sut.buildEncodeStepsFor(CodePoint(0x2014))
                 val hex = steps[1].shouldBeInstanceOf<Step.HexBytes>()
                 hex.expected shouldBe listOf(0x97)
             }
 
             "Microsoft extension U+2122 (trademark) -> byte 0x99" {
-                val steps = sut.buildEncodeStepsFor(CodePoint(0x2122), Granularity.Verbose)
+                val steps = sut.buildEncodeStepsFor(CodePoint(0x2122))
                 val hex = steps[1].shouldBeInstanceOf<Step.HexBytes>()
                 hex.expected shouldBe listOf(0x99)
             }
 
             "Microsoft extension U+2018 (left single quote, smart quote) -> byte 0x91" {
-                val steps = sut.buildEncodeStepsFor(CodePoint(0x2018), Granularity.Verbose)
+                val steps = sut.buildEncodeStepsFor(CodePoint(0x2018))
                 val hex = steps[1].shouldBeInstanceOf<Step.HexBytes>()
                 hex.expected shouldBe listOf(0x91)
             }
 
             "U+0100 (Latin A with macron) is rejected as not encodable" {
                 shouldThrow<school.charset.app.domain.encoding.EncoderException> {
-                    sut.buildEncodeStepsFor(CodePoint(0x0100), Granularity.Verbose)
+                    sut.buildEncodeStepsFor(CodePoint(0x0100))
                 }
             }
         }
@@ -171,7 +153,7 @@ class Windows1252GeneratorTest :
             "ASCII identity byte 0x41 -> U+0041 (A)" {
                 val bytes = byteArrayOf(0x41)
                 val cp = codec.decode(bytes, Encoding.Windows1252)
-                val steps = sut.buildDecodeStepsFor(bytes, cp, Granularity.Verbose)
+                val steps = sut.buildDecodeStepsFor(bytes, cp)
                 steps shouldHaveSize 2
                 steps[0].shouldBeInstanceOf<Step.Binary>().expected shouldBe "01000001"
                 steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x41
@@ -180,7 +162,7 @@ class Windows1252GeneratorTest :
             "Latin-1 identity byte 0xE9 -> U+00E9 (e acute)" {
                 val bytes = byteArrayOf(0xE9.toByte())
                 val cp = codec.decode(bytes, Encoding.Windows1252)
-                val steps = sut.buildDecodeStepsFor(bytes, cp, Granularity.Verbose)
+                val steps = sut.buildDecodeStepsFor(bytes, cp)
                 steps[0].shouldBeInstanceOf<Step.Binary>().expected shouldBe "11101001"
                 steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0xE9
             }
@@ -188,7 +170,7 @@ class Windows1252GeneratorTest :
             "Microsoft extension byte 0x80 -> U+20AC (Euro)" {
                 val bytes = byteArrayOf(0x80.toByte())
                 val cp = codec.decode(bytes, Encoding.Windows1252)
-                val steps = sut.buildDecodeStepsFor(bytes, cp, Granularity.Verbose)
+                val steps = sut.buildDecodeStepsFor(bytes, cp)
                 steps[0].shouldBeInstanceOf<Step.Binary>().expected shouldBe "10000000"
                 steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x20AC
             }
@@ -196,7 +178,7 @@ class Windows1252GeneratorTest :
             "Microsoft extension byte 0x97 -> U+2014 (em dash)" {
                 val bytes = byteArrayOf(0x97.toByte())
                 val cp = codec.decode(bytes, Encoding.Windows1252)
-                val steps = sut.buildDecodeStepsFor(bytes, cp, Granularity.Verbose)
+                val steps = sut.buildDecodeStepsFor(bytes, cp)
                 steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x2014
             }
 
@@ -239,9 +221,9 @@ class Windows1252GeneratorTest :
                 return Windows1252Generator(codec, mockk(), bag)
             }
 
-            "verbose [0x80] (Euro special block) -> CodePointEntry=U+20AC" {
+            "[0x80] (Euro special block) -> CodePointEntry=U+20AC" {
                 val sut = newDecodeSut(byteArrayOf(0x80.toByte()))
-                val exercise = sut.generateDecode(level = 1, Granularity.Verbose)
+                val exercise = sut.generateDecode(level = 1)
 
                 exercise.encoding shouldBe Encoding.Windows1252
                 exercise.bytes shouldBe byteArrayOf(0x80.toByte())
@@ -250,36 +232,22 @@ class Windows1252GeneratorTest :
                 exercise.steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x20AC
             }
 
-            "verbose [0x9F] (Ÿ, last special) -> CodePointEntry=U+0178" {
+            "[0x9F] (Ÿ, last special) -> CodePointEntry=U+0178" {
                 val sut = newDecodeSut(byteArrayOf(0x9F.toByte()))
-                val exercise = sut.generateDecode(level = 1, Granularity.Verbose)
+                val exercise = sut.generateDecode(level = 1)
                 exercise.steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x0178
             }
 
-            "verbose [0x41] (ASCII identity, level 2) -> CodePointEntry=0x41" {
+            "[0x41] (ASCII identity, level 2) -> CodePointEntry=0x41" {
                 val sut = newDecodeSut(byteArrayOf(0x41), level = 2)
-                val exercise = sut.generateDecode(level = 2, Granularity.Verbose)
+                val exercise = sut.generateDecode(level = 2)
                 exercise.steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x41
             }
 
-            "verbose [0xE9] (Latin-1 identity, level 2) -> CodePointEntry=0xE9" {
+            "[0xE9] (Latin-1 identity, level 2) -> CodePointEntry=0xE9" {
                 val sut = newDecodeSut(byteArrayOf(0xE9.toByte()), level = 2)
-                val exercise = sut.generateDecode(level = 2, Granularity.Verbose)
+                val exercise = sut.generateDecode(level = 2)
                 exercise.steps[1].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0xE9
-            }
-
-            "standard builds [CodePointEntry] only" {
-                val sut = newDecodeSut(byteArrayOf(0x80.toByte()))
-                val exercise = sut.generateDecode(level = 1, Granularity.Standard)
-                exercise.steps shouldHaveSize 1
-                exercise.steps[0].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x20AC
-            }
-
-            "compact builds [CodePointEntry] only" {
-                val sut = newDecodeSut(byteArrayOf(0x80.toByte()))
-                val exercise = sut.generateDecode(level = 1, Granularity.Compact)
-                exercise.steps shouldHaveSize 1
-                exercise.steps[0].shouldBeInstanceOf<Step.CodePointEntry>().expected shouldBe 0x20AC
             }
         }
     })

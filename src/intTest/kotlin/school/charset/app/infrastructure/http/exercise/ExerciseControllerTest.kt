@@ -56,7 +56,7 @@ class ExerciseControllerTest(
                 .cookie(xsrfCookie)
                 .header("X-XSRF-TOKEN", xsrfCookie.value)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"moduleId":"utf8-encode","level":1,"granularity":"verbose"}"""),
+                .content("""{"moduleId":"utf8-encode","level":1}"""),
         ).andExpect(status().isUnauthorized)
     }
 
@@ -239,7 +239,6 @@ class ExerciseControllerTest(
         xsrfCookie: Cookie,
         moduleId: String,
         level: Int,
-        granularity: String = "verbose",
     ): ResultActions = mockMvc.perform(
         post("/api/exercise/generate")
             .cookie(sessionCookie, xsrfCookie)
@@ -247,7 +246,7 @@ class ExerciseControllerTest(
             .contentType(MediaType.APPLICATION_JSON)
             .content(
                 mapper.writeValueAsString(
-                    mapOf("moduleId" to moduleId, "level" to level, "granularity" to granularity),
+                    mapOf("moduleId" to moduleId, "level" to level),
                 ),
             ),
     )

@@ -2,7 +2,6 @@ package school.charset.app.domain.exercise.generator
 
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Exercise
-import school.charset.app.domain.exercise.Granularity
 
 /**
  * Per-encoding generator. Each implementation handles a single encoding and
@@ -24,7 +23,7 @@ import school.charset.app.domain.exercise.Granularity
 interface EncodingExerciseGenerator {
     val encoding: Encoding
 
-    fun generateEncode(level: Int, granularity: Granularity): Exercise.Encode
+    fun generateEncode(level: Int): Exercise.Encode
 
-    fun generateDecode(level: Int, granularity: Granularity): Exercise.Decode
+    fun generateDecode(level: Int): Exercise.Decode
 }

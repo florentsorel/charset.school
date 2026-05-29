@@ -3,7 +3,6 @@ package school.charset.app.domain.exercise.generator
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Exercise
 import school.charset.app.domain.exercise.ExerciseGenerationException
-import school.charset.app.domain.exercise.Granularity
 
 /**
  * Thin dispatcher: routes `generateEncode` / `generateDecode` calls to the
@@ -25,31 +24,23 @@ class ExerciseGenerator(
         }
     }
 
-    fun generateEncode(
-        encoding: Encoding,
-        level: Int,
-        granularity: Granularity,
-    ): Exercise.Encode {
+    fun generateEncode(encoding: Encoding, level: Int): Exercise.Encode {
         val generator = byEncoding[encoding]
             ?: throw ExerciseGenerationException(
                 encoding = encoding,
                 level = level,
                 reason = "no generator registered for this encoding",
             )
-        return generator.generateEncode(level, granularity)
+        return generator.generateEncode(level)
     }
 
-    fun generateDecode(
-        encoding: Encoding,
-        level: Int,
-        granularity: Granularity,
-    ): Exercise.Decode {
+    fun generateDecode(encoding: Encoding, level: Int): Exercise.Decode {
         val generator = byEncoding[encoding]
             ?: throw ExerciseGenerationException(
                 encoding = encoding,
                 level = level,
                 reason = "no generator registered for this encoding",
             )
-        return generator.generateDecode(level, granularity)
+        return generator.generateDecode(level)
     }
 }

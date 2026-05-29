@@ -468,12 +468,6 @@
     "level_label": "Level",
     "level_option": "Level {n}",
     "level_suggested": "Level {n} suggested (winning streak)",
-    "granularity_label": "Granularity",
-    "granularity": {
-      "verbose": "Step by step",
-      "standard": "Standard",
-      "compact": "Express"
-    },
     "prompt_label": "Exercise",
     "code_point_label": "Code point",
     "code_point_input_label": "Enter the code point in hex",
@@ -511,14 +505,14 @@
     "finalized": {
       "success": "Nice! Exercise solved unaided.",
       "failed": "Exercise done. Try again without revealing!",
-      "change_settings": "Change level / granularity",
+      "change_settings": "Change level",
       "start_with_settings": "Start",
       "level_up_nudge": "You're on a roll. Ready for level {n}?",
       "level_up_button": "Level {n}"
     },
     "resume": {
       "banner_label": "Exercise in progress",
-      "message": "You have an exercise in progress - level {level}, {granularity}, step {done}/{total}.",
+      "message": "You have an exercise in progress - level {level}, step {done}/{total}.",
       "continue_button": "Continue",
       "new_button": "New exercise"
     },

@@ -12,7 +12,6 @@ CREATE TABLE exercise_attempts (
     user_id      BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     module_id    VARCHAR(64)  NOT NULL,
     level        SMALLINT     NOT NULL,
-    granularity  VARCHAR(16)  NOT NULL,
     code_point   INT          NOT NULL,
     encoding     VARCHAR(16)  NOT NULL,
     correct      BOOLEAN      NOT NULL DEFAULT FALSE,

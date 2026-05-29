@@ -6,7 +6,6 @@ import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Exercise
 import school.charset.app.domain.exercise.ExerciseGenerationException
 import school.charset.app.domain.exercise.FormatChoice
-import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
 class Utf8Generator(
@@ -16,27 +15,27 @@ class Utf8Generator(
 ) : EncodingExerciseGenerator {
     override val encoding = Encoding.Utf8
 
-    override fun generateEncode(level: Int, granularity: Granularity): Exercise.Encode {
+    override fun generateEncode(level: Int): Exercise.Encode {
         val utf8Level = parseLevel(level)
         val codePoint = codePointGenerator.randomUtf8(utf8Level)
-        val steps = codePoint.buildExerciseEncodeSteps(granularity)
-        return Exercise.Encode(codePoint, Encoding.Utf8, level, granularity, steps)
+        val steps = codePoint.buildExerciseEncodeSteps()
+        return Exercise.Encode(codePoint, Encoding.Utf8, level, steps)
+    }
+
+    override fun generateDecode(level: Int): Exercise.Decode {
+        val utf8Level = parseLevel(level)
+        val bytes = byteArrayGenerator.randomUtf8(utf8Level)
+        val codePoint = codec.decode(bytes, Encoding.Utf8)
+        val steps = bytes.buildExerciseDecodeSteps(codePoint)
+        return Exercise.Decode(bytes, codePoint, Encoding.Utf8, level, steps)
     }
 
     // Sandbox uses the historical layout: useful-bit binary (no padding) and no
     // UsefulBitCount step, since the sandbox visualises the encoding rather
     // than asking the user pedagogical questions.
-    fun buildEncodeStepsFor(codePoint: CodePoint, granularity: Granularity): List<Step> = codePoint.buildSandboxEncodeSteps(granularity)
+    fun buildEncodeStepsFor(codePoint: CodePoint): List<Step> = codePoint.buildSandboxEncodeSteps()
 
-    fun buildDecodeStepsFor(bytes: ByteArray, codePoint: CodePoint, granularity: Granularity): List<Step> = bytes.buildSandboxDecodeSteps(codePoint, granularity)
-
-    override fun generateDecode(level: Int, granularity: Granularity): Exercise.Decode {
-        val utf8Level = parseLevel(level)
-        val bytes = byteArrayGenerator.randomUtf8(utf8Level)
-        val codePoint = codec.decode(bytes, Encoding.Utf8)
-        val steps = bytes.buildExerciseDecodeSteps(codePoint, granularity)
-        return Exercise.Decode(bytes, codePoint, Encoding.Utf8, level, granularity, steps)
-    }
+    fun buildDecodeStepsFor(bytes: ByteArray, codePoint: CodePoint): List<Step> = bytes.buildSandboxDecodeSteps(codePoint)
 
     private fun parseLevel(level: Int): Utf8Level = Utf8Level.fromNumber(level)
         ?: throw ExerciseGenerationException(
@@ -48,23 +47,11 @@ class Utf8Generator(
     // EXERCISE flow: byte-aligned padded binary + explicit UsefulBitCount step,
     // so the user explicitly thinks "I padded to a byte multiple, only N bits
     // are useful, split them into MSB/LSB packets per UTF-8 byte".
-    private fun CodePoint.buildExerciseEncodeSteps(granularity: Granularity): List<Step> {
+    private fun CodePoint.buildExerciseEncodeSteps(): List<Step> {
         val bytes = codec.encode(this, Encoding.Utf8)
         val byteCount = bytes.size
         val (formatStep, hexStep) = formatAndHexFor(byteCount, bytes)
 
-        return when (granularity) {
-            Granularity.Verbose -> exerciseVerboseEncodeSteps(byteCount, formatStep, hexStep)
-            Granularity.Standard -> listOf(formatStep, hexStep)
-            Granularity.Compact -> listOf(hexStep)
-        }
-    }
-
-    private fun CodePoint.exerciseVerboseEncodeSteps(
-        byteCount: Int,
-        formatStep: Step.Format,
-        hexStep: Step.HexBytes,
-    ): List<Step> {
         // ASCII range (1 byte): binary IS the byte, hex IS the code point.
         // Format step alone teaches the identity-range insight.
         if (byteCount == 1) return listOf(formatStep, hexStep)
@@ -82,7 +69,7 @@ class Utf8Generator(
         )
     }
 
-    private fun ByteArray.buildExerciseDecodeSteps(codePoint: CodePoint, granularity: Granularity): List<Step> {
+    private fun ByteArray.buildExerciseDecodeSteps(codePoint: CodePoint): List<Step> {
         val byteCount = size
         val codePointValue = codePoint.value
         val dataBits = dataBitsForByteCount(byteCount)
@@ -91,20 +78,6 @@ class Utf8Generator(
         val formatStep = Step.Format(choices = FORMAT_CHOICES, expected = byteCountLabel)
         val codePointStep = Step.CodePointEntry(expected = codePointValue)
 
-        return when (granularity) {
-            Granularity.Verbose -> exerciseVerboseDecodeSteps(byteCount, combinedBinary, dataBits, formatStep, codePointStep)
-            Granularity.Standard -> listOf(formatStep, codePointStep)
-            Granularity.Compact -> listOf(codePointStep)
-        }
-    }
-
-    private fun exerciseVerboseDecodeSteps(
-        byteCount: Int,
-        combinedBinary: String,
-        dataBits: Int,
-        formatStep: Step.Format,
-        codePointStep: Step.CodePointEntry,
-    ): List<Step> {
         if (byteCount == 1) return listOf(formatStep, codePointStep)
 
         val paddedBits = paddedBitCount(dataBits)
@@ -122,23 +95,11 @@ class Utf8Generator(
     // (not byte-padded). The sandbox visualises the encoding mechanics rather
     // than asking interactive questions, so byte-alignment / explicit useful
     // count aren't needed.
-    private fun CodePoint.buildSandboxEncodeSteps(granularity: Granularity): List<Step> {
+    private fun CodePoint.buildSandboxEncodeSteps(): List<Step> {
         val bytes = codec.encode(this, Encoding.Utf8)
         val byteCount = bytes.size
         val (formatStep, hexStep) = formatAndHexFor(byteCount, bytes)
 
-        return when (granularity) {
-            Granularity.Verbose -> sandboxVerboseEncodeSteps(byteCount, formatStep, hexStep)
-            Granularity.Standard -> listOf(formatStep, hexStep)
-            Granularity.Compact -> listOf(hexStep)
-        }
-    }
-
-    private fun CodePoint.sandboxVerboseEncodeSteps(
-        byteCount: Int,
-        formatStep: Step.Format,
-        hexStep: Step.HexBytes,
-    ): List<Step> {
         val dataBits = dataBitsForByteCount(byteCount)
         val binary = value.toString(2).padStart(dataBits, '0')
         val binaryStep = Step.Binary(expected = binary, length = dataBits)
@@ -151,7 +112,7 @@ class Utf8Generator(
         }
     }
 
-    private fun ByteArray.buildSandboxDecodeSteps(codePoint: CodePoint, granularity: Granularity): List<Step> {
+    private fun ByteArray.buildSandboxDecodeSteps(codePoint: CodePoint): List<Step> {
         val byteCount = size
         val codePointValue = codePoint.value
         val dataBits = dataBitsForByteCount(byteCount)
@@ -159,22 +120,8 @@ class Utf8Generator(
         val byteCountLabel = FORMAT_CHOICES[byteCount - 1]
         val formatStep = Step.Format(choices = FORMAT_CHOICES, expected = byteCountLabel)
         val codePointStep = Step.CodePointEntry(expected = codePointValue)
-
-        return when (granularity) {
-            Granularity.Verbose -> sandboxVerboseDecodeSteps(byteCount, combinedBinary, dataBits, formatStep, codePointStep)
-            Granularity.Standard -> listOf(formatStep, codePointStep)
-            Granularity.Compact -> listOf(codePointStep)
-        }
-    }
-
-    private fun sandboxVerboseDecodeSteps(
-        byteCount: Int,
-        combinedBinary: String,
-        dataBits: Int,
-        formatStep: Step.Format,
-        codePointStep: Step.CodePointEntry,
-    ): List<Step> {
         val binaryStep = Step.Binary(expected = combinedBinary, length = dataBits)
+
         return if (byteCount == 1) {
             listOf(formatStep, binaryStep, codePointStep)
         } else {

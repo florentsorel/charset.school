@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Granularity, ModuleId } from '~/types/exercise'
+import type { ModuleId } from '~/types/exercise'
 import { ModuleIds } from '~/types/exercise'
 
 const SUPPORTED_IN_SLICE: ModuleId[] = ['utf8-encode', 'utf8-decode']
@@ -19,13 +19,11 @@ const { t } = useI18n()
 const moduleId = route.params.module as ModuleId
 
 const level = ref(1)
-const granularity = ref<Granularity>('verbose')
 const suggestedLevel = ref<number | undefined>(undefined)
 const streak = ref(0)
 const showNextSettings = ref(false)
 
 const draftLevel = ref(1)
-const draftGranularity = ref<Granularity>('verbose')
 
 const initializing = ref(true)
 const pendingResume = ref<import('~/types/exercise').ResumeExerciseResponse | null>(null)
@@ -53,7 +51,7 @@ const pendingResumeProgress = computed(() => {
   if (!pendingResume.value) return null
   const total = pendingResume.value.stepStates.length
   const done = pendingResume.value.stepStates.filter(s => s.correct || s.revealed).length
-  return { done, total, level: pendingResume.value.level, granularity: pendingResume.value.granularity }
+  return { done, total, level: pendingResume.value.level }
 })
 
 const shouldNudgeLevelUp = computed(() =>
@@ -70,14 +68,13 @@ onMounted(async () => {
     initializing.value = false
     return
   }
-  await generate(level.value, granularity.value)
+  await generate(level.value)
   initializing.value = false
 })
 
 async function resumePending() {
   if (!pendingResume.value) return
   level.value = pendingResume.value.level
-  granularity.value = pendingResume.value.granularity as Granularity
   hydrate(pendingResume.value)
   pendingResume.value = null
 }
@@ -85,7 +82,7 @@ async function resumePending() {
 async function discardPendingAndGenerate() {
   pendingResume.value = null
   initializing.value = true
-  await generate(level.value, granularity.value)
+  await generate(level.value)
   initializing.value = false
 }
 
@@ -162,7 +159,7 @@ async function loadProgress() {
 
 async function regenerateSameSettings() {
   pendingResume.value = null
-  await generate(level.value, granularity.value)
+  await generate(level.value)
   await refreshStreak()
   showNextSettings.value = false
 }
@@ -170,8 +167,7 @@ async function regenerateSameSettings() {
 async function regenerateWithDraft() {
   pendingResume.value = null
   level.value = draftLevel.value
-  granularity.value = draftGranularity.value
-  await generate(level.value, granularity.value)
+  await generate(level.value)
   await refreshStreak()
   showNextSettings.value = false
 }
@@ -180,13 +176,12 @@ async function regenerateAtSuggested() {
   if (suggestedLevel.value === undefined) return
   pendingResume.value = null
   level.value = suggestedLevel.value
-  await generate(level.value, granularity.value)
+  await generate(level.value)
   await refreshStreak()
 }
 
 function openNextSettings() {
   draftLevel.value = level.value
-  draftGranularity.value = granularity.value
   showNextSettings.value = true
 }
 
@@ -213,7 +208,6 @@ useHead({
     <ExerciseSubHeader
       :module-id="moduleId"
       :level="level"
-      :granularity="granularity"
       :streak="streak"
       @skip="regenerateSameSettings"
     />
@@ -229,8 +223,7 @@ useHead({
           {{ t('exercise.resume.message', {
             done: pendingResumeProgress?.done,
             total: pendingResumeProgress?.total,
-            level: pendingResumeProgress?.level,
-            granularity: t(`exercise.granularity.${pendingResumeProgress?.granularity}`)
+            level: pendingResumeProgress?.level
           }) }}
         </p>
         <div class="exercise-resume-actions">
@@ -542,7 +535,6 @@ useHead({
               v-model="draftLevel"
               :suggested="suggestedLevel"
             />
-            <GranularitySelector v-model="draftGranularity" />
           </div>
           <div class="exercise-next-settings-actions">
             <button

@@ -2,7 +2,6 @@ import type {
   AnswerPayload,
   ExerciseStep,
   GenerateExerciseResponse,
-  Granularity,
   ModuleId,
   ResumeExerciseResponse,
   RevealedAnswer,
@@ -63,10 +62,10 @@ export function useExercise(moduleId: ModuleId) {
 
   const currentStatus = computed<StepStatus | null>(() => statuses.value[currentStepIndex.value] ?? null)
 
-  async function generate(level: number, granularity: Granularity) {
+  async function generate(level: number) {
     loading.value = true
     try {
-      const fresh = await api.generate({ moduleId, level, granularity })
+      const fresh = await api.generate({ moduleId, level })
       const seededInputs: Record<number, StepInput> = {}
       fresh.steps.forEach((step, i) => {
         seededInputs[i] = initialInput(step)
@@ -114,7 +113,6 @@ export function useExercise(moduleId: ModuleId) {
       moduleId: resume.moduleId,
       direction: resume.direction,
       level: resume.level,
-      granularity: resume.granularity,
       encoding: resume.encoding,
       codePoint: resume.codePoint,
       codePointLabel: resume.codePointLabel,

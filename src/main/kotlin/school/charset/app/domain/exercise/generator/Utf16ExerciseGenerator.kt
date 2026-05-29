@@ -4,7 +4,6 @@ import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Exercise
 import school.charset.app.domain.exercise.ExerciseGenerationException
-import school.charset.app.domain.exercise.Granularity
 
 class Utf16ExerciseGenerator(
     private val codec: Codec,
@@ -23,19 +22,19 @@ class Utf16ExerciseGenerator(
     private val endian: Encoding.Endian =
         if (encoding == Encoding.Utf16Be) Encoding.Endian.BigEndian else Encoding.Endian.LittleEndian
 
-    override fun generateEncode(level: Int, granularity: Granularity): Exercise.Encode {
+    override fun generateEncode(level: Int): Exercise.Encode {
         val utf16Level = parseLevel(level)
         val codePoint = codePointGenerator.randomUtf16(utf16Level)
-        val steps = utf16Generator.buildEncodeStepsFor(codePoint, endian, granularity)
-        return Exercise.Encode(codePoint, encoding, level, granularity, steps)
+        val steps = utf16Generator.buildEncodeStepsFor(codePoint, endian)
+        return Exercise.Encode(codePoint, encoding, level, steps)
     }
 
-    override fun generateDecode(level: Int, granularity: Granularity): Exercise.Decode {
+    override fun generateDecode(level: Int): Exercise.Decode {
         val utf16Level = parseLevel(level)
         val bytes = byteArrayGenerator.randomUtf16(utf16Level, encoding)
         val codePoint = codec.decode(bytes, encoding)
-        val steps = utf16Generator.buildDecodeStepsFor(bytes, codePoint, endian, granularity)
-        return Exercise.Decode(bytes, codePoint, encoding, level, granularity, steps)
+        val steps = utf16Generator.buildDecodeStepsFor(bytes, codePoint, endian)
+        return Exercise.Decode(bytes, codePoint, encoding, level, steps)
     }
 
     private fun parseLevel(level: Int): Utf16Level = Utf16Level.fromNumber(level)
