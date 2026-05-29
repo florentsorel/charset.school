@@ -90,13 +90,16 @@ export function useExercise(moduleId: ModuleId) {
       const restoredInput = state?.userAnswer ? revealedAnswerToInput(step, state.userAnswer) : null
       seededInputs[i] = restoredInput ?? initialInput(step)
       if (state) {
+        // A revealed step is resolved (read-only) even though the DB stores
+        // `correct = false`. Treat it as done for rendering so the user sees
+        // the revealed answer instead of a blank input.
         seededStatuses[i] = {
-          correct: state.correct,
+          correct: state.correct || state.revealed,
           attempts: state.attempts,
           errorType: state.errorType,
           params: {},
           canReveal: state.canReveal,
-          revealedAnswer: null,
+          revealedAnswer: state.revealedAnswer,
           userInput: restoredInput
         }
       }

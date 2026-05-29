@@ -78,7 +78,7 @@ function focusPrev(index: number) {
       autocapitalize="characters"
       :value="cell"
       :disabled="disabled"
-      :aria-label="`Octet ${i + 1}`"
+      :aria-label="$t('exercise.byte_input_label', { n: i + 1 })"
       @input="onInput(i, $event)"
       @keydown="onKeydown(i, $event)"
     >

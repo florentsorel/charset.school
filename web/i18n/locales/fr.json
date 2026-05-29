@@ -491,6 +491,8 @@
     },
     "useful_bit_count_input_label": "Nombre de bits utiles",
     "useful_bit_count_suffix": "bits utiles",
+    "bit_input_label": "Bit {n}",
+    "byte_input_label": "Octet {n}",
     "step_progress_label": "Progression des étapes",
     "step_state": {
       "done": "Étape {n} - validée",
@@ -555,6 +557,6 @@
     "code-point.wrong-value": "Code point incorrect. Vérifie ta conversion binaire → décimal puis décimal → hex.",
     "endianness.wrong-choice": "Mauvaise endianness. Compare l'ordre des octets attendu à l'ordre des octets natifs du format.",
     "useful-bit-count.non-positive": "`{got}` n'est pas un nombre positif. Compte les bits qui portent réellement de l'information.",
-    "useful-bit-count.wrong-value": "`{got}` n'est pas le bon nombre de bits utiles. Rappel : `1 byte = 7`, `2 bytes = 11`, `3 bytes = 16`, `4 bytes = 21`."
+    "useful-bit-count.wrong-value": "`{got}` n'est pas le bon nombre de bits utiles. Rappel UTF-8 (bits de payload, hors markers) : `1 octet = 7 bits utiles`, `2 octets = 11`, `3 octets = 16`, `4 octets = 21`."
   }
 }

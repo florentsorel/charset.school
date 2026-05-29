@@ -45,6 +45,7 @@ data class StepStateDto(
     val errorType: String?,
     val canReveal: Boolean,
     val userAnswer: RevealedAnswer?,
+    val revealedAnswer: RevealedAnswer?,
 )
 
 data class ValidateStepResponse(
@@ -95,6 +96,10 @@ fun ExerciseAttempt.toResumeResponse(decodeBytes: List<Int>?): ResumeExerciseRes
                 errorType = it.errorType,
                 canReveal = !it.correct && !it.revealed && it.attempts >= ExerciseService.REVEAL_THRESHOLD,
                 userAnswer = it.userAnswer?.toRevealedAnswer(),
+                // Revealed steps echo the expected answer so a refreshed session
+                // can render the revealed value (the DB never stores it as
+                // `user_answer`; reveal only flips the `revealed` flag).
+                revealedAnswer = if (it.revealed) it.step.toRevealedAnswer() else null,
             )
         },
     )

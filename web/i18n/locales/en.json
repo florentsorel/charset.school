@@ -491,6 +491,8 @@
     },
     "useful_bit_count_input_label": "Useful bit count",
     "useful_bit_count_suffix": "useful bits",
+    "bit_input_label": "Bit {n}",
+    "byte_input_label": "Byte {n}",
     "step_progress_label": "Step progress",
     "step_state": {
       "done": "Step {n} - solved",
@@ -555,6 +557,6 @@
     "code-point.wrong-value": "Wrong code point. Check your binary → decimal then decimal → hex conversion.",
     "endianness.wrong-choice": "Wrong endianness. Compare the expected byte order with the format's native order.",
     "useful-bit-count.non-positive": "`{got}` isn't a positive number. Count the bits that actually carry information.",
-    "useful-bit-count.wrong-value": "`{got}` isn't the right useful bit count. Reminder: `1 byte = 7`, `2 bytes = 11`, `3 bytes = 16`, `4 bytes = 21`."
+    "useful-bit-count.wrong-value": "`{got}` isn't the right useful bit count. UTF-8 reminder (payload bits, excluding markers): `1-byte = 7 useful bits`, `2-byte = 11`, `3-byte = 16`, `4-byte = 21`."
   }
 }

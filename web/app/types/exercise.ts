@@ -61,6 +61,7 @@ export type StepStateDto = {
   errorType: string | null
   canReveal: boolean
   userAnswer: RevealedAnswer | null
+  revealedAnswer: RevealedAnswer | null
 }
 
 export type ResumeExerciseResponse = GenerateExerciseResponse & {

@@ -85,7 +85,7 @@ function focusPrev(index: number) {
         maxlength="1"
         :value="cell"
         :disabled="disabled"
-        :aria-label="`Bit ${i + 1}`"
+        :aria-label="$t('exercise.bit_input_label', { n: i + 1 })"
         @input="onInput(i, $event)"
         @keydown="onKeydown(i, $event)"
       >

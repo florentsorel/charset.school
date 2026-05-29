@@ -161,12 +161,14 @@ async function loadProgress() {
 }
 
 async function regenerateSameSettings() {
+  pendingResume.value = null
   await generate(level.value, granularity.value)
   await refreshStreak()
   showNextSettings.value = false
 }
 
 async function regenerateWithDraft() {
+  pendingResume.value = null
   level.value = draftLevel.value
   granularity.value = draftGranularity.value
   await generate(level.value, granularity.value)
@@ -176,6 +178,7 @@ async function regenerateWithDraft() {
 
 async function regenerateAtSuggested() {
   if (suggestedLevel.value === undefined) return
+  pendingResume.value = null
   level.value = suggestedLevel.value
   await generate(level.value, granularity.value)
   await refreshStreak()
