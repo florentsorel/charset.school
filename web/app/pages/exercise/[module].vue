@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ModuleId } from '~/types/exercise'
-import { ModuleIds } from '~/types/exercise'
+import { MaxLevelByModule, ModuleIds } from '~/types/exercise'
 
 const SUPPORTED_IN_SLICE: ModuleId[] = ['utf8-encode', 'utf8-decode']
 
@@ -17,6 +17,7 @@ const route = useRoute()
 const { t } = useI18n()
 
 const moduleId = route.params.module as ModuleId
+const maxLevel = MaxLevelByModule[moduleId]
 
 const level = ref(1)
 const suggestedLevel = ref<number | undefined>(undefined)
@@ -564,6 +565,7 @@ useHead({
           <div class="exercise-next-settings-row">
             <LevelSelector
               v-model="draftLevel"
+              :max="maxLevel"
               :suggested="suggestedLevel"
             />
           </div>

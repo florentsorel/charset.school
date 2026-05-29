@@ -15,6 +15,22 @@ export type ModuleId = typeof ModuleIds[number]
 
 export type Direction = 'encode' | 'decode'
 
+// Mirrors the backend's per-encoding level enums (Utf8Level / Utf16Level /
+// Utf32Level / Latin1Level / Windows1252Level). Submitting a level above the
+// max for the current module yields HTTP 422 from `/api/exercise/generate`.
+export const MaxLevelByModule: Record<ModuleId, number> = {
+  'utf8-encode': 4,
+  'utf8-decode': 4,
+  'utf16-encode': 2,
+  'utf16-decode': 2,
+  'utf32-encode': 2,
+  'utf32-decode': 2,
+  'latin1-encode': 2,
+  'latin1-decode': 2,
+  'windows1252-encode': 2,
+  'windows1252-decode': 2
+}
+
 export type StepType
   = | 'format'
     | 'binary'

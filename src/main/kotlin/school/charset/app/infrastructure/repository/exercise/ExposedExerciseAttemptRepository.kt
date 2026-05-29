@@ -1,6 +1,5 @@
 package school.charset.app.infrastructure.repository.exercise
 
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -16,7 +15,6 @@ import school.charset.app.domain.exercise.ExerciseAttempt
 import school.charset.app.domain.exercise.ExerciseAttemptRepository
 import school.charset.app.domain.exercise.ExerciseModule
 import school.charset.app.domain.exercise.Step
-import school.charset.app.domain.exercise.StepType
 import kotlin.time.Clock
 
 class ExposedExerciseAttemptRepository(
@@ -83,8 +81,11 @@ class ExposedExerciseAttemptRepository(
         )
     }
 
-    override fun findLatestUnfinalizedByUserAndModule(userId: Long, module: ExerciseModule): ExerciseAttempt? = transaction {
-        val latestId = ExerciseAttemptsTable
+    override fun findLatestUnfinalizedByUserAndModule(
+        userId: Long,
+        module: ExerciseModule,
+    ): ExerciseAttempt? = transaction {
+        ExerciseAttemptsTable
             .selectAll()
             .where {
                 (ExerciseAttemptsTable.userId eq userId)
@@ -94,38 +95,15 @@ class ExposedExerciseAttemptRepository(
             .orderBy(ExerciseAttemptsTable.createdAt, SortOrder.DESC)
             .limit(1)
             .firstOrNull()
-            ?.get(ExerciseAttemptsTable.id)
-            ?: return@transaction null
-
-        findById(latestId)
+            ?.toExerciseAttempt()
     }
 
     override fun findById(attemptId: Long): ExerciseAttempt? = transaction {
-        val attemptRow = ExerciseAttemptsTable
+        ExerciseAttemptsTable
             .selectAll()
             .where { ExerciseAttemptsTable.id eq attemptId }
             .singleOrNull()
-            ?: return@transaction null
-
-        val steps = AttemptStepsTable
-            .selectAll()
-            .where { AttemptStepsTable.attemptId eq attemptId }
-            .orderBy(AttemptStepsTable.position, SortOrder.ASC)
-            .map { it.toAttemptStep() }
-
-        ExerciseAttempt(
-            id = attemptId,
-            userId = attemptRow[ExerciseAttemptsTable.userId],
-            module = attemptRow[ExerciseAttemptsTable.moduleId],
-            level = attemptRow[ExerciseAttemptsTable.level].toInt(),
-            codePoint = CodePoint(attemptRow[ExerciseAttemptsTable.codePoint]),
-            encoding = attemptRow[ExerciseAttemptsTable.encoding],
-            correct = attemptRow[ExerciseAttemptsTable.correct],
-            finalized = attemptRow[ExerciseAttemptsTable.finalized],
-            durationMs = attemptRow[ExerciseAttemptsTable.durationMs],
-            steps = steps,
-            createdAt = attemptRow[ExerciseAttemptsTable.createdAt],
-        )
+            ?.toExerciseAttempt()
     }
 
     override fun recordStepSubmission(
@@ -148,14 +126,18 @@ class ExposedExerciseAttemptRepository(
         }
         updateUserAnswer(stepId, userAnswer)
 
-        loadAttemptStep(stepId)
+        current.toAttemptStep(overrides = StepRowOverrides(correct, errorType, newAttempts.toInt()))
     }
 
     override fun markStepRevealed(stepId: Long): AttemptStep = transaction {
         AttemptStepsTable.update({ AttemptStepsTable.id eq stepId }) {
             it[revealed] = true
         }
-        loadAttemptStep(stepId)
+        AttemptStepsTable
+            .selectAll()
+            .where { AttemptStepsTable.id eq stepId }
+            .single()
+            .toAttemptStep()
     }
 
     override fun finalize(attemptId: Long, correct: Boolean, durationMs: Int?): ExerciseAttempt = transaction {
@@ -164,28 +146,12 @@ class ExposedExerciseAttemptRepository(
             it[finalized] = true
             it[ExerciseAttemptsTable.durationMs] = durationMs
         }
-        findById(attemptId) ?: error("Attempt $attemptId disappeared after finalize")
-    }
-
-    private fun loadAttemptStep(stepId: Long): AttemptStep = AttemptStepsTable
-        .selectAll()
-        .where { AttemptStepsTable.id eq stepId }
-        .single()
-        .toAttemptStep()
-
-    private fun ResultRow.toAttemptStep(): AttemptStep {
-        val stepId = this[AttemptStepsTable.id]
-        val stepType = this[AttemptStepsTable.stepType]
-        return AttemptStep(
-            id = stepId,
-            position = this[AttemptStepsTable.position].toInt(),
-            step = loadStep(stepId, stepType),
-            correct = this[AttemptStepsTable.correct],
-            errorType = this[AttemptStepsTable.errorType],
-            attempts = this[AttemptStepsTable.attempts].toInt(),
-            revealed = this[AttemptStepsTable.revealed],
-            userAnswer = loadUserAnswer(stepId, stepType),
-        )
+        ExerciseAttemptsTable
+            .selectAll()
+            .where { ExerciseAttemptsTable.id eq attemptId }
+            .singleOrNull()
+            ?.toExerciseAttempt()
+            ?: error("Attempt $attemptId disappeared after finalize")
     }
 
     private fun insertStepExpected(stepId: Long, step: Step) {
@@ -195,27 +161,33 @@ class ExposedExerciseAttemptRepository(
                 it[choices] = step.choices
                 it[expected] = step.expected
             }
+
             is Step.Binary -> AttemptStepBinaryTable.insert {
                 it[AttemptStepBinaryTable.stepId] = stepId
                 it[expected] = step.expected
                 it[bitLength] = step.length.toShort()
             }
+
             is Step.BitGroups -> AttemptStepBitGroupsTable.insert {
                 it[AttemptStepBitGroupsTable.stepId] = stepId
                 it[expected] = step.expected
             }
+
             is Step.HexBytes -> AttemptStepHexBytesTable.insert {
                 it[AttemptStepHexBytesTable.stepId] = stepId
                 it[expected] = step.expected.map { byte -> byte.toShort() }
             }
+
             is Step.CodePointEntry -> AttemptStepCodePointTable.insert {
                 it[AttemptStepCodePointTable.stepId] = stepId
                 it[expected] = step.expected
             }
+
             is Step.UsefulBitCount -> AttemptStepUsefulBitCountTable.insert {
                 it[AttemptStepUsefulBitCountTable.stepId] = stepId
                 it[expected] = step.expected.toShort()
             }
+
             is Step.Endianness -> AttemptStepEndiannessTable.insert {
                 it[AttemptStepEndiannessTable.stepId] = stepId
                 it[expected] = step.expected
@@ -223,128 +195,32 @@ class ExposedExerciseAttemptRepository(
         }
     }
 
-    private fun loadStep(stepId: Long, stepType: StepType): Step = when (stepType) {
-        StepType.Format ->
-            AttemptStepFormatTable
-                .selectAll()
-                .where { AttemptStepFormatTable.stepId eq stepId }
-                .single()
-                .let { Step.Format(choices = it[AttemptStepFormatTable.choices], expected = it[AttemptStepFormatTable.expected]) }
-
-        StepType.Binary ->
-            AttemptStepBinaryTable
-                .selectAll()
-                .where { AttemptStepBinaryTable.stepId eq stepId }
-                .single()
-                .let { Step.Binary(expected = it[AttemptStepBinaryTable.expected], length = it[AttemptStepBinaryTable.bitLength].toInt()) }
-
-        StepType.BitGroups ->
-            AttemptStepBitGroupsTable
-                .selectAll()
-                .where { AttemptStepBitGroupsTable.stepId eq stepId }
-                .single()
-                .let { Step.BitGroups(expected = it[AttemptStepBitGroupsTable.expected]) }
-
-        StepType.HexBytes ->
-            AttemptStepHexBytesTable
-                .selectAll()
-                .where { AttemptStepHexBytesTable.stepId eq stepId }
-                .single()
-                .let { Step.HexBytes(expected = it[AttemptStepHexBytesTable.expected].map { byte -> byte.toInt() }) }
-
-        StepType.CodePointEntry ->
-            AttemptStepCodePointTable
-                .selectAll()
-                .where { AttemptStepCodePointTable.stepId eq stepId }
-                .single()
-                .let { Step.CodePointEntry(expected = it[AttemptStepCodePointTable.expected]) }
-
-        StepType.UsefulBitCount ->
-            AttemptStepUsefulBitCountTable
-                .selectAll()
-                .where { AttemptStepUsefulBitCountTable.stepId eq stepId }
-                .single()
-                .let { Step.UsefulBitCount(expected = it[AttemptStepUsefulBitCountTable.expected].toInt()) }
-
-        StepType.Endianness ->
-            AttemptStepEndiannessTable
-                .selectAll()
-                .where { AttemptStepEndiannessTable.stepId eq stepId }
-                .single()
-                .let { Step.Endianness(expected = it[AttemptStepEndiannessTable.expected]) }
-    }
-
-    private fun loadUserAnswer(stepId: Long, stepType: StepType): Answer? = when (stepType) {
-        StepType.Format ->
-            AttemptStepFormatTable
-                .selectAll()
-                .where { AttemptStepFormatTable.stepId eq stepId }
-                .single()[AttemptStepFormatTable.userAnswer]
-                ?.let(Answer::FormatChoice)
-
-        StepType.Binary ->
-            AttemptStepBinaryTable
-                .selectAll()
-                .where { AttemptStepBinaryTable.stepId eq stepId }
-                .single()[AttemptStepBinaryTable.userAnswer]
-                ?.let(Answer::BinaryValue)
-
-        StepType.BitGroups ->
-            AttemptStepBitGroupsTable
-                .selectAll()
-                .where { AttemptStepBitGroupsTable.stepId eq stepId }
-                .single()[AttemptStepBitGroupsTable.userAnswer]
-                ?.let(Answer::BitGroupsValue)
-
-        StepType.HexBytes ->
-            AttemptStepHexBytesTable
-                .selectAll()
-                .where { AttemptStepHexBytesTable.stepId eq stepId }
-                .single()[AttemptStepHexBytesTable.userAnswer]
-                ?.let { bytes -> Answer.HexBytesValue(bytes.map { it.toInt() }) }
-
-        StepType.CodePointEntry ->
-            AttemptStepCodePointTable
-                .selectAll()
-                .where { AttemptStepCodePointTable.stepId eq stepId }
-                .single()[AttemptStepCodePointTable.userAnswer]
-                ?.let(Answer::CodePointValue)
-
-        StepType.UsefulBitCount ->
-            AttemptStepUsefulBitCountTable
-                .selectAll()
-                .where { AttemptStepUsefulBitCountTable.stepId eq stepId }
-                .single()[AttemptStepUsefulBitCountTable.userAnswer]
-                ?.let { Answer.UsefulBitCountValue(it.toInt()) }
-
-        StepType.Endianness ->
-            AttemptStepEndiannessTable
-                .selectAll()
-                .where { AttemptStepEndiannessTable.stepId eq stepId }
-                .single()[AttemptStepEndiannessTable.userAnswer]
-                ?.let(Answer::EndiannessChoice)
-    }
-
     private fun updateUserAnswer(stepId: Long, answer: Answer) {
         when (answer) {
             is Answer.FormatChoice -> AttemptStepFormatTable.update({ AttemptStepFormatTable.stepId eq stepId }) {
                 it[userAnswer] = answer.value
             }
+
             is Answer.BinaryValue -> AttemptStepBinaryTable.update({ AttemptStepBinaryTable.stepId eq stepId }) {
                 it[userAnswer] = answer.bits
             }
+
             is Answer.BitGroupsValue -> AttemptStepBitGroupsTable.update({ AttemptStepBitGroupsTable.stepId eq stepId }) {
                 it[userAnswer] = answer.groups
             }
+
             is Answer.HexBytesValue -> AttemptStepHexBytesTable.update({ AttemptStepHexBytesTable.stepId eq stepId }) {
                 it[userAnswer] = answer.bytes.map { byte -> byte.toShort() }
             }
+
             is Answer.CodePointValue -> AttemptStepCodePointTable.update({ AttemptStepCodePointTable.stepId eq stepId }) {
                 it[userAnswer] = answer.value
             }
+
             is Answer.UsefulBitCountValue -> AttemptStepUsefulBitCountTable.update({ AttemptStepUsefulBitCountTable.stepId eq stepId }) {
                 it[userAnswer] = answer.value.toShort()
             }
+
             is Answer.EndiannessChoice -> AttemptStepEndiannessTable.update({ AttemptStepEndiannessTable.stepId eq stepId }) {
                 it[userAnswer] = answer.value
             }
