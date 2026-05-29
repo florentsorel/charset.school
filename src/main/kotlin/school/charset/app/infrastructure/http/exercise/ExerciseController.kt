@@ -53,7 +53,7 @@ class ExerciseController(
         val module = ExerciseModule.fromId(request.moduleId)
             ?: throw UnknownModuleException(request.moduleId)
 
-        val attempt = exerciseService.generate(userId, module, request.level)
+        val attempt = exerciseService.generate(userId, module)
         val decodeBytes = if (module.direction == ExerciseModule.Direction.Decode) {
             codec.encode(attempt.codePoint, attempt.encoding).map { it.toInt() and 0xFF }
         } else {

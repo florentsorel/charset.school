@@ -2,7 +2,11 @@
 defineProps<{
   moduleId: string
   level: number
+  maxLevel: number
   streak: number
+  threshold: number
+  atMax: boolean
+  loaded: boolean
 }>()
 
 defineEmits<{
@@ -23,17 +27,29 @@ const { t } = useI18n()
         <span class="separator">/</span>
         <span class="crumb font-mono">{{ moduleId }}</span>
         <span class="separator">/</span>
-        <span class="crumb crumb-level font-mono">{{ t('exercise.breadcrumb_level', { n: level }) }}</span>
+        <!-- Render only after progress is loaded to avoid flashing the
+             default "Niveau 1 · 0/5" before the real values land. While
+             loading we reserve the pill space with an unbreakable dash
+             so the header height doesn't shift. -->
+        <span
+          v-if="!loaded"
+          class="crumb crumb-level crumb-level-loading font-mono"
+          aria-hidden="true"
+        >&nbsp;</span>
+        <span
+          v-else-if="atMax"
+          class="crumb crumb-level font-mono"
+        >
+          {{ t('exercise.progression.max', { n: level }) }}
+        </span>
+        <span
+          v-else
+          class="crumb crumb-level font-mono"
+        >
+          {{ t('exercise.progression.next', { level, done: streak, threshold, next: level + 1 }) }}
+        </span>
       </nav>
       <div class="exercise-stats">
-        <span
-          v-if="streak > 0"
-          class="font-mono"
-        >{{ t('exercise.streak', { n: streak }) }}</span>
-        <span
-          v-if="streak > 0"
-          class="separator-dot"
-        >·</span>
         <button
           type="button"
           class="btn-quiet btn"
@@ -66,8 +82,7 @@ const { t } = useI18n()
   gap: 0.6rem;
   font-size: 0.875rem;
 }
-.separator,
-.separator-dot {
+.separator {
   color: var(--color-faint);
 }
 .crumb-root {
@@ -80,6 +95,12 @@ const { t } = useI18n()
 .crumb-level {
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
+  background: var(--color-subtle);
+}
+.crumb-level-loading {
+  /* Match the rendered width of "Level X · 0/5 before level X+1" so the
+     header doesn't reflow when the real pill replaces it. */
+  min-width: 14ch;
   background: var(--color-subtle);
 }
 .exercise-stats {

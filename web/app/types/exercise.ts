@@ -42,9 +42,14 @@ export const ModuleIdByRoute: Record<Direction, Record<EncodingSlug, ModuleId>> 
   }
 }
 
-// Mirrors the backend's per-encoding level enums (Utf8Level / Utf16Level /
-// Utf32Level / Latin1Level / Windows1252Level). Submitting a level above the
-// max for the current module yields HTTP 422 from `/api/exercise/generate`.
+// Threshold to advance one level (mirrors ModuleProgress.STREAK_FOR_LEVEL_UP).
+// The back owns the actual advancement; the front only uses this constant
+// to display "Niveau X · Y/N avant niveau X+1" in the progression indicator.
+export const STREAK_FOR_LEVEL_UP = 5
+
+// Per-encoding max level. Mirrors the back's per-encoding Level enums
+// (Utf8Level / Utf16Level / etc. via ExerciseModule.maxLevel). Structural
+// constant - safe to keep static on the front.
 export const MaxLevelByModule: Record<ModuleId, number> = {
   'utf8-encode': 4,
   'utf8-decode': 4,
@@ -78,7 +83,6 @@ export type ExerciseStep
 
 export type GenerateExerciseRequest = {
   moduleId: ModuleId
-  level: number
 }
 
 export type GenerateExerciseResponse = {
@@ -164,7 +168,6 @@ export type ModuleProgress = {
   streak: number
   attempts: number
   errors: number
-  suggestedLevel: number
   lastPlayedAt: string | null
 }
 

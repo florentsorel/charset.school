@@ -13,7 +13,6 @@ class ModuleProgressSerializer : ValueSerializer<ModuleProgress>() {
         gen.writeNumberProperty("streak", progress.streak)
         gen.writeNumberProperty("attempts", progress.attempts)
         gen.writeNumberProperty("errors", progress.errors)
-        gen.writeNumberProperty("suggestedLevel", progress.suggestedLevel)
         if (progress.lastPlayedAt != null) {
             gen.writeStringProperty("lastPlayedAt", progress.lastPlayedAt.toString())
         } else {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Direction, EncodingSlug, ModuleId } from '~/types/exercise'
-import { Directions, EncodingSlugs, MaxLevelByModule, ModuleIdByRoute } from '~/types/exercise'
+import { Directions, EncodingSlugs, MaxLevelByModule, ModuleIdByRoute, STREAK_FOR_LEVEL_UP } from '~/types/exercise'
 
 const SUPPORTED_IN_SLICE: ModuleId[] = ['utf8-encode', 'utf8-decode']
 
@@ -22,14 +22,19 @@ const { t } = useI18n()
 const direction = route.params.direction as Direction
 const encodingSlug = route.params.encoding as EncodingSlug
 const moduleId = ModuleIdByRoute[direction][encodingSlug]
-const maxLevel = MaxLevelByModule[moduleId]
 
+// Progression state - the back drives advancement, the front only displays.
+// `level` is the user's current tier (1..maxLevel), `streak` the in-row
+// correct count at the current tier; both fetched from /api/progress.
+// `maxLevel` is structural per module, read from a static map.
+// `progressionLoaded` gates the indicator render so we don't flash the
+// default `level 1 · 0/5` before the API response lands.
 const level = ref(1)
-const suggestedLevel = ref<number | undefined>(undefined)
 const streak = ref(0)
-const showNextSettings = ref(false)
-
-const draftLevel = ref(1)
+const maxLevel = MaxLevelByModule[moduleId]
+const progressionLoaded = ref(false)
+const atMaxLevel = computed(() => level.value >= maxLevel)
+const progressionThreshold = STREAK_FOR_LEVEL_UP
 
 const initializing = ref(true)
 const pendingResume = ref<import('~/types/exercise').ResumeExerciseResponse | null>(null)
@@ -60,12 +65,6 @@ const pendingResumeProgress = computed(() => {
   return { done, total, level: pendingResume.value.level }
 })
 
-const shouldNudgeLevelUp = computed(() =>
-  finalizedCorrect.value
-  && suggestedLevel.value !== undefined
-  && suggestedLevel.value > level.value
-)
-
 onMounted(async () => {
   await loadProgress()
   const { attempt: resumable } = await useExerciseApi().current(moduleId)
@@ -74,7 +73,7 @@ onMounted(async () => {
     initializing.value = false
     return
   }
-  await generate(level.value)
+  await generate()
   initializing.value = false
 })
 
@@ -88,7 +87,7 @@ async function resumePending() {
 async function discardPendingAndGenerate() {
   pendingResume.value = null
   initializing.value = true
-  await generate(level.value)
+  await generate()
   initializing.value = false
 }
 
@@ -184,54 +183,20 @@ async function loadProgress() {
     const { progress } = await useExerciseApi().progress()
     const moduleProgress = progress.find(p => p.moduleId === moduleId)
     if (moduleProgress) {
-      suggestedLevel.value = moduleProgress.suggestedLevel
-      level.value = moduleProgress.suggestedLevel
+      level.value = moduleProgress.level
       streak.value = moduleProgress.streak
     }
   } catch {
     // First-time users have no progress yet - keep defaults.
+  } finally {
+    progressionLoaded.value = true
   }
 }
 
-async function regenerateSameSettings() {
+async function regenerateNext() {
   pendingResume.value = null
-  await generate(level.value)
-  await refreshStreak()
-  showNextSettings.value = false
-}
-
-async function regenerateWithDraft() {
-  pendingResume.value = null
-  level.value = draftLevel.value
-  await generate(level.value)
-  await refreshStreak()
-  showNextSettings.value = false
-}
-
-async function regenerateAtSuggested() {
-  if (suggestedLevel.value === undefined) return
-  pendingResume.value = null
-  level.value = suggestedLevel.value
-  await generate(level.value)
-  await refreshStreak()
-}
-
-function openNextSettings() {
-  draftLevel.value = level.value
-  showNextSettings.value = true
-}
-
-async function refreshStreak() {
-  try {
-    const { progress } = await useExerciseApi().progress()
-    const moduleProgress = progress.find(p => p.moduleId === moduleId)
-    if (moduleProgress) {
-      suggestedLevel.value = moduleProgress.suggestedLevel
-      streak.value = moduleProgress.streak
-    }
-  } catch {
-    // ignore
-  }
+  await generate()
+  await loadProgress()
 }
 
 useHead({
@@ -244,8 +209,12 @@ useHead({
     <ExerciseSubHeader
       :module-id="moduleId"
       :level="level"
+      :max-level="maxLevel"
       :streak="streak"
-      @skip="regenerateSameSettings"
+      :threshold="progressionThreshold"
+      :at-max="atMaxLevel"
+      :loaded="progressionLoaded"
+      @skip="regenerateNext"
     />
 
     <div class="exercise-container">
@@ -529,68 +498,15 @@ useHead({
           {{ finalizedCorrect ? t('exercise.finalized.success') : t('exercise.finalized.failed') }}
         </p>
 
-        <div
-          v-if="shouldNudgeLevelUp"
-          class="exercise-finalized-nudge"
-        >
-          <p>{{ t('exercise.finalized.level_up_nudge', { n: suggestedLevel }) }}</p>
-          <button
-            type="button"
-            class="btn btn-ghost"
-            :disabled="loading"
-            @click="regenerateAtSuggested"
-          >
-            {{ t('exercise.finalized.level_up_button', { n: suggestedLevel }) }}
-          </button>
-        </div>
-
         <div class="exercise-finalized-actions">
           <button
             type="button"
             class="btn btn-primary"
             :disabled="loading"
-            @click="regenerateSameSettings"
+            @click="regenerateNext"
           >
             {{ t('exercise.next_button') }}
           </button>
-          <button
-            v-if="!showNextSettings"
-            type="button"
-            class="btn btn-ghost"
-            @click="openNextSettings"
-          >
-            {{ t('exercise.finalized.change_settings') }}
-          </button>
-        </div>
-
-        <div
-          v-if="showNextSettings"
-          class="exercise-next-settings"
-        >
-          <div class="exercise-next-settings-row">
-            <LevelSelector
-              v-model="draftLevel"
-              :max="maxLevel"
-              :suggested="suggestedLevel"
-            />
-          </div>
-          <div class="exercise-next-settings-actions">
-            <button
-              type="button"
-              class="btn btn-primary"
-              :disabled="loading"
-              @click="regenerateWithDraft"
-            >
-              {{ t('exercise.finalized.start_with_settings') }}
-            </button>
-            <button
-              type="button"
-              class="btn btn-quiet"
-              @click="showNextSettings = false"
-            >
-              {{ t('common.cancel') }}
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -796,39 +712,9 @@ useHead({
 .exercise-finalized-message {
   font-size: 0.95rem;
 }
-.exercise-finalized-nudge {
-  padding: 0.85rem 1rem;
-  background: var(--color-accent-soft);
-  border: 1px solid color-mix(in oklab, var(--color-accent) 25%, var(--color-accent-soft));
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  font-size: 0.9rem;
-  color: var(--color-accent);
-}
 .exercise-finalized-actions {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
-}
-.exercise-next-settings {
-  margin-top: 0.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--color-rule);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.exercise-next-settings-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.75rem;
-}
-.exercise-next-settings-actions {
-  display: flex;
-  gap: 0.5rem;
 }
 </style>

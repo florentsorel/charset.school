@@ -7,7 +7,7 @@ import type {
   RevealedAnswer,
   ValidateStepResponse
 } from '~/types/exercise'
-import type { StepState } from '~/components/exercise/StepProgress.vue'
+import type {StepState} from '~/components/exercise/StepProgress.vue'
 
 type StepInput
   = | { type: 'format', value: string | null }
@@ -62,10 +62,10 @@ export function useExercise(moduleId: ModuleId) {
 
   const currentStatus = computed<StepStatus | null>(() => statuses.value[currentStepIndex.value] ?? null)
 
-  async function generate(level: number) {
+  async function generate() {
     loading.value = true
     try {
-      const fresh = await api.generate({ moduleId, level })
+      const fresh = await api.generate({ moduleId })
       const seededInputs: Record<number, StepInput> = {}
       fresh.steps.forEach((step, i) => {
         seededInputs[i] = initialInput(step)
@@ -108,7 +108,7 @@ export function useExercise(moduleId: ModuleId) {
       return !s || (!s.correct && !s.revealed)
     })
 
-    const generateLike: GenerateExerciseResponse = {
+    attempt.value = {
       attemptId: resume.attemptId,
       moduleId: resume.moduleId,
       direction: resume.direction,
@@ -119,7 +119,6 @@ export function useExercise(moduleId: ModuleId) {
       bytes: resume.bytes,
       steps: resume.steps
     }
-    attempt.value = generateLike
     inputs.value = seededInputs
     statuses.value = seededStatuses
     currentStepIndex.value = firstUnresolved === -1 ? resume.steps.length - 1 : firstUnresolved

@@ -5,6 +5,12 @@ enum class AsciiLevel(val number: Int) {
     Full(2), // U+0000..U+007F
     ;
 
+    val distribution: Map<AsciiLevel, Int>
+        get() = when (this) {
+            Printable -> mapOf(Printable to 100)
+            Full -> mapOf(Printable to 40, Full to 60)
+        }
+
     companion object {
         fun fromNumber(n: Int): AsciiLevel? = entries.firstOrNull { it.number == n }
 
