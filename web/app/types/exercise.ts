@@ -15,6 +15,33 @@ export type ModuleId = typeof ModuleIds[number]
 
 export type Direction = 'encode' | 'decode'
 
+// URL slug ↔ backend encoding id. Mirrors the sandbox URL convention
+// (`utf-8`, `utf-16`, `windows-1252`, ...) so the routes feel consistent.
+export const EncodingSlugs = ['utf-8', 'utf-16', 'utf-32', 'latin1', 'windows-1252'] as const
+export type EncodingSlug = typeof EncodingSlugs[number]
+
+export const Directions = ['encode', 'decode'] as const
+
+// (direction, encoding-slug) → backend ModuleId. Used by the
+// `/exercise/[direction]/[encoding]` route to look up the module the page
+// should drive.
+export const ModuleIdByRoute: Record<Direction, Record<EncodingSlug, ModuleId>> = {
+  encode: {
+    'utf-8': 'utf8-encode',
+    'utf-16': 'utf16-encode',
+    'utf-32': 'utf32-encode',
+    'latin1': 'latin1-encode',
+    'windows-1252': 'windows1252-encode'
+  },
+  decode: {
+    'utf-8': 'utf8-decode',
+    'utf-16': 'utf16-decode',
+    'utf-32': 'utf32-decode',
+    'latin1': 'latin1-decode',
+    'windows-1252': 'windows1252-decode'
+  }
+}
+
 // Mirrors the backend's per-encoding level enums (Utf8Level / Utf16Level /
 // Utf32Level / Latin1Level / Windows1252Level). Submitting a level above the
 // max for the current module yields HTTP 422 from `/api/exercise/generate`.

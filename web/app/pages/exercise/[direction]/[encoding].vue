@@ -1,22 +1,27 @@
 <script setup lang="ts">
-import type { ModuleId } from '~/types/exercise'
-import { MaxLevelByModule, ModuleIds } from '~/types/exercise'
+import type { Direction, EncodingSlug, ModuleId } from '~/types/exercise'
+import { Directions, EncodingSlugs, MaxLevelByModule, ModuleIdByRoute } from '~/types/exercise'
 
 const SUPPORTED_IN_SLICE: ModuleId[] = ['utf8-encode', 'utf8-decode']
 
 definePageMeta({
   validate(route) {
-    const m = route.params.module
-    return typeof m === 'string'
-      && ModuleIds.includes(m as ModuleId)
-      && SUPPORTED_IN_SLICE.includes(m as ModuleId)
+    const d = route.params.direction
+    const e = route.params.encoding
+    if (typeof d !== 'string' || typeof e !== 'string') return false
+    if (!(Directions as readonly string[]).includes(d)) return false
+    if (!(EncodingSlugs as readonly string[]).includes(e)) return false
+    const id = ModuleIdByRoute[d as Direction][e as EncodingSlug]
+    return SUPPORTED_IN_SLICE.includes(id)
   }
 })
 
 const route = useRoute()
 const { t } = useI18n()
 
-const moduleId = route.params.module as ModuleId
+const direction = route.params.direction as Direction
+const encodingSlug = route.params.encoding as EncodingSlug
+const moduleId = ModuleIdByRoute[direction][encodingSlug]
 const maxLevel = MaxLevelByModule[moduleId]
 
 const level = ref(1)
