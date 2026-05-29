@@ -463,7 +463,7 @@
     "breadcrumb_label": "Fil d'Ariane",
     "breadcrumb_root": "Exercices",
     "breadcrumb_level": "niveau {n}",
-    "streak": "Série {n}j",
+    "streak": "Streak {n}",
     "skip_button": "Passer",
     "level_label": "Niveau",
     "level_option": "Niveau {n}",

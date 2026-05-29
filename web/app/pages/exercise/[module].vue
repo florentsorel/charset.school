@@ -136,6 +136,36 @@ function utf8MarkersForGroups(groupLengths: number[]): string[] {
   return [firstMarker, ...Array(byteCount - 1).fill('10')]
 }
 
+type BitSegment = { length: number, role: 'marker' | 'payload' | 'cont' | 'boundary' | 'plain' }
+
+// Colour the resolved binary by group once the user has reached the
+// bit-groups step, so they can visually see where each group starts/ends
+// without re-counting bits. Padding bits stay neutral.
+function binarySegmentsFor(index: number): BitSegment[] | undefined {
+  if (!attempt.value) return undefined
+  const step = attempt.value.steps[index]
+  if (!step || step.type !== 'binary') return undefined
+
+  const bgIdx = attempt.value.steps.findIndex(s => s.type === 'bit-groups')
+  if (bgIdx === -1) return undefined
+  if (currentStepIndex.value < bgIdx) return undefined
+
+  const bg = attempt.value.steps[bgIdx]
+  if (!bg || bg.type !== 'bit-groups') return undefined
+
+  const groupLengths = bg.groupLengths
+  const useful = groupLengths.reduce((s, n) => s + n, 0)
+  const padding = step.length - useful
+
+  const palette: BitSegment['role'][] = ['payload', 'marker', 'cont', 'boundary']
+  const segments: BitSegment[] = []
+  if (padding > 0) segments.push({ length: padding, role: 'plain' })
+  groupLengths.forEach((g, i) => {
+    segments.push({ length: g, role: palette[i % palette.length]! })
+  })
+  return segments
+}
+
 function usefulBitCountResolvedValue(index: number): number {
   const revealed = statuses.value[index]?.revealedAnswer
   if (revealed?.type === 'useful-bit-count' && revealed.count != null) return revealed.count
@@ -433,6 +463,7 @@ useHead({
                   <BitDisplay
                     :bits="binaryResolvedValue(index)"
                     :boundary-every="8"
+                    :segments="binarySegmentsFor(index)"
                   />
                 </template>
                 <template v-else-if="step.type === 'bit-groups'">
