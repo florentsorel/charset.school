@@ -36,8 +36,9 @@ fun ResultRow.toAttemptStep(overrides: StepRowOverrides? = null): AttemptStep {
     val stepId = this[AttemptStepsTable.id]
     val stepType = this[AttemptStepsTable.stepType]
     val (step, answer) = selectChildRows(stepType, listOf(stepId))
-        .single()
-        .second
+        .singleOrNull()
+        ?.second
+        ?: error("Missing child row for step $stepId of type $stepType")
     return AttemptStep(
         id = stepId,
         position = this[AttemptStepsTable.position].toInt(),
