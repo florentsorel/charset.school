@@ -11,7 +11,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-// Default: 8 bits per row on narrow viewports, 16 once 740px is reached
+// Default: 8 bits per row on narrow viewports, 16 once 685px is reached
 // (= width below which 16 bits + container padding overflow the input box).
 // Caller can override via `wrapEvery` prop if needed.
 const fitsWide = useFitsWideBitRow()
