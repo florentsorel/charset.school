@@ -1,10 +1,16 @@
 <script setup lang="ts">
-const props = defineProps<{
-  modelValue: string
-  length: number
-  boundaryEvery?: number
-  disabled?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: string
+    length: number
+    boundaryEvery?: number
+    wrapEvery?: number
+    disabled?: boolean
+  }>(),
+  {
+    wrapEvery: 16
+  }
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
@@ -13,6 +19,16 @@ const emit = defineEmits<{
 const cells = computed(() => {
   const padded = props.modelValue.padEnd(props.length, ' ')
   return Array.from({ length: props.length }, (_, i) => padded[i] === ' ' ? '' : padded[i])
+})
+
+const rows = computed(() => {
+  const size = props.wrapEvery > 0 ? props.wrapEvery : props.length
+  const out: number[][] = []
+  for (let start = 0; start < props.length; start += size) {
+    const end = Math.min(start + size, props.length)
+    out.push(Array.from({ length: end - start }, (_, k) => start + k))
+  }
+  return out
 })
 
 const refs = ref<HTMLInputElement[]>([])
@@ -68,32 +84,43 @@ function focusPrev(index: number) {
 </script>
 
 <template>
-  <span class="bit-row">
-    <template
-      v-for="(cell, i) in cells"
-      :key="i"
+  <span class="bit-rows">
+    <span
+      v-for="(row, ri) in rows"
+      :key="ri"
+      class="bit-row"
     >
-      <span
-        v-if="boundaryEvery && boundaryEvery > 0 && i > 0 && i % boundaryEvery === 0"
-        class="bit-sep-mid"
-      />
-      <input
-        :ref="el => { if (el) refs[i] = el as HTMLInputElement }"
-        class="bit bit-input"
-        type="text"
-        inputmode="numeric"
-        maxlength="1"
-        :value="cell"
-        :disabled="disabled"
-        :aria-label="$t('exercise.bit_input_label', { n: i + 1 })"
-        @input="onInput(i, $event)"
-        @keydown="onKeydown(i, $event)"
+      <template
+        v-for="(i, k) in row"
+        :key="i"
       >
-    </template>
+        <span
+          v-if="boundaryEvery && boundaryEvery > 0 && k > 0 && k % boundaryEvery === 0"
+          class="bit-sep-mid"
+        />
+        <input
+          :ref="el => { if (el) refs[i] = el as HTMLInputElement }"
+          class="bit bit-input"
+          type="text"
+          inputmode="numeric"
+          maxlength="1"
+          :value="cells[i]"
+          :disabled="disabled"
+          :aria-label="$t('exercise.bit_input_label', { n: i + 1 })"
+          @input="onInput(i, $event)"
+          @keydown="onKeydown(i, $event)"
+        >
+      </template>
+    </span>
   </span>
 </template>
 
 <style scoped>
+.bit-rows {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
 .bit-input {
   text-align: center;
   outline: none;

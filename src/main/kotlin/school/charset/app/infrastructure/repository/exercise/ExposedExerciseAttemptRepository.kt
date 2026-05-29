@@ -15,7 +15,6 @@ import school.charset.app.domain.exercise.AttemptStep
 import school.charset.app.domain.exercise.ExerciseAttempt
 import school.charset.app.domain.exercise.ExerciseAttemptRepository
 import school.charset.app.domain.exercise.ExerciseModule
-import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 import school.charset.app.domain.exercise.StepType
 import kotlin.time.Clock
@@ -28,7 +27,6 @@ class ExposedExerciseAttemptRepository(
         userId: Long,
         module: ExerciseModule,
         level: Int,
-        granularity: Granularity,
         codePoint: CodePoint,
         encoding: Encoding,
         steps: List<Step>,
@@ -38,7 +36,6 @@ class ExposedExerciseAttemptRepository(
             it[ExerciseAttemptsTable.userId] = userId
             it[moduleId] = module
             it[ExerciseAttemptsTable.level] = level.toShort()
-            it[ExerciseAttemptsTable.granularity] = granularity
             it[ExerciseAttemptsTable.codePoint] = codePoint.value
             it[ExerciseAttemptsTable.encoding] = encoding
             it[correct] = false
@@ -76,7 +73,6 @@ class ExposedExerciseAttemptRepository(
             userId = userId,
             module = module,
             level = level,
-            granularity = granularity,
             codePoint = codePoint,
             encoding = encoding,
             correct = false,
@@ -122,7 +118,6 @@ class ExposedExerciseAttemptRepository(
             userId = attemptRow[ExerciseAttemptsTable.userId],
             module = attemptRow[ExerciseAttemptsTable.moduleId],
             level = attemptRow[ExerciseAttemptsTable.level].toInt(),
-            granularity = attemptRow[ExerciseAttemptsTable.granularity],
             codePoint = CodePoint(attemptRow[ExerciseAttemptsTable.codePoint]),
             encoding = attemptRow[ExerciseAttemptsTable.encoding],
             correct = attemptRow[ExerciseAttemptsTable.correct],

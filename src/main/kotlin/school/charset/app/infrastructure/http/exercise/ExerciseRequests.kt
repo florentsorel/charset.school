@@ -13,8 +13,6 @@ data class GenerateExerciseRequest(
     val moduleId: String,
     @field:Min(1) @field:Max(10)
     val level: Int,
-    @field:NotBlank
-    val granularity: String,
 )
 
 data class ValidateStepRequest(

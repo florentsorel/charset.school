@@ -29,7 +29,7 @@ class SandboxController(
     @GetMapping("/encode/utf-8")
     fun encodeUtf8(@RequestParam(defaultValue = "") input: String): ResponseEntity<Utf8SandboxResponse> {
         val codePoint = sandboxInputParser.parse(input)
-        val steps = sandboxService.encodeUtf8Verbose(codePoint)
+        val steps = sandboxService.encodeUtf8(codePoint)
         return ResponseEntity.ok(
             Utf8SandboxResponse(
                 codepoint = codePoint.value,
@@ -45,7 +45,7 @@ class SandboxController(
     fun decodeUtf8(@RequestParam(defaultValue = "") bytes: String): ResponseEntity<Utf8DecodeSandboxResponse> {
         val raw = sandboxBytesParser.parse(bytes)
         val codePoint = codec.decode(raw, Encoding.Utf8)
-        val steps = sandboxService.decodeUtf8Verbose(raw, codePoint)
+        val steps = sandboxService.decodeUtf8(raw, codePoint)
         return ResponseEntity.ok(
             Utf8DecodeSandboxResponse(
                 bytes = raw.map { it.toInt() and 0xFF },
@@ -65,7 +65,7 @@ class SandboxController(
     ): ResponseEntity<Utf16EncodeSandboxResponse> {
         val codePoint = sandboxInputParser.parse(input)
         val parsedEndian = sandboxEndianParser.parse(endian)
-        val steps = sandboxService.encodeUtf16Verbose(codePoint, parsedEndian)
+        val steps = sandboxService.encodeUtf16(codePoint, parsedEndian)
         return ResponseEntity.ok(
             Utf16EncodeSandboxResponse(
                 codepoint = codePoint.value,
@@ -90,7 +90,7 @@ class SandboxController(
             Encoding.Endian.LittleEndian -> Encoding.Utf16Le
         }
         val codePoint = codec.decode(raw, utf16Encoding)
-        val steps = sandboxService.decodeUtf16Verbose(raw, codePoint, parsedEndian)
+        val steps = sandboxService.decodeUtf16(raw, codePoint, parsedEndian)
         return ResponseEntity.ok(
             Utf16DecodeSandboxResponse(
                 bytes = raw.map { it.toInt() and 0xFF },
@@ -111,7 +111,7 @@ class SandboxController(
     ): ResponseEntity<Utf32EncodeSandboxResponse> {
         val codePoint = sandboxInputParser.parse(input)
         val parsedEndian = sandboxEndianParser.parse(endian)
-        val steps = sandboxService.encodeUtf32Verbose(codePoint, parsedEndian)
+        val steps = sandboxService.encodeUtf32(codePoint, parsedEndian)
         return ResponseEntity.ok(
             Utf32EncodeSandboxResponse(
                 codepoint = codePoint.value,
@@ -136,7 +136,7 @@ class SandboxController(
             Encoding.Endian.LittleEndian -> Encoding.Utf32Le
         }
         val codePoint = codec.decode(raw, utf32Encoding)
-        val steps = sandboxService.decodeUtf32Verbose(raw, codePoint, parsedEndian)
+        val steps = sandboxService.decodeUtf32(raw, codePoint, parsedEndian)
         return ResponseEntity.ok(
             Utf32DecodeSandboxResponse(
                 bytes = raw.map { it.toInt() and 0xFF },
@@ -158,7 +158,7 @@ class SandboxController(
         // a 422 `encoding.not-encodable` response, instead of leaking
         // through to step generation.
         codec.encode(codePoint, Encoding.Windows1252)
-        val steps = sandboxService.encodeWindows1252Verbose(codePoint)
+        val steps = sandboxService.encodeWindows1252(codePoint)
         return ResponseEntity.ok(
             Windows1252EncodeSandboxResponse(
                 codepoint = codePoint.value,
@@ -177,7 +177,7 @@ class SandboxController(
         // 0x8F, 0x90, 0x9D) raise DecoderException, surfacing as a 422
         // `encoding.not-decodable` response.
         val codePoint = codec.decode(raw, Encoding.Windows1252)
-        val steps = sandboxService.decodeWindows1252Verbose(raw, codePoint)
+        val steps = sandboxService.decodeWindows1252(raw, codePoint)
         return ResponseEntity.ok(
             Windows1252DecodeSandboxResponse(
                 bytes = raw.map { it.toInt() and 0xFF },
@@ -193,7 +193,7 @@ class SandboxController(
     @GetMapping("/encode/latin1")
     fun encodeLatin1(@RequestParam(defaultValue = "") input: String): ResponseEntity<Latin1EncodeSandboxResponse> {
         val codePoint = sandboxInputParser.parse(input)
-        val steps = sandboxService.encodeLatin1Verbose(codePoint)
+        val steps = sandboxService.encodeLatin1(codePoint)
         return ResponseEntity.ok(
             Latin1EncodeSandboxResponse(
                 codepoint = codePoint.value,
@@ -215,7 +215,7 @@ class SandboxController(
         // i18n key set.
         if (raw.size != 1) throw SandboxBytesParseException(SandboxBytesParser.REASON_TOO_LONG)
         val codePoint = codec.decode(raw, Encoding.Latin1)
-        val steps = sandboxService.decodeLatin1Verbose(raw)
+        val steps = sandboxService.decodeLatin1(raw)
         return ResponseEntity.ok(
             Latin1DecodeSandboxResponse(
                 bytes = raw.map { it.toInt() and 0xFF },

@@ -15,8 +15,6 @@ export type ModuleId = typeof ModuleIds[number]
 
 export type Direction = 'encode' | 'decode'
 
-export type Granularity = 'verbose' | 'standard' | 'compact'
-
 export type StepType
   = | 'format'
     | 'binary'
@@ -38,7 +36,6 @@ export type ExerciseStep
 export type GenerateExerciseRequest = {
   moduleId: ModuleId
   level: number
-  granularity: Granularity
 }
 
 export type GenerateExerciseResponse = {
@@ -46,7 +43,6 @@ export type GenerateExerciseResponse = {
   moduleId: ModuleId
   direction: Direction
   level: number
-  granularity: Granularity
   encoding: string
   codePoint: number | null
   codePointLabel: string | null

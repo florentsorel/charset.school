@@ -9,7 +9,6 @@ data class ExerciseAttempt(
     val userId: Long,
     val module: ExerciseModule,
     val level: Int,
-    val granularity: Granularity,
     val codePoint: CodePoint,
     val encoding: Encoding,
     val correct: Boolean,

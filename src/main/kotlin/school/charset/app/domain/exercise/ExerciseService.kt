@@ -13,22 +13,16 @@ class ExerciseService(
     private val random: Random,
 ) {
 
-    fun generate(
-        userId: Long,
-        module: ExerciseModule,
-        level: Int,
-        granularity: Granularity,
-    ): ExerciseAttempt {
+    fun generate(userId: Long, module: ExerciseModule, level: Int): ExerciseAttempt {
         val encoding = pickEncoding(module)
         val exercise = when (module.direction) {
-            ExerciseModule.Direction.Encode -> exerciseGenerator.generateEncode(encoding, level, granularity)
-            ExerciseModule.Direction.Decode -> exerciseGenerator.generateDecode(encoding, level, granularity)
+            ExerciseModule.Direction.Encode -> exerciseGenerator.generateEncode(encoding, level)
+            ExerciseModule.Direction.Decode -> exerciseGenerator.generateDecode(encoding, level)
         }
         return attemptRepository.create(
             userId = userId,
             module = module,
             level = level,
-            granularity = granularity,
             codePoint = exercise.codePoint,
             encoding = exercise.encoding,
             steps = exercise.steps,

@@ -26,7 +26,6 @@ import school.charset.app.domain.sandbox.SandboxEndianParseException
 import school.charset.app.domain.sandbox.SandboxParseException
 import school.charset.app.domain.user.EmailAlreadyTakenException
 import school.charset.app.infrastructure.http.exercise.InvalidAnswerPayloadException
-import school.charset.app.infrastructure.http.exercise.UnknownGranularityException
 import school.charset.app.infrastructure.http.exercise.UnknownModuleException
 
 @RestControllerAdvice
@@ -129,11 +128,6 @@ class GlobalExceptionHandler {
     fun handleUnknownModule(ex: UnknownModuleException): ResponseEntity<ErrorResponse> = ResponseEntity
         .status(HttpStatus.UNPROCESSABLE_CONTENT)
         .body(ErrorResponse(errorType = "exercise.unknown-module", params = mapOf("moduleId" to ex.moduleId)))
-
-    @ExceptionHandler(UnknownGranularityException::class)
-    fun handleUnknownGranularity(ex: UnknownGranularityException): ResponseEntity<ErrorResponse> = ResponseEntity
-        .status(HttpStatus.UNPROCESSABLE_CONTENT)
-        .body(ErrorResponse(errorType = "exercise.unknown-granularity", params = mapOf("granularity" to ex.granularity)))
 
     @ExceptionHandler(AttemptNotFoundException::class)
     fun handleAttemptNotFound(ex: AttemptNotFoundException): ResponseEntity<ErrorResponse> = ResponseEntity

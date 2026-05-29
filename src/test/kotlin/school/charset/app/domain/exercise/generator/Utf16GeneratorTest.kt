@@ -7,7 +7,6 @@ import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.FormatChoice
-import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 
 class Utf16GeneratorTest :
@@ -17,11 +16,10 @@ class Utf16GeneratorTest :
 
         "encode" - {
             "BMP code point (U+00E9 'é')" - {
-                "BigEndian produces 4 verbose steps ending in 00 E9" {
+                "BigEndian produces 4 steps ending in 00 E9" {
                     val steps = generator.buildEncodeStepsFor(
                         codePoint = CodePoint(0xE9),
                         endian = Encoding.Endian.BigEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     steps.size shouldBe 4
@@ -36,7 +34,6 @@ class Utf16GeneratorTest :
                     val steps = generator.buildEncodeStepsFor(
                         codePoint = CodePoint(0xE9),
                         endian = Encoding.Endian.LittleEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     (steps.last() as Step.HexBytes).expected.shouldContainExactly(0xE9, 0x00)
@@ -44,11 +41,10 @@ class Utf16GeneratorTest :
             }
 
             "supplementary code point (U+1F389 '🎉')" - {
-                "BigEndian produces 5 verbose steps with surrogate pair D8 3C DF 89" {
+                "BigEndian produces 5 steps with surrogate pair D8 3C DF 89" {
                     val steps = generator.buildEncodeStepsFor(
                         codePoint = CodePoint(0x1F389),
                         endian = Encoding.Endian.BigEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     steps.size shouldBe 5
@@ -66,7 +62,6 @@ class Utf16GeneratorTest :
                     val steps = generator.buildEncodeStepsFor(
                         codePoint = CodePoint(0x1F389),
                         endian = Encoding.Endian.LittleEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     (steps.last() as Step.HexBytes).expected.shouldContainExactly(0x3C, 0xD8, 0x89, 0xDF)
@@ -76,13 +71,12 @@ class Utf16GeneratorTest :
 
         "decode" - {
             "BMP 2-byte input" - {
-                "00 E9 BigEndian produces 4 verbose steps ending at U+00E9" {
+                "00 E9 BigEndian produces 4 steps ending at U+00E9" {
                     val bytes = byteArrayOf(0x00, 0xE9.toByte())
                     val steps = generator.buildDecodeStepsFor(
                         bytes = bytes,
                         codePoint = CodePoint(0xE9),
                         endian = Encoding.Endian.BigEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     steps.size shouldBe 4
@@ -94,13 +88,12 @@ class Utf16GeneratorTest :
             }
 
             "4-byte surrogate pair input" - {
-                "D8 3C DF 89 BigEndian produces 5 verbose steps ending at U+1F389" {
+                "D8 3C DF 89 BigEndian produces 5 steps ending at U+1F389" {
                     val bytes = byteArrayOf(0xD8.toByte(), 0x3C, 0xDF.toByte(), 0x89.toByte())
                     val steps = generator.buildDecodeStepsFor(
                         bytes = bytes,
                         codePoint = CodePoint(0x1F389),
                         endian = Encoding.Endian.BigEndian,
-                        granularity = Granularity.Verbose,
                     )
 
                     steps.size shouldBe 5

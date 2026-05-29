@@ -2,7 +2,6 @@ package school.charset.app.domain.sandbox
 
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Encoding
-import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 import school.charset.app.domain.exercise.generator.Latin1Generator
 import school.charset.app.domain.exercise.generator.Utf16Generator
@@ -17,23 +16,23 @@ class SandboxService(
     private val windows1252Generator: Windows1252Generator,
     private val latin1Generator: Latin1Generator,
 ) {
-    fun encodeUtf8Verbose(codePoint: CodePoint): List<Step> = utf8Generator.buildEncodeStepsFor(codePoint, Granularity.Verbose)
+    fun encodeUtf8(codePoint: CodePoint): List<Step> = utf8Generator.buildEncodeStepsFor(codePoint)
 
-    fun decodeUtf8Verbose(bytes: ByteArray, codePoint: CodePoint): List<Step> = utf8Generator.buildDecodeStepsFor(bytes, codePoint, Granularity.Verbose)
+    fun decodeUtf8(bytes: ByteArray, codePoint: CodePoint): List<Step> = utf8Generator.buildDecodeStepsFor(bytes, codePoint)
 
-    fun encodeUtf16Verbose(codePoint: CodePoint, endian: Encoding.Endian): List<Step> = utf16Generator.buildEncodeStepsFor(codePoint, endian, Granularity.Verbose)
+    fun encodeUtf16(codePoint: CodePoint, endian: Encoding.Endian): List<Step> = utf16Generator.buildEncodeStepsFor(codePoint, endian)
 
-    fun decodeUtf16Verbose(bytes: ByteArray, codePoint: CodePoint, endian: Encoding.Endian): List<Step> = utf16Generator.buildDecodeStepsFor(bytes, codePoint, endian, Granularity.Verbose)
+    fun decodeUtf16(bytes: ByteArray, codePoint: CodePoint, endian: Encoding.Endian): List<Step> = utf16Generator.buildDecodeStepsFor(bytes, codePoint, endian)
 
-    fun encodeUtf32Verbose(codePoint: CodePoint, endian: Encoding.Endian): List<Step> = utf32Generator.buildEncodeStepsFor(codePoint, endian, Granularity.Verbose)
+    fun encodeUtf32(codePoint: CodePoint, endian: Encoding.Endian): List<Step> = utf32Generator.buildEncodeStepsFor(codePoint, endian)
 
-    fun decodeUtf32Verbose(bytes: ByteArray, codePoint: CodePoint, endian: Encoding.Endian): List<Step> = utf32Generator.buildDecodeStepsFor(bytes, codePoint, endian, Granularity.Verbose)
+    fun decodeUtf32(bytes: ByteArray, codePoint: CodePoint, endian: Encoding.Endian): List<Step> = utf32Generator.buildDecodeStepsFor(bytes, codePoint, endian)
 
-    fun encodeWindows1252Verbose(codePoint: CodePoint): List<Step> = windows1252Generator.buildEncodeStepsFor(codePoint, Granularity.Verbose)
+    fun encodeWindows1252(codePoint: CodePoint): List<Step> = windows1252Generator.buildEncodeStepsFor(codePoint)
 
-    fun decodeWindows1252Verbose(bytes: ByteArray, codePoint: CodePoint): List<Step> = windows1252Generator.buildDecodeStepsFor(bytes, codePoint, Granularity.Verbose)
+    fun decodeWindows1252(bytes: ByteArray, codePoint: CodePoint): List<Step> = windows1252Generator.buildDecodeStepsFor(bytes, codePoint)
 
-    fun encodeLatin1Verbose(codePoint: CodePoint): List<Step> = latin1Generator.buildEncodeStepsFor(codePoint, Granularity.Verbose)
+    fun encodeLatin1(codePoint: CodePoint): List<Step> = latin1Generator.buildEncodeStepsFor(codePoint)
 
-    fun decodeLatin1Verbose(bytes: ByteArray): List<Step> = latin1Generator.buildDecodeStepsFor(bytes, Granularity.Verbose)
+    fun decodeLatin1(bytes: ByteArray): List<Step> = latin1Generator.buildDecodeStepsFor(bytes)
 }

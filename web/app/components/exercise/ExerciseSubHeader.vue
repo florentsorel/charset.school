@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import type { Granularity } from '~/types/exercise'
-
 defineProps<{
   moduleId: string
   level: number
-  granularity: Granularity
   streak: number
 }>()
 
@@ -27,8 +24,6 @@ const { t } = useI18n()
         <span class="crumb font-mono">{{ moduleId }}</span>
         <span class="separator">/</span>
         <span class="crumb crumb-level font-mono">{{ t('exercise.breadcrumb_level', { n: level }) }}</span>
-        <span class="separator">/</span>
-        <span class="crumb crumb-granularity font-mono">{{ t(`exercise.granularity.${granularity}`) }}</span>
       </nav>
       <div class="exercise-stats">
         <span
@@ -82,8 +77,7 @@ const { t } = useI18n()
 .crumb {
   font-size: 0.84rem;
 }
-.crumb-level,
-.crumb-granularity {
+.crumb-level {
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
   background: var(--color-subtle);

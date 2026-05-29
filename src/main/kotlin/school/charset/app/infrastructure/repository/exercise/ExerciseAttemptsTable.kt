@@ -4,7 +4,6 @@ import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.timestamp
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.ExerciseModule
-import school.charset.app.domain.exercise.Granularity
 
 object ExerciseAttemptsTable : Table("exercise_attempts") {
     val id = long("id").autoIncrement()
@@ -14,10 +13,6 @@ object ExerciseAttemptsTable : Table("exercise_attempts") {
         unwrap = { it.id },
     )
     val level = short("level")
-    val granularity = varchar("granularity", 16).transform(
-        wrap = { Granularity.fromId(it) ?: error("Unknown granularity from DB: $it") },
-        unwrap = { it.id },
-    )
     val codePoint = integer("code_point")
     val encoding = varchar("encoding", 16).transform(
         wrap = { Encoding.fromId(it) ?: error("Unknown encoding from DB: $it") },

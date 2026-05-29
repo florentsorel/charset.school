@@ -4,8 +4,7 @@ import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Encoding
 
 /**
- * A single exercise instance, broken down into a sequence of steps according to
- * the requested granularity.
+ * A single exercise instance, broken down into a sequence of pedagogical steps.
  *
  * Two directions, modelled as sealed subtypes:
  *
@@ -25,14 +24,12 @@ sealed class Exercise {
     abstract val codePoint: CodePoint
     abstract val encoding: Encoding
     abstract val level: Int
-    abstract val granularity: Granularity
     abstract val steps: List<Step>
 
     data class Encode(
         override val codePoint: CodePoint,
         override val encoding: Encoding,
         override val level: Int,
-        override val granularity: Granularity,
         override val steps: List<Step>,
     ) : Exercise()
 
@@ -41,7 +38,6 @@ sealed class Exercise {
         override val codePoint: CodePoint,
         override val encoding: Encoding,
         override val level: Int,
-        override val granularity: Granularity,
         override val steps: List<Step>,
     ) : Exercise() {
         override fun equals(other: Any?): Boolean {
@@ -51,7 +47,6 @@ sealed class Exercise {
                 codePoint == other.codePoint &&
                 encoding == other.encoding &&
                 level == other.level &&
-                granularity == other.granularity &&
                 steps == other.steps
         }
 
@@ -60,7 +55,6 @@ sealed class Exercise {
             result = 31 * result + codePoint.hashCode()
             result = 31 * result + encoding.hashCode()
             result = 31 * result + level.hashCode()
-            result = 31 * result + granularity.hashCode()
             result = 31 * result + steps.hashCode()
             return result
         }

@@ -160,7 +160,6 @@ school.charset.app/
 │   │   └── DecoderException.kt
 │   │
 │   ├── exercise/                       # Tout ce qui concerne les exercices et leur validation
-│   │   ├── Granularity.kt              # enum Verbose / Standard / Compact
 │   │   ├── StepType.kt                 # enum Format / Binary / BitGroups / HexBytes / CodePointEntry / Endianness
 │   │   ├── Step.kt                     # sealed class — un step par valeur de StepType
 │   │   ├── Answer.kt                   # sealed class — un Answer par type de step
@@ -168,8 +167,8 @@ school.charset.app/
 │   │   ├── ErrorType.kt                # object — identifiants stables des erreurs de validation
 │   │   ├── ParamKey.kt                 # object — noms des variables d'interpolation
 │   │   ├── FormatChoice.kt             # object — identifiants stables des choix Step.Format (byte-count.*)
-│   │   ├── Exercise.kt                 # data class (codePoint, encoding, granularity, steps)
-│   │   ├── ExerciseAttempt.kt          # data class (id, userId, moduleId, level, granularity, steps, correct, ...)
+│   │   ├── Exercise.kt                 # data class (codePoint, encoding, level, steps)
+│   │   ├── ExerciseAttempt.kt          # data class (id, userId, moduleId, level, steps, correct, ...)
 │   │   ├── ExerciseModule.kt           # enum des modules (utf8-encode, utf8-decode, ...)
 │   │   ├── ExerciseLevel.kt
 │   │   ├── ExerciseAttemptRepository.kt  # interface (port)
@@ -536,15 +535,13 @@ six tables filles (une par `StepType`) stockent les données spécifiques. Type-
 DB-level, queries SQL natives faciles (stats par step_type), pas de JSON.
 
 Le schéma doit **rester aligné** avec les objets domain (`Step` sealed class,
-`StepType` enum, `Answer` sealed class, `Granularity` enum, `AnswerValidator`,
-`ValidationResult`) — toute évolution du domaine doit refléter une migration et
-inversement.
+`StepType` enum, `Answer` sealed class, `AnswerValidator`, `ValidationResult`) —
+toute évolution du domaine doit refléter une migration et inversement.
 
 #### Pas de CHECK constraints sur les valeurs énumérées
 
 **Choix tranché le 2026-05-20** : pas de `CHECK (... IN (...))` sur les colonnes
-correspondant à des enums Kotlin (`granularity`, `step_type`, `encoding`, etc.).
-Raisons :
+correspondant à des enums Kotlin (`step_type`, `encoding`, etc.). Raisons :
 
 - L'enum Kotlin est l'unique source de vérité ; la validation se fait au mapping
   Exposed (`enumerationByName`) — la DB n'a jamais à voir une valeur invalide
@@ -564,7 +561,6 @@ CREATE TABLE exercise_attempts (
     user_id       BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     module_id     VARCHAR(64)  NOT NULL,
     level         SMALLINT     NOT NULL,
-    granularity   VARCHAR(16)  NOT NULL,    -- 'verbose' | 'standard' | 'compact' (validé côté app)
     code_point    INT          NOT NULL,    -- input du module encode (et identifiant pour le module decode)
     encoding      VARCHAR(16)  NOT NULL,    -- 'utf-8', 'utf-16be', ... (matche Encoding.id)
     correct       BOOLEAN      NOT NULL,    -- agrégé : tous les steps corrects
@@ -682,14 +678,6 @@ ou multi-query selon ce qui est le plus simple à exprimer en Exposed.
 
 ### Tables Spring Session JDBC
 Générées via le script officiel `schema-postgresql.sql` dans une migration Flyway.
-
-### TBD — granularity dans `module_progress` ?
-
-À trancher au moment de la mise en place de la persistance : faut-il stocker la
-progression **par granularité** (verbose/standard/compact) en plus du couple
-(user_id, module_id) ? Ça permettrait des stats du genre "80% en Express, 50% en
-Pas à pas". Si oui, ajouter `granularity` à l'UNIQUE de `module_progress` ou faire
-une table séparée.
 
 ---
 
@@ -1009,10 +997,10 @@ Convention de nommage : suffixe **`Type`** pour les catégories d'identifiants
 **`ParamKey`** (sans suffixe Type, parce que ce ne sont pas des "types de
 messages" mais des variables).
 
-Le validator est **agnostic de l'exercice** (encoding, code point, granularity).
+Le validator est **agnostic de l'exercice** (encoding, code point, niveau).
 Il ne sait que valider un step isolé. La composition d'un exercice (quels steps,
-dans quel ordre) est la responsabilité de `ExerciseGenerator` selon la `Granularity`
-demandée.
+dans quel ordre) est la responsabilité de `ExerciseGenerator` selon le niveau
+demandé.
 
 Conventions de nommage des `errorType` :
 - préfixe = nom du step (`binary.`, `hex-bytes.`, `format.`, ...)
@@ -1210,7 +1198,7 @@ chaudes en cache.
 2. `domain/encoding/` : `CodePoint`, `Encoding`, `Codec` (encode/decode pour les
    8 encodings), `EncoderException`, `DecoderException`, `ByteArrayExt`. Tests Kotest
    complets (frontières UTF-8/16/32, surrogates, BOM, overlong, sign-extension).
-3. `domain/exercise/` : `Granularity`, `StepType`, `Step` sealed class, `Answer` sealed
+3. `domain/exercise/` : `StepType`, `Step` sealed class, `Answer` sealed
    class, `ValidationResult`, `Exercise`, `ExerciseAttempt`, `ExerciseAttemptRepository`
    (interface), `AnswerValidator`, `ExerciseGenerator`. Tests par type de step.
 4. `domain/progress/`, `domain/user/` : entités + repositories (interfaces) + services

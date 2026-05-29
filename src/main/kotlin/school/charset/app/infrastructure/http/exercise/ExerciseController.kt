@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.exercise.ExerciseModule
 import school.charset.app.domain.exercise.ExerciseService
-import school.charset.app.domain.exercise.Granularity
 import school.charset.app.infrastructure.security.requireUserDetailsAdapter
 
 @RestController
@@ -53,10 +52,8 @@ class ExerciseController(
         val userId = authentication.requireUserDetailsAdapter().userId
         val module = ExerciseModule.fromId(request.moduleId)
             ?: throw UnknownModuleException(request.moduleId)
-        val granularity = Granularity.fromId(request.granularity)
-            ?: throw UnknownGranularityException(request.granularity)
 
-        val attempt = exerciseService.generate(userId, module, request.level, granularity)
+        val attempt = exerciseService.generate(userId, module, request.level)
         val decodeBytes = if (module.direction == ExerciseModule.Direction.Decode) {
             codec.encode(attempt.codePoint, attempt.encoding).map { it.toInt() and 0xFF }
         } else {
@@ -96,5 +93,3 @@ class ExerciseController(
 }
 
 class UnknownModuleException(val moduleId: String) : RuntimeException("Unknown exercise module: $moduleId")
-
-class UnknownGranularityException(val granularity: String) : RuntimeException("Unknown granularity: $granularity")

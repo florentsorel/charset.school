@@ -21,7 +21,6 @@ import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Answer
 import school.charset.app.domain.exercise.ExerciseAttemptRepository
 import school.charset.app.domain.exercise.ExerciseModule
-import school.charset.app.domain.exercise.Granularity
 import school.charset.app.domain.exercise.Step
 import school.charset.app.domain.user.PasswordHash
 import school.charset.app.domain.user.UserRepository
@@ -71,7 +70,6 @@ class ExposedExerciseAttemptRepositoryTest(
             userId = userId,
             module = ExerciseModule.Utf8Encode,
             level = 2,
-            granularity = Granularity.Verbose,
             codePoint = CodePoint(0xE9),
             encoding = Encoding.Utf8,
             steps = steps,
@@ -81,7 +79,6 @@ class ExposedExerciseAttemptRepositoryTest(
         loaded.userId shouldBe userId
         loaded.module shouldBe ExerciseModule.Utf8Encode
         loaded.level shouldBe 2
-        loaded.granularity shouldBe Granularity.Verbose
         loaded.codePoint.value shouldBe 0xE9
         loaded.encoding shouldBe Encoding.Utf8
         loaded.correct shouldBe false
@@ -101,7 +98,6 @@ class ExposedExerciseAttemptRepositoryTest(
             userId = userId,
             module = ExerciseModule.Utf8Encode,
             level = 1,
-            granularity = Granularity.Verbose,
             codePoint = CodePoint(0x41),
             encoding = Encoding.Utf8,
             steps = listOf(Step.Binary(expected = "01000001", length = 8)),
@@ -136,7 +132,6 @@ class ExposedExerciseAttemptRepositoryTest(
             userId = userId,
             module = ExerciseModule.Utf8Encode,
             level = 2,
-            granularity = Granularity.Verbose,
             codePoint = CodePoint(0xE9),
             encoding = Encoding.Utf8,
             steps = listOf(Step.UsefulBitCount(expected = 11)),
@@ -170,7 +165,6 @@ class ExposedExerciseAttemptRepositoryTest(
             userId = userId,
             module = ExerciseModule.Utf8Encode,
             level = 1,
-            granularity = Granularity.Verbose,
             codePoint = CodePoint(0x41),
             encoding = Encoding.Utf8,
             steps = listOf(Step.Binary(expected = "01000001", length = 8)),
@@ -187,7 +181,6 @@ class ExposedExerciseAttemptRepositoryTest(
             userId = userId,
             module = ExerciseModule.Utf8Encode,
             level = 1,
-            granularity = Granularity.Verbose,
             codePoint = CodePoint(0x41),
             encoding = Encoding.Utf8,
             steps = listOf(Step.Binary(expected = "01000001", length = 8)),
@@ -205,7 +198,6 @@ class ExposedExerciseAttemptRepositoryTest(
             userId = ownerId,
             module = ExerciseModule.Utf8Encode,
             level = 1,
-            granularity = Granularity.Verbose,
             codePoint = CodePoint(0x41),
             encoding = Encoding.Utf8,
             steps = listOf(Step.Binary(expected = "01000001", length = 8)),
@@ -222,7 +214,6 @@ class ExposedExerciseAttemptRepositoryTest(
             userId = userId,
             module = ExerciseModule.Utf8Encode,
             level = 1,
-            granularity = Granularity.Verbose,
             codePoint = CodePoint(0x41),
             encoding = Encoding.Utf8,
             steps = listOf(Step.Binary(expected = "01000001", length = 8)),
