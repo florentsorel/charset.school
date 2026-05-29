@@ -1,14 +1,14 @@
 {
   "format-choice": {
     "byte-count": {
-      "1": "1 byte",
-      "2": "2 bytes",
-      "3": "3 bytes",
-      "4": "4 bytes"
+      "1": "1 byte · U+0000 → U+007F",
+      "2": "2 bytes · U+0080 → U+07FF",
+      "3": "3 bytes · U+0800 → U+FFFF",
+      "4": "4 bytes · U+10000 → U+10FFFF"
     },
     "code-unit": {
-      "1": "1 code unit (2 bytes)",
-      "2": "2 code units (4 bytes, surrogate pair)"
+      "1": "1 code unit · BMP",
+      "2": "2 code units · surrogate pair"
     }
   },
   "common": {
@@ -458,5 +458,105 @@
       },
       "unknown": "An error occurred."
     }
+  },
+  "exercise": {
+    "breadcrumb_label": "Breadcrumb",
+    "breadcrumb_root": "Exercises",
+    "breadcrumb_level": "level {n}",
+    "streak": "{n}d streak",
+    "skip_button": "Skip",
+    "level_label": "Level",
+    "level_option": "Level {n}",
+    "level_suggested": "Level {n} suggested (winning streak)",
+    "granularity_label": "Granularity",
+    "granularity": {
+      "verbose": "Step by step",
+      "standard": "Standard",
+      "compact": "Express"
+    },
+    "prompt_label": "Exercise",
+    "code_point_label": "Code point",
+    "code_point_input_label": "Enter the code point in hex",
+    "bytes_label": "Bytes",
+    "submit_button": "Submit",
+    "next_button": "Next exercise",
+    "step_title": {
+      "format": "Pick the format",
+      "binary": "Convert to binary",
+      "bit-groups": "Split the useful bits (MSB / LSB)",
+      "hex-bytes": "Convert to hex",
+      "code-point": "Identify the code point",
+      "useful-bit-count": "How many useful bits?",
+      "endianness": "Pick the endianness"
+    },
+    "useful_bit_count_input_label": "Useful bit count",
+    "useful_bit_count_suffix": "useful bits",
+    "bit_input_label": "Bit {n}",
+    "byte_input_label": "Byte {n}",
+    "step_progress_label": "Step progress",
+    "step_state": {
+      "done": "Step {n} - solved",
+      "active": "Step {n} - active",
+      "error": "Step {n} - error",
+      "todo": "Step {n} - to do"
+    },
+    "step": {
+      "solved": "Solved",
+      "revealed": "Revealed"
+    },
+    "feedback": {
+      "try": "Try {n}/{threshold}",
+      "reveal_button": "Show me the answer"
+    },
+    "finalized": {
+      "success": "Nice! Exercise solved unaided.",
+      "failed": "Exercise done. Try again without revealing!",
+      "change_settings": "Change level / granularity",
+      "start_with_settings": "Start",
+      "level_up_nudge": "You're on a roll. Ready for level {n}?",
+      "level_up_button": "Level {n}"
+    },
+    "resume": {
+      "banner_label": "Exercise in progress",
+      "message": "You have an exercise in progress - level {level}, {granularity}, step {done}/{total}.",
+      "continue_button": "Continue",
+      "new_button": "New exercise"
+    },
+    "module": {
+      "utf8-encode": {
+        "title": "Charset Playground - Encode UTF-8",
+        "prompt": "Encode this code point in UTF-8."
+      },
+      "utf8-decode": {
+        "title": "Charset Playground - Decode UTF-8",
+        "prompt": "Decode these UTF-8 bytes into a code point."
+      }
+    }
+  },
+  "feedback": {
+    "default": "Not quite right. Try again.",
+    "format.unknown-choice": "The choice `{got}` is not in the offered options.",
+    "format.wrong-choice": "Wrong format. Check which value range the code point falls into.",
+    "binary.empty": "Enter a sequence of bits.",
+    "binary.invalid-character": "You typed `{got}` - only `0` and `1` are allowed.",
+    "binary.too-few-bits": "Bits are missing: you have `{got-length}` out of `{expected-length}`. Remember to pad with leading zeros when the value is narrower than the width.",
+    "binary.too-many-bits": "You have `{got-length}` bits but exactly `{expected-length}` are expected. Drop the extra leading zeros.",
+    "binary.wrong-value": "Bit count is right but the value doesn't match. Double-check your decimal → binary conversion (powers of 2).",
+    "bit-groups.empty": "Enter the bit groups.",
+    "bit-groups.wrong-group-count": "You have `{got-count}` group(s), `{expected-count}` expected.",
+    "bit-groups.wrong-group-length": "The group at position `{position}` has `{got-length}` bits, `{expected-length}` expected.",
+    "bit-groups.invalid-character": "The group at position `{position}` contains characters other than `0` and `1`.",
+    "bit-groups.wrong-value": "Groups have the right size but content doesn't match. Check how you split the code point bits into the format.",
+    "hex-bytes.empty": "Enter the hex bytes.",
+    "hex-bytes.wrong-byte-count": "You entered `{got-count}` byte(s), `{expected-count}` expected.",
+    "hex-bytes.invalid-byte": "Byte at position `{position}` (`{got}`) is not valid (0..255).",
+    "hex-bytes.wrong-value": "Byte count is right but the value doesn't match. Re-assemble the format bits into hex (4 bits per hex digit).",
+    "code-point.empty": "Enter the code point.",
+    "code-point.out-of-range": "`{got}` is outside the Unicode range (`U+0000` → `U+10FFFF`).",
+    "code-point.surrogate": "`{got}` is in the surrogate range (`U+D800` → `U+DFFF`), which is forbidden in Unicode.",
+    "code-point.wrong-value": "Wrong code point. Check your binary → decimal then decimal → hex conversion.",
+    "endianness.wrong-choice": "Wrong endianness. Compare the expected byte order with the format's native order.",
+    "useful-bit-count.non-positive": "`{got}` isn't a positive number. Count the bits that actually carry information.",
+    "useful-bit-count.wrong-value": "`{got}` isn't the right useful bit count. UTF-8 reminder (payload bits, excluding markers): `1-byte = 7 useful bits`, `2-byte = 11`, `3-byte = 16`, `4-byte = 21`."
   }
 }

@@ -2,6 +2,7 @@ package school.charset.app.infrastructure.repository.exercise
 
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -84,6 +85,23 @@ class ExposedExerciseAttemptRepository(
             steps = attemptSteps,
             createdAt = now,
         )
+    }
+
+    override fun findLatestUnfinalizedByUserAndModule(userId: Long, module: ExerciseModule): ExerciseAttempt? = transaction {
+        val latestId = ExerciseAttemptsTable
+            .selectAll()
+            .where {
+                (ExerciseAttemptsTable.userId eq userId)
+                    .and(ExerciseAttemptsTable.moduleId eq module)
+                    .and(ExerciseAttemptsTable.finalized eq false)
+            }
+            .orderBy(ExerciseAttemptsTable.createdAt, SortOrder.DESC)
+            .limit(1)
+            .firstOrNull()
+            ?.get(ExerciseAttemptsTable.id)
+            ?: return@transaction null
+
+        findById(latestId)
     }
 
     override fun findById(attemptId: Long): ExerciseAttempt? = transaction {
@@ -199,6 +217,10 @@ class ExposedExerciseAttemptRepository(
                 it[AttemptStepCodePointTable.stepId] = stepId
                 it[expected] = step.expected
             }
+            is Step.UsefulBitCount -> AttemptStepUsefulBitCountTable.insert {
+                it[AttemptStepUsefulBitCountTable.stepId] = stepId
+                it[expected] = step.expected.toShort()
+            }
             is Step.Endianness -> AttemptStepEndiannessTable.insert {
                 it[AttemptStepEndiannessTable.stepId] = stepId
                 it[expected] = step.expected
@@ -241,6 +263,13 @@ class ExposedExerciseAttemptRepository(
                 .where { AttemptStepCodePointTable.stepId eq stepId }
                 .single()
                 .let { Step.CodePointEntry(expected = it[AttemptStepCodePointTable.expected]) }
+
+        StepType.UsefulBitCount ->
+            AttemptStepUsefulBitCountTable
+                .selectAll()
+                .where { AttemptStepUsefulBitCountTable.stepId eq stepId }
+                .single()
+                .let { Step.UsefulBitCount(expected = it[AttemptStepUsefulBitCountTable.expected].toInt()) }
 
         StepType.Endianness ->
             AttemptStepEndiannessTable
@@ -286,6 +315,13 @@ class ExposedExerciseAttemptRepository(
                 .single()[AttemptStepCodePointTable.userAnswer]
                 ?.let(Answer::CodePointValue)
 
+        StepType.UsefulBitCount ->
+            AttemptStepUsefulBitCountTable
+                .selectAll()
+                .where { AttemptStepUsefulBitCountTable.stepId eq stepId }
+                .single()[AttemptStepUsefulBitCountTable.userAnswer]
+                ?.let { Answer.UsefulBitCountValue(it.toInt()) }
+
         StepType.Endianness ->
             AttemptStepEndiannessTable
                 .selectAll()
@@ -310,6 +346,9 @@ class ExposedExerciseAttemptRepository(
             }
             is Answer.CodePointValue -> AttemptStepCodePointTable.update({ AttemptStepCodePointTable.stepId eq stepId }) {
                 it[userAnswer] = answer.value
+            }
+            is Answer.UsefulBitCountValue -> AttemptStepUsefulBitCountTable.update({ AttemptStepUsefulBitCountTable.stepId eq stepId }) {
+                it[userAnswer] = answer.value.toShort()
             }
             is Answer.EndiannessChoice -> AttemptStepEndiannessTable.update({ AttemptStepEndiannessTable.stepId eq stepId }) {
                 it[userAnswer] = answer.value

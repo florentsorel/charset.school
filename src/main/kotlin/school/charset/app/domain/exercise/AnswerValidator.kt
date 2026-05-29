@@ -7,7 +7,23 @@ class AnswerValidator {
         is Step.BitGroups -> validateBitGroups(step, answer)
         is Step.HexBytes -> validateHexBytes(step, answer)
         is Step.CodePointEntry -> validateCodePoint(step, answer)
+        is Step.UsefulBitCount -> validateUsefulBitCount(step, answer)
         is Step.Endianness -> validateEndianness(step, answer)
+    }
+
+    private fun validateUsefulBitCount(step: Step.UsefulBitCount, answer: Answer): ValidationResult {
+        if (answer !is Answer.UsefulBitCountValue) return typeMismatch(step, answer)
+        return when {
+            answer.value <= 0 -> ValidationResult.incorrect(
+                errorType = ErrorType.UsefulBitCount.NON_POSITIVE,
+                params = mapOf(ParamKey.GOT to answer.value.toString()),
+            )
+            answer.value != step.expected -> ValidationResult.incorrect(
+                errorType = ErrorType.UsefulBitCount.WRONG_VALUE,
+                params = mapOf(ParamKey.GOT to answer.value.toString()),
+            )
+            else -> ValidationResult.correct()
+        }
     }
 
     private fun validateBinary(step: Step.Binary, answer: Answer): ValidationResult {

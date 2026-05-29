@@ -153,4 +153,36 @@ class StepTest :
                     Encoding.Endian.LittleEndian
             }
         }
+
+        "UsefulBitCount" - {
+            "valid count builds" {
+                Step.UsefulBitCount(expected = 11).expected shouldBe 11
+            }
+
+            "lower bound 1 builds" {
+                Step.UsefulBitCount(expected = 1).expected shouldBe 1
+            }
+
+            "upper bound 32 builds" {
+                Step.UsefulBitCount(expected = 32).expected shouldBe 32
+            }
+
+            "zero throws" {
+                shouldThrow<IllegalArgumentException> {
+                    Step.UsefulBitCount(expected = 0)
+                }
+            }
+
+            "negative throws" {
+                shouldThrow<IllegalArgumentException> {
+                    Step.UsefulBitCount(expected = -1)
+                }
+            }
+
+            "above 32 throws" {
+                shouldThrow<IllegalArgumentException> {
+                    Step.UsefulBitCount(expected = 33)
+                }
+            }
+        }
     })

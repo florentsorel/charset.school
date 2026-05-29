@@ -138,6 +138,93 @@ class ExerciseControllerTest(
     }
 
     @Test
+    fun `multi-byte UTF-8 encode generates Format then Binary then UsefulBitCount then BitGroups then HexBytes`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin()
+
+        generate(sessionCookie, xsrfCookie, moduleId = "utf8-encode", level = 2)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.steps.length()").value(5))
+            .andExpect(jsonPath("$.steps[0].type").value("format"))
+            .andExpect(jsonPath("$.steps[1].type").value("binary"))
+            .andExpect(jsonPath("$.steps[1].length").value(16))
+            .andExpect(jsonPath("$.steps[2].type").value("useful-bit-count"))
+            .andExpect(jsonPath("$.steps[3].type").value("bit-groups"))
+            .andExpect(jsonPath("$.steps[4].type").value("hex-bytes"))
+    }
+
+    @Test
+    fun `GET current returns null attempt when nothing in progress`() {
+        val (sessionCookie, _) = registerAndLogin()
+
+        mockMvc.perform(get("/api/exercise/current").param("moduleId", "utf8-encode").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.attempt").value(null as Any?))
+    }
+
+    @Test
+    fun `GET current returns the in-progress attempt with stepStates and userAnswer`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin()
+        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode", level = 1)
+        val attemptId = (attempt["attemptId"] as Number).toLong()
+
+        validate(sessionCookie, xsrfCookie, attemptId, stepIndex = 0, body = """{"type":"format","value":"format-choice.byte-count.2"}""")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.ok").value(false))
+
+        mockMvc.perform(get("/api/exercise/current").param("moduleId", "utf8-encode").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.attempt.attemptId").value(attemptId))
+            .andExpect(jsonPath("$.attempt.stepStates[0].correct").value(false))
+            .andExpect(jsonPath("$.attempt.stepStates[0].attempts").value(1))
+            .andExpect(jsonPath("$.attempt.stepStates[0].canReveal").value(false))
+            .andExpect(jsonPath("$.attempt.stepStates[0].userAnswer.type").value("format"))
+            .andExpect(jsonPath("$.attempt.stepStates[0].userAnswer.value").value("format-choice.byte-count.2"))
+    }
+
+    @Test
+    fun `GET current excludes finalized attempts`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin()
+        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode", level = 1)
+        val attemptId = (attempt["attemptId"] as Number).toLong()
+
+        @Suppress("UNCHECKED_CAST")
+        val steps = attempt["steps"] as List<Map<String, Any?>>
+        steps.forEachIndexed { idx, step ->
+            val answer = when (step["type"]) {
+                "format" -> """{"type":"format","value":"format-choice.byte-count.1"}"""
+                "hex-bytes" -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val bytes = listOf(attempt["codePoint"] as Int)
+                    """{"type":"hex-bytes","bytes":$bytes}"""
+                }
+                else -> error("Unexpected step ${step["type"]}")
+            }
+            validate(sessionCookie, xsrfCookie, attemptId, stepIndex = idx, body = answer)
+                .andExpect(status().isOk)
+        }
+
+        mockMvc.perform(get("/api/exercise/current").param("moduleId", "utf8-encode").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.attempt").value(null as Any?))
+    }
+
+    @Test
+    fun `validate useful-bit-count step accepts correct count and rejects wrong count`() {
+        val (sessionCookie, xsrfCookie) = registerAndLogin()
+        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode", level = 2)
+        val attemptId = (attempt["attemptId"] as Number).toLong()
+
+        validate(sessionCookie, xsrfCookie, attemptId, stepIndex = 2, body = """{"type":"useful-bit-count","count":7}""")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.ok").value(false))
+            .andExpect(jsonPath("$.errorType").value("useful-bit-count.wrong-value"))
+
+        validate(sessionCookie, xsrfCookie, attemptId, stepIndex = 2, body = """{"type":"useful-bit-count","count":11}""")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.ok").value(true))
+    }
+
+    @Test
     fun `GET progress returns empty list before any exercise`() {
         val (sessionCookie, _) = registerAndLogin()
 

@@ -56,6 +56,10 @@ class StepSerializer : ValueSerializer<Step>() {
                 gen.writeNumberProperty("value", step.expected)
             }
 
+            is Step.UsefulBitCount -> {
+                gen.writeNumberProperty("value", step.expected)
+            }
+
             is Step.Endianness -> {
                 gen.writeStringProperty(
                     "value",

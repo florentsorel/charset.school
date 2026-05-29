@@ -384,4 +384,43 @@ class AnswerValidatorTest :
                 result.params[ParamKey.EXPECTED_TYPE] shouldBe "endianness"
             }
         }
+
+        "useful-bit-count" - {
+            val step = Step.UsefulBitCount(expected = 11)
+
+            "correct value -> ok" {
+                sut.validate(step, Answer.UsefulBitCountValue(11)) shouldBe
+                    ValidationResult.correct()
+            }
+
+            "zero -> useful-bit-count.non-positive" {
+                sut.validate(step, Answer.UsefulBitCountValue(0)) shouldBe
+                    ValidationResult.incorrect(
+                        errorType = ErrorType.UsefulBitCount.NON_POSITIVE,
+                        params = mapOf(ParamKey.GOT to "0"),
+                    )
+            }
+
+            "negative -> useful-bit-count.non-positive" {
+                sut.validate(step, Answer.UsefulBitCountValue(-3)) shouldBe
+                    ValidationResult.incorrect(
+                        errorType = ErrorType.UsefulBitCount.NON_POSITIVE,
+                        params = mapOf(ParamKey.GOT to "-3"),
+                    )
+            }
+
+            "wrong positive value -> useful-bit-count.wrong-value" {
+                sut.validate(step, Answer.UsefulBitCountValue(16)) shouldBe
+                    ValidationResult.incorrect(
+                        errorType = ErrorType.UsefulBitCount.WRONG_VALUE,
+                        params = mapOf(ParamKey.GOT to "16"),
+                    )
+            }
+
+            "wrong Answer type -> answer.type-mismatch" {
+                val result = sut.validate(step, Answer.BinaryValue("11"))
+                result.errorType shouldBe ErrorType.Answer.TYPE_MISMATCH
+                result.params[ParamKey.EXPECTED_TYPE] shouldBe "useful-bit-count"
+            }
+        }
     })

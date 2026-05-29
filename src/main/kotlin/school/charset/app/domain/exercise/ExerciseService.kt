@@ -35,6 +35,8 @@ class ExerciseService(
         )
     }
 
+    fun findResumable(userId: Long, module: ExerciseModule): ExerciseAttempt? = attemptRepository.findLatestUnfinalizedByUserAndModule(userId, module)
+
     fun validateStep(
         userId: Long,
         attemptId: Long,

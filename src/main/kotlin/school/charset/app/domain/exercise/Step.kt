@@ -82,6 +82,18 @@ sealed class Step {
         }
     }
 
+    data class UsefulBitCount(
+        val expected: Int,
+    ) : Step() {
+        override val type: StepType = StepType.UsefulBitCount
+
+        init {
+            require(expected in 1..32) {
+                "UsefulBitCount expected must be in 1..32, got $expected"
+            }
+        }
+    }
+
     data class Endianness(
         val expected: Encoding.Endian,
     ) : Step() {

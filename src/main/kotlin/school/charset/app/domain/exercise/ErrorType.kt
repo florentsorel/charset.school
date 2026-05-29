@@ -45,4 +45,9 @@ object ErrorType {
     object Endianness {
         const val WRONG_CHOICE = "endianness.wrong-choice"
     }
+
+    object UsefulBitCount {
+        const val NON_POSITIVE = "useful-bit-count.non-positive"
+        const val WRONG_VALUE = "useful-bit-count.wrong-value"
+    }
 }

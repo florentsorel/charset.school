@@ -79,3 +79,9 @@ CREATE TABLE attempt_step_endianness (
     expected     VARCHAR(16)  NOT NULL,
     user_answer  VARCHAR(16)
 );
+
+CREATE TABLE attempt_step_useful_bit_count (
+    step_id     BIGINT PRIMARY KEY REFERENCES attempt_steps (id) ON DELETE CASCADE,
+    expected    SMALLINT NOT NULL,
+    user_answer SMALLINT
+);

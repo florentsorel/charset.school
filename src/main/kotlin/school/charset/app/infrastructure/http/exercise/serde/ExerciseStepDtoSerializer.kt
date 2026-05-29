@@ -22,7 +22,10 @@ class ExerciseStepDtoSerializer : ValueSerializer<ExerciseStepDto>() {
                 gen.writeEndArray()
             }
             is ExerciseStepDto.HexBytes -> gen.writeNumberProperty("byteCount", step.byteCount)
-            ExerciseStepDto.CodePointEntry, ExerciseStepDto.Endianness -> {
+            ExerciseStepDto.CodePointEntry,
+            ExerciseStepDto.UsefulBitCount,
+            ExerciseStepDto.Endianness,
+            -> {
             }
         }
         gen.writeEndObject()
