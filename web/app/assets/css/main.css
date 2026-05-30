@@ -106,7 +106,10 @@
 
 html {
   scrollbar-gutter: stable;
-  --header-height: 4rem;
+  /* Authoritative header height: AppHeader is pinned to exactly this value
+     (box-border, border included) so the sandbox sticky sidebar offset below
+     never drifts. Sized to the natural header content + breathing room. */
+  --header-height: 4.5rem;
 }
 html, body {
   background: var(--color-page);
@@ -178,9 +181,10 @@ abbr[title] {
 }
 
 /* Sandbox sidebar: sticky offset = natural rest position, so the sidebar
-   doesn't visually shift on first scroll. Position = AppHeader height +
-   layout top padding on lg+ (3.5rem from `md:py-14`). Keep in sync if
-   either changes. */
+   doesn't visually shift on first scroll. AppHeader is pinned to exactly
+   --header-height (border included), so that term is exact; the 3.5rem is
+   the layout top padding on lg+ (`md:py-14`). Keep the 3.5rem in sync if
+   the layout padding changes. */
 .sandbox-sidebar-sticky {
   top: calc(var(--header-height) + 3.5rem);
 }
