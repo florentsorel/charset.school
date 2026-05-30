@@ -5,22 +5,25 @@ const { t, tm, rt } = useI18n()
 const localePath = useLocalePath()
 const { isAuthenticated } = useAuth()
 
+const NuxtLink = resolveComponent('NuxtLink')
+
 useHead({
   titleTemplate: () => `${t('landing.title_tagline')} · charset.school`
 })
 
-// Modules listed in the landing teaser. IDs map to the future exercise URLs
-// (kebab-case is the wire convention shared with the back).
+// Modules listed in the landing teaser. `to` is set only for modules that
+// are actually playable today (the rest are previews). Built modules render
+// as links to their exercise route.
 const modules = [
-  { id: 'utf8-encode', order: '01' },
-  { id: 'utf8-decode', order: '02' },
-  { id: 'utf16-encode', order: '03' },
-  { id: 'utf16-decode', order: '04' },
-  { id: 'utf32-encode', order: '05' },
-  { id: 'utf32-decode', order: '06' },
-  { id: 'latin1', order: '07' },
-  { id: 'identify', order: '08' },
-  { id: 'mojibake', order: '09' }
+  { id: 'utf8-encode', order: '01', to: '/exercise/encode/utf-8' },
+  { id: 'utf8-decode', order: '02', to: '/exercise/decode/utf-8' },
+  { id: 'utf16-encode', order: '03', to: null },
+  { id: 'utf16-decode', order: '04', to: null },
+  { id: 'utf32-encode', order: '05', to: null },
+  { id: 'utf32-decode', order: '06', to: null },
+  { id: 'latin1', order: '07', to: null },
+  { id: 'identify', order: '08', to: null },
+  { id: 'mojibake', order: '09', to: null }
 ] as const
 
 // `tm` returns the raw messages array (vue-i18n compiles each entry to an
@@ -138,10 +141,13 @@ const bulletItems = computed(() => tm('landing.bullets') as unknown as string[])
         {{ t('landing.modules_kicker') }}
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        <div
+        <component
+          :is="m.to ? NuxtLink : 'div'"
           v-for="m in modules"
           :key="m.id"
-          class="p-4 rounded-md border border-rule hover:border-rule-strong transition-colors"
+          :to="m.to ? localePath(m.to) : undefined"
+          class="block p-4 rounded-md border border-rule transition-colors"
+          :class="m.to ? 'hover:border-rule-strong' : 'opacity-55'"
         >
           <div class="font-mono text-xs uppercase tracking-widest text-faint mb-1">
             {{ m.order }}
@@ -152,7 +158,7 @@ const bulletItems = computed(() => tm('landing.bullets') as unknown as string[])
           <p class="text-xs text-mute mt-1">
             {{ t(`landing.modules.${m.id}.subtitle`) }}
           </p>
-        </div>
+        </component>
       </div>
     </section>
   </main>

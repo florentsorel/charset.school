@@ -336,6 +336,11 @@ abbr[title] {
   border: 1px solid var(--color-rule);
   border-radius: 10px;
 }
+.banner-accent {
+  background: var(--color-accent-soft);
+  border: 1px solid color-mix(in oklab, var(--color-accent) 25%, var(--color-accent-soft));
+  border-radius: 10px;
+}
 .divider { height: 1px; background: var(--color-rule); }
 
 .section-card {
