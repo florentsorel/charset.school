@@ -508,6 +508,7 @@
     "resume": {
       "banner_label": "Exercise in progress",
       "message": "You have an exercise in progress - level {level}, step {done}/{total}.",
+      "message_max": "You have an exercise in progress - level {level}.",
       "continue_button": "Continue",
       "new_button": "New exercise"
     },

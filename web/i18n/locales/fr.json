@@ -508,6 +508,7 @@
     "resume": {
       "banner_label": "Exercice en cours",
       "message": "Tu as un exercice en cours - niveau {level}, étape {done}/{total}.",
+      "message_max": "Tu as un exercice en cours - niveau {level}.",
       "continue_button": "Reprendre",
       "new_button": "Nouvel exercice"
     },

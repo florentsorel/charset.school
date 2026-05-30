@@ -1,12 +1,12 @@
 <script setup lang="ts">
 defineProps<{
-  moduleId: string
+  direction: string
+  encoding: string
   level: number
   maxLevel: number
   streak: number
   threshold: number
   atMax: boolean
-  loaded: boolean
 }>()
 
 defineEmits<{
@@ -25,19 +25,14 @@ const { t } = useI18n()
       >
         <span class="crumb-root">{{ t('exercise.breadcrumb_root') }}</span>
         <span class="separator">/</span>
-        <span class="crumb font-mono">{{ moduleId }}</span>
+        <span class="crumb font-mono">{{ direction }}</span>
         <span class="separator">/</span>
-        <!-- Render only after progress is loaded to avoid flashing the
-             default "Niveau 1 · 0/5" before the real values land. While
-             loading we reserve the pill space with an unbreakable dash
-             so the header height doesn't shift. -->
+        <span class="crumb font-mono">{{ encoding }}</span>
+        <span class="separator">/</span>
+        <!-- Progression values come from the page's SSR bootstrap, so the
+             real pill is in the initial HTML - no loading placeholder needed. -->
         <span
-          v-if="!loaded"
-          class="crumb crumb-level crumb-level-loading font-mono"
-          aria-hidden="true"
-        >&nbsp;</span>
-        <span
-          v-else-if="atMax"
+          v-if="atMax"
           class="crumb crumb-level font-mono"
         >
           {{ t('exercise.progression.max', { n: level }) }}
@@ -95,15 +90,6 @@ const { t } = useI18n()
 .crumb-level {
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
-  background: var(--color-subtle);
-}
-.crumb-level-loading {
-  /* inline-block so min-width actually reserves space (min-width is a no-op
-     on inline elements). Width sized to the longer FR string
-     "Niveau 1 · 0/5 avant niveau 2" so the header doesn't reflow when the
-     real pill replaces it. */
-  display: inline-block;
-  min-width: 18ch;
   background: var(--color-subtle);
 }
 .exercise-stats {
