@@ -23,21 +23,35 @@ const direction = route.params.direction as Direction
 const encodingSlug = route.params.encoding as EncodingSlug
 const moduleId = ModuleIdByRoute[direction][encodingSlug]
 
+const exerciseApi = useExerciseApi()
+
+// SSR-safe read-only bootstrap: progress + any resumable attempt, resolved
+// DURING server render (both are GETs). This puts the correct progression
+// pill and resume banner into the initial HTML - no client-side flash.
+// generate() (a POST that creates an attempt) is deliberately NOT run here:
+// it stays client-only so an SSR render / crawler never mutates the DB.
+const { data: bootstrap, error: bootstrapError } = await useAsyncData(`exercise-bootstrap-${moduleId}`, async () => {
+  const [progressRes, currentRes] = await Promise.all([
+    exerciseApi.progress(),
+    exerciseApi.current(moduleId)
+  ])
+  return {
+    progress: progressRes.progress.find(p => p.moduleId === moduleId) ?? null,
+    resumable: currentRes.attempt
+  }
+})
+
 // Progression state - the back drives advancement, the front only displays.
 // `level` is the user's current tier (1..maxLevel), `streak` the in-row
-// correct count at the current tier; both fetched from /api/progress.
+// correct count at the current tier; both seeded from the SSR bootstrap.
 // `maxLevel` is structural per module, read from a static map.
-// `progressionLoaded` gates the indicator render so we don't flash the
-// default `level 1 · 0/5` before the API response lands.
-const level = ref(1)
-const streak = ref(0)
+const level = ref(bootstrap.value?.progress?.level ?? 1)
+const streak = ref(bootstrap.value?.progress?.streak ?? 0)
 const maxLevel = MaxLevelByModule[moduleId]
-const progressionLoaded = ref(false)
 const atMaxLevel = computed(() => level.value >= maxLevel)
 const progressionThreshold = STREAK_FOR_LEVEL_UP
 
-const initializing = ref(true)
-const pendingResume = ref<import('~/types/exercise').ResumeExerciseResponse | null>(null)
+const pendingResume = ref(bootstrap.value?.resumable ?? null)
 
 const {
   attempt,
@@ -62,19 +76,33 @@ const pendingResumeProgress = computed(() => {
   if (!pendingResume.value) return null
   const total = pendingResume.value.stepStates.length
   const done = pendingResume.value.stepStates.filter(s => s.correct || s.revealed).length
-  return { done, total, level: pendingResume.value.level }
+  // At the encoding's max level there's no further progression to chase, so
+  // the banner drops the step count and just states the level.
+  const atMax = pendingResume.value.level >= maxLevel
+  return { done, total, level: pendingResume.value.level, atMax }
 })
 
 onMounted(async () => {
-  await loadProgress()
-  const { attempt: resumable } = await useExerciseApi().current(moduleId)
-  if (resumable) {
-    pendingResume.value = resumable
-    initializing.value = false
-    return
+  if (pendingResume.value || attempt.value) return
+
+  // If the SSR bootstrap failed (transient back error etc.), `pendingResume`
+  // is null only because we never got a successful /current response — NOT
+  // because there's no resumable attempt. Re-check on the client before
+  // creating a new one, otherwise a failed bootstrap would orphan the
+  // user's in-progress attempt. Also refresh the progression the bootstrap
+  // couldn't provide.
+  if (bootstrapError.value) {
+    const { attempt: resumable } = await exerciseApi.current(moduleId)
+    if (resumable) {
+      pendingResume.value = resumable
+      return
+    }
+    await refreshProgress()
   }
+
+  // No resumable attempt → create a fresh one. The POST stays client-side
+  // (never during SSR) so renders / crawlers don't spawn attempts.
   await generate()
-  initializing.value = false
 })
 
 async function resumePending() {
@@ -86,9 +114,7 @@ async function resumePending() {
 
 async function discardPendingAndGenerate() {
   pendingResume.value = null
-  initializing.value = true
   await generate()
-  initializing.value = false
 }
 
 function resolvedInput(index: number) {
@@ -178,25 +204,25 @@ function usefulBitCountResolvedValue(index: number): number {
   return input?.type === 'useful-bit-count' && input.value != null ? input.value : 0
 }
 
-async function loadProgress() {
+// Client-side refresh after a finalized attempt: the back may have advanced
+// the level / bumped the streak. Defaults are kept on transient failure.
+async function refreshProgress() {
   try {
-    const { progress } = await useExerciseApi().progress()
+    const { progress } = await exerciseApi.progress()
     const moduleProgress = progress.find(p => p.moduleId === moduleId)
     if (moduleProgress) {
       level.value = moduleProgress.level
       streak.value = moduleProgress.streak
     }
   } catch {
-    // First-time users have no progress yet - keep defaults.
-  } finally {
-    progressionLoaded.value = true
+    // keep current values
   }
 }
 
 async function regenerateNext() {
   pendingResume.value = null
   await generate()
-  await loadProgress()
+  await refreshProgress()
 }
 
 useHead({
@@ -207,13 +233,13 @@ useHead({
 <template>
   <div class="exercise-page">
     <ExerciseSubHeader
-      :module-id="moduleId"
+      :direction="direction"
+      :encoding="encodingSlug"
       :level="level"
       :max-level="maxLevel"
       :streak="streak"
       :threshold="progressionThreshold"
       :at-max="atMaxLevel"
-      :loaded="progressionLoaded"
       @skip="regenerateNext"
     />
 
@@ -225,7 +251,7 @@ useHead({
         :aria-label="t('exercise.resume.banner_label')"
       >
         <p class="exercise-resume-message">
-          {{ t('exercise.resume.message', {
+          {{ t(pendingResumeProgress?.atMax ? 'exercise.resume.message_max' : 'exercise.resume.message', {
             done: pendingResumeProgress?.done,
             total: pendingResumeProgress?.total,
             level: pendingResumeProgress?.level
