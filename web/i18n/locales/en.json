@@ -462,12 +462,11 @@
   "exercise": {
     "breadcrumb_label": "Breadcrumb",
     "breadcrumb_root": "Exercises",
-    "breadcrumb_level": "level {n}",
-    "streak": "Streak {n}",
     "skip_button": "Skip",
-    "level_label": "Level",
-    "level_option": "Level {n}",
-    "level_suggested": "Level {n} suggested (winning streak)",
+    "progression": {
+      "next": "Level {level} · {done}/{threshold} before level {next}",
+      "max": "Level {n} · mastered"
+    },
     "prompt_label": "Exercise",
     "code_point_label": "Code point",
     "code_point_input_label": "Enter the code point in hex",
@@ -504,11 +503,7 @@
     },
     "finalized": {
       "success": "Nice! Exercise solved unaided.",
-      "failed": "Exercise done. Try again without revealing!",
-      "change_settings": "Change level",
-      "start_with_settings": "Start",
-      "level_up_nudge": "You're on a roll. Ready for level {n}?",
-      "level_up_button": "Level {n}"
+      "failed": "Exercise done. Try again without revealing!"
     },
     "resume": {
       "banner_label": "Exercise in progress",

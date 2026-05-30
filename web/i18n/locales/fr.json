@@ -462,12 +462,11 @@
   "exercise": {
     "breadcrumb_label": "Fil d'Ariane",
     "breadcrumb_root": "Exercices",
-    "breadcrumb_level": "niveau {n}",
-    "streak": "Streak {n}",
     "skip_button": "Passer",
-    "level_label": "Niveau",
-    "level_option": "Niveau {n}",
-    "level_suggested": "Niveau {n} suggéré (suite de réussites)",
+    "progression": {
+      "next": "Niveau {level} · {done}/{threshold} avant niveau {next}",
+      "max": "Niveau {n} · maîtrise"
+    },
     "prompt_label": "Exercice",
     "code_point_label": "Code point",
     "code_point_input_label": "Saisis le code point en hexadécimal",
@@ -504,11 +503,7 @@
     },
     "finalized": {
       "success": "Bien joué ! Exercice complété sans aide.",
-      "failed": "Exercice terminé. Au prochain essai sans révéler !",
-      "change_settings": "Changer le niveau",
-      "start_with_settings": "Commencer",
-      "level_up_nudge": "Tu enchaînes les bonnes réponses. Prêt pour le niveau {n} ?",
-      "level_up_button": "Niveau {n}"
+      "failed": "Exercice terminé. Au prochain essai sans révéler !"
     },
     "resume": {
       "banner_label": "Exercice en cours",

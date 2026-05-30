@@ -56,7 +56,7 @@ class ExerciseControllerTest(
                 .cookie(xsrfCookie)
                 .header("X-XSRF-TOKEN", xsrfCookie.value)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"moduleId":"utf8-encode","level":1}"""),
+                .content("""{"moduleId":"utf8-encode"}"""),
         ).andExpect(status().isUnauthorized)
     }
 
@@ -64,7 +64,7 @@ class ExerciseControllerTest(
     fun `POST exercise generate returns the exercise without expected values`() {
         val (sessionCookie, xsrfCookie) = registerAndLogin()
 
-        generate(sessionCookie, xsrfCookie, moduleId = "utf8-encode", level = 1)
+        generate(sessionCookie, xsrfCookie, moduleId = "utf8-encode")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.attemptId").isNumber)
             .andExpect(jsonPath("$.moduleId").value("utf8-encode"))
@@ -80,7 +80,7 @@ class ExerciseControllerTest(
     fun `decode module exposes bytes input but hides expected code point`() {
         val (sessionCookie, xsrfCookie) = registerAndLogin()
 
-        generate(sessionCookie, xsrfCookie, moduleId = "utf8-decode", level = 1)
+        generate(sessionCookie, xsrfCookie, moduleId = "utf8-decode")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.direction").value("decode"))
             .andExpect(jsonPath("$.bytes").isArray)
@@ -92,7 +92,7 @@ class ExerciseControllerTest(
     fun `unknown module returns 422`() {
         val (sessionCookie, xsrfCookie) = registerAndLogin()
 
-        generate(sessionCookie, xsrfCookie, moduleId = "nope-encode", level = 1)
+        generate(sessionCookie, xsrfCookie, moduleId = "nope-encode")
             .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.errorType").value("exercise.unknown-module"))
     }
@@ -100,7 +100,7 @@ class ExerciseControllerTest(
     @Test
     fun `validate with wrong answer increments attempts and stays incorrect`() {
         val (sessionCookie, xsrfCookie) = registerAndLogin()
-        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode", level = 1)
+        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode")
         val attemptId = (attempt["attemptId"] as Number).toLong()
 
         validate(sessionCookie, xsrfCookie, attemptId, stepIndex = 0, body = """{"type":"binary","bits":"00000000"}""")
@@ -113,7 +113,7 @@ class ExerciseControllerTest(
     @Test
     fun `reveal before threshold returns 422`() {
         val (sessionCookie, xsrfCookie) = registerAndLogin()
-        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode", level = 1)
+        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode")
         val attemptId = (attempt["attemptId"] as Number).toLong()
 
         mockMvc.perform(
@@ -129,27 +129,12 @@ class ExerciseControllerTest(
     @Test
     fun `validate with missing answer field returns 422 invalid-answer-payload`() {
         val (sessionCookie, xsrfCookie) = registerAndLogin()
-        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode", level = 1)
+        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode")
         val attemptId = (attempt["attemptId"] as Number).toLong()
 
         validate(sessionCookie, xsrfCookie, attemptId, stepIndex = 0, body = """{"type":"binary"}""")
             .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.errorType").value("exercise.invalid-answer-payload"))
-    }
-
-    @Test
-    fun `multi-byte UTF-8 encode generates Format then Binary then UsefulBitCount then BitGroups then HexBytes`() {
-        val (sessionCookie, xsrfCookie) = registerAndLogin()
-
-        generate(sessionCookie, xsrfCookie, moduleId = "utf8-encode", level = 2)
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.steps.length()").value(5))
-            .andExpect(jsonPath("$.steps[0].type").value("format"))
-            .andExpect(jsonPath("$.steps[1].type").value("binary"))
-            .andExpect(jsonPath("$.steps[1].length").value(16))
-            .andExpect(jsonPath("$.steps[2].type").value("useful-bit-count"))
-            .andExpect(jsonPath("$.steps[3].type").value("bit-groups"))
-            .andExpect(jsonPath("$.steps[4].type").value("hex-bytes"))
     }
 
     @Test
@@ -164,7 +149,7 @@ class ExerciseControllerTest(
     @Test
     fun `GET current returns the in-progress attempt with stepStates and userAnswer`() {
         val (sessionCookie, xsrfCookie) = registerAndLogin()
-        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode", level = 1)
+        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode")
         val attemptId = (attempt["attemptId"] as Number).toLong()
 
         validate(sessionCookie, xsrfCookie, attemptId, stepIndex = 0, body = """{"type":"format","value":"format-choice.byte-count.2"}""")
@@ -184,7 +169,7 @@ class ExerciseControllerTest(
     @Test
     fun `GET current excludes finalized attempts`() {
         val (sessionCookie, xsrfCookie) = registerAndLogin()
-        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode", level = 1)
+        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode")
         val attemptId = (attempt["attemptId"] as Number).toLong()
 
         @Suppress("UNCHECKED_CAST")
@@ -209,22 +194,6 @@ class ExerciseControllerTest(
     }
 
     @Test
-    fun `validate useful-bit-count step accepts correct count and rejects wrong count`() {
-        val (sessionCookie, xsrfCookie) = registerAndLogin()
-        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode", level = 2)
-        val attemptId = (attempt["attemptId"] as Number).toLong()
-
-        validate(sessionCookie, xsrfCookie, attemptId, stepIndex = 2, body = """{"type":"useful-bit-count","count":7}""")
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.ok").value(false))
-            .andExpect(jsonPath("$.errorType").value("useful-bit-count.wrong-value"))
-
-        validate(sessionCookie, xsrfCookie, attemptId, stepIndex = 2, body = """{"type":"useful-bit-count","count":11}""")
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.ok").value(true))
-    }
-
-    @Test
     fun `GET progress returns empty list before any exercise`() {
         val (sessionCookie, _) = registerAndLogin()
 
@@ -238,7 +207,6 @@ class ExerciseControllerTest(
         sessionCookie: Cookie,
         xsrfCookie: Cookie,
         moduleId: String,
-        level: Int,
     ): ResultActions = mockMvc.perform(
         post("/api/exercise/generate")
             .cookie(sessionCookie, xsrfCookie)
@@ -246,7 +214,7 @@ class ExerciseControllerTest(
             .contentType(MediaType.APPLICATION_JSON)
             .content(
                 mapper.writeValueAsString(
-                    mapOf("moduleId" to moduleId, "level" to level),
+                    mapOf("moduleId" to moduleId),
                 ),
             ),
     )
@@ -255,9 +223,8 @@ class ExerciseControllerTest(
         sessionCookie: Cookie,
         xsrfCookie: Cookie,
         moduleId: String,
-        level: Int,
     ): Map<String, Any?> {
-        val result = generate(sessionCookie, xsrfCookie, moduleId, level).andReturn()
+        val result = generate(sessionCookie, xsrfCookie, moduleId).andReturn()
         @Suppress("UNCHECKED_CAST")
         return mapper.readValue(result.response.contentAsString, Map::class.java) as Map<String, Any?>
     }

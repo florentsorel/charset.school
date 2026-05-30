@@ -12,18 +12,23 @@ data class ModuleProgress(
     val errors: Int,
     val lastPlayedAt: Instant?,
 ) {
-    // Capped by the encoding's actual max level (mirrors Utf8Level /
-    // Utf16Level / etc. via ExerciseModule.maxLevel), so the field never
-    // suggests a level the generator would refuse.
-    val suggestedLevel: Int
-        get() = if (streak >= STREAK_FOR_LEVEL_UP && level < module.maxLevel) level + 1 else level
-
-    fun recordCompletion(correct: Boolean, now: Instant): ModuleProgress = copy(
-        attempts = attempts + 1,
-        errors = if (correct) errors else errors + 1,
-        streak = if (correct) streak + 1 else 0,
-        lastPlayedAt = now,
-    )
+    // Auto-advances the level once the streak threshold is hit (while still
+    // below the module's max level), then resets the streak so the user has
+    // to earn the next bump as well. The level is no longer user-selectable
+    // from the UI - the back drives progression entirely.
+    fun recordCompletion(correct: Boolean, now: Instant): ModuleProgress {
+        val updated = copy(
+            attempts = attempts + 1,
+            errors = if (correct) errors else errors + 1,
+            streak = if (correct) streak + 1 else 0,
+            lastPlayedAt = now,
+        )
+        return if (updated.streak >= STREAK_FOR_LEVEL_UP && updated.level < module.maxLevel) {
+            updated.copy(level = updated.level + 1, streak = 0)
+        } else {
+            updated
+        }
+    }
 
     companion object {
         const val STREAK_FOR_LEVEL_UP: Int = 5

@@ -13,7 +13,11 @@ class ExerciseService(
     private val random: Random,
 ) {
 
-    fun generate(userId: Long, module: ExerciseModule, level: Int): ExerciseAttempt {
+    fun generate(userId: Long, module: ExerciseModule): ExerciseAttempt {
+        // Level is driven by the user's persisted ModuleProgress (auto-
+        // advanced by streak), not by the HTTP request. First-time users
+        // start at level 1.
+        val level = progressService.currentLevel(userId, module)
         val encoding = pickEncoding(module)
         val exercise = when (module.direction) {
             ExerciseModule.Direction.Encode -> exerciseGenerator.generateEncode(encoding, level)
