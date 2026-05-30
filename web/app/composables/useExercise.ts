@@ -7,7 +7,7 @@ import type {
   RevealedAnswer,
   ValidateStepResponse
 } from '~/types/exercise'
-import type {StepState} from '~/components/exercise/StepProgress.vue'
+import type { StepState } from '~/components/exercise/StepProgress.vue'
 
 type StepInput
   = | { type: 'format', value: string | null }

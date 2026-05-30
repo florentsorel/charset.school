@@ -98,9 +98,12 @@ const { t } = useI18n()
   background: var(--color-subtle);
 }
 .crumb-level-loading {
-  /* Match the rendered width of "Level X · 0/5 before level X+1" so the
-     header doesn't reflow when the real pill replaces it. */
-  min-width: 14ch;
+  /* inline-block so min-width actually reserves space (min-width is a no-op
+     on inline elements). Width sized to the longer FR string
+     "Niveau 1 · 0/5 avant niveau 2" so the header doesn't reflow when the
+     real pill replaces it. */
+  display: inline-block;
+  min-width: 18ch;
   background: var(--color-subtle);
 }
 .exercise-stats {

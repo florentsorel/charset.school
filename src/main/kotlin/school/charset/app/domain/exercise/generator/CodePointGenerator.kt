@@ -30,7 +30,7 @@ class CodePointGenerator(
         // and saves an allocation/RNG draw on the hot path.
         if (distribution.size == 1) return distribution.keys.first()
         val total = distribution.values.sum()
-        require(total > 0) { "Empty distribution" }
+        require(total > 0) { "Total weight must be positive, got $total for $distribution" }
         var roll = random.nextInt(0, total)
         for ((subLevel, weight) in distribution) {
             roll -= weight
