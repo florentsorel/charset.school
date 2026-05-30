@@ -456,6 +456,12 @@
       "validation": {
         "failed": "Certains champs sont invalides."
       },
+      "internal": {
+        "server-error": "Une erreur interne est survenue. Réessaie dans un instant."
+      },
+      "request": {
+        "bad": "Requête invalide."
+      },
       "unknown": "Une erreur est survenue."
     }
   },

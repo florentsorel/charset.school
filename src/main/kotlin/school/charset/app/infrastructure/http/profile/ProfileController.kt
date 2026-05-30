@@ -4,6 +4,7 @@ import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -34,6 +35,8 @@ class ProfileController(
     private val profileService: ProfileService,
     private val rememberMeServices: RememberMeServices,
 ) {
+    private val logger = LoggerFactory.getLogger(ProfileController::class.java)
+
     @PatchMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun update(
         @Valid @RequestBody req: UpdateProfileRequest,
@@ -65,6 +68,7 @@ class ProfileController(
             currentPassword = RawPassword(req.currentPassword),
             newPassword = RawPassword(req.newPassword),
         )
+        logger.info("Password changed (userId={})", userId)
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
@@ -77,6 +81,7 @@ class ProfileController(
     ): ResponseEntity<Void> {
         val userId = authentication.requireUserDetailsAdapter().userId
         profileService.deleteAccount(userId, RawPassword(req.password))
+        logger.info("Account deleted (userId={})", userId)
 
         // Revoke persistent remember-me tokens BEFORE wiping the SecurityContext —
         // the logout handler reads the still-active `Authentication` to know
