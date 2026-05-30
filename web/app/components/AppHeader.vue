@@ -69,8 +69,8 @@ const mobileDropdownUi = {
 </script>
 
 <template>
-  <header class="sticky top-0 z-40 bg-page/85 backdrop-blur border-b border-rule">
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+  <header class="sticky top-0 z-40 bg-page/85 backdrop-blur border-b border-rule h-[var(--header-height)]">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 h-full flex items-center justify-between gap-4">
       <NuxtLink
         :to="localePath('/')"
         class="flex items-center gap-2 hover:opacity-80 transition-opacity"

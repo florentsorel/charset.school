@@ -18,7 +18,9 @@ const { t } = useI18n()
 
 <template>
   <div class="exercise-sub-header">
-    <div class="exercise-sub-header-inner">
+    <!-- Same container utilities as AppHeader (mx-auto max-w-6xl px-4 sm:px-6)
+         so the breadcrumb lines up with the logo by construction. -->
+    <div class="exercise-sub-header-inner mx-auto max-w-6xl px-4 sm:px-6">
       <nav
         class="exercise-breadcrumb"
         :aria-label="t('exercise.breadcrumb_label')"
@@ -62,9 +64,11 @@ const { t } = useI18n()
   background: var(--color-page);
 }
 .exercise-sub-header-inner {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0.85rem 1.5rem;
+  /* max-width / horizontal padding come from Tailwind utilities in the
+     template (matching AppHeader). Only the layout + vertical rhythm live
+     here. */
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
   display: flex;
   align-items: center;
   justify-content: space-between;

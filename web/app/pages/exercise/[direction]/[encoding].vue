@@ -246,7 +246,7 @@ useHead({
     <div class="exercise-container">
       <div
         v-if="pendingResume"
-        class="exercise-resume-banner"
+        class="exercise-resume-banner banner-accent"
         role="region"
         :aria-label="t('exercise.resume.banner_label')"
       >
@@ -288,7 +288,7 @@ useHead({
 
         <div
           v-if="attempt && attempt.direction === 'encode'"
-          class="exercise-prompt-card"
+          class="exercise-prompt-card surface-subtle"
         >
           <div>
             <p class="exercise-prompt-card-label">
@@ -302,7 +302,7 @@ useHead({
 
         <div
           v-else-if="attempt && attempt.direction === 'decode'"
-          class="exercise-prompt-card"
+          class="exercise-prompt-card surface-subtle"
         >
           <div>
             <p class="exercise-prompt-card-label">
@@ -383,7 +383,7 @@ useHead({
 
             <div
               v-if="index === currentStepIndex && !finalized"
-              class="exercise-step-input"
+              class="exercise-step-input surface"
             >
               <FormatSelector
                 v-if="step.type === 'format' && currentInput?.type === 'format'"
@@ -518,7 +518,7 @@ useHead({
 
       <div
         v-if="finalized"
-        class="exercise-finalized"
+        class="exercise-finalized surface-subtle"
       >
         <p class="exercise-finalized-message">
           {{ finalizedCorrect ? t('exercise.finalized.success') : t('exercise.finalized.failed') }}
@@ -552,10 +552,8 @@ useHead({
   padding: 2rem 1.5rem 6rem;
 }
 .exercise-resume-banner {
+  /* card shape via .banner-accent */
   padding: 1.25rem 1.4rem;
-  background: var(--color-accent-soft);
-  border: 1px solid color-mix(in oklab, var(--color-accent) 25%, var(--color-accent-soft));
-  border-radius: 10px;
   margin-bottom: 2rem;
   display: flex;
   flex-wrap: wrap;
@@ -592,9 +590,7 @@ useHead({
   margin-bottom: 1.4rem;
 }
 .exercise-prompt-card {
-  background: var(--color-subtle);
-  border: 1px solid var(--color-rule);
-  border-radius: 10px;
+  /* card shape via .surface-subtle */
   padding: 1.4rem 1.5rem;
   display: flex;
   flex-wrap: wrap;
@@ -665,9 +661,7 @@ useHead({
   font-weight: 500;
 }
 .exercise-step-input {
-  background: var(--color-surface);
-  border: 1px solid var(--color-rule);
-  border-radius: 10px;
+  /* card shape via .surface */
   padding: 1.1rem 1.25rem;
 }
 .exercise-step-actions {
@@ -726,11 +720,9 @@ useHead({
   align-items: center;
 }
 .exercise-finalized {
+  /* card shape via .surface-subtle */
   margin-top: 2rem;
   padding: 1.5rem;
-  background: var(--color-subtle);
-  border: 1px solid var(--color-rule);
-  border-radius: 10px;
   display: flex;
   flex-direction: column;
   gap: 1rem;
