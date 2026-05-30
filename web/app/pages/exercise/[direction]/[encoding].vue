@@ -30,7 +30,7 @@ const exerciseApi = useExerciseApi()
 // pill and resume banner into the initial HTML - no client-side flash.
 // generate() (a POST that creates an attempt) is deliberately NOT run here:
 // it stays client-only so an SSR render / crawler never mutates the DB.
-const { data: bootstrap } = await useAsyncData(`exercise-bootstrap-${moduleId}`, async () => {
+const { data: bootstrap, error: bootstrapError } = await useAsyncData(`exercise-bootstrap-${moduleId}`, async () => {
   const [progressRes, currentRes] = await Promise.all([
     exerciseApi.progress(),
     exerciseApi.current(moduleId)
@@ -83,13 +83,26 @@ const pendingResumeProgress = computed(() => {
 })
 
 onMounted(async () => {
-  // No resumable attempt to offer and none generated yet → create a fresh
-  // one. The POST stays client-side (never during SSR) so renders / crawlers
-  // don't spawn attempts. When a resume banner is showing we wait for the
-  // user's choice instead.
-  if (!pendingResume.value && !attempt.value) {
-    await generate()
+  if (pendingResume.value || attempt.value) return
+
+  // If the SSR bootstrap failed (transient back error etc.), `pendingResume`
+  // is null only because we never got a successful /current response — NOT
+  // because there's no resumable attempt. Re-check on the client before
+  // creating a new one, otherwise a failed bootstrap would orphan the
+  // user's in-progress attempt. Also refresh the progression the bootstrap
+  // couldn't provide.
+  if (bootstrapError.value) {
+    const { attempt: resumable } = await exerciseApi.current(moduleId)
+    if (resumable) {
+      pendingResume.value = resumable
+      return
+    }
+    await refreshProgress()
   }
+
+  // No resumable attempt → create a fresh one. The POST stays client-side
+  // (never during SSR) so renders / crawlers don't spawn attempts.
+  await generate()
 })
 
 async function resumePending() {
