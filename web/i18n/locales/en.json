@@ -456,6 +456,12 @@
       "validation": {
         "failed": "Some fields are invalid."
       },
+      "internal": {
+        "server-error": "An internal error occurred. Please try again shortly."
+      },
+      "request": {
+        "malformed": "Invalid request."
+      },
       "unknown": "An error occurred."
     }
   },

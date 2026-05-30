@@ -7,6 +7,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
+import org.slf4j.LoggerFactory
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Answer
@@ -20,6 +21,7 @@ import kotlin.time.Clock
 class ExposedExerciseAttemptRepository(
     private val clock: Clock,
 ) : ExerciseAttemptRepository {
+    private val logger = LoggerFactory.getLogger(ExposedExerciseAttemptRepository::class.java)
 
     override fun create(
         userId: Long,
@@ -151,7 +153,10 @@ class ExposedExerciseAttemptRepository(
             .where { ExerciseAttemptsTable.id eq attemptId }
             .singleOrNull()
             ?.toExerciseAttempt()
-            ?: error("Attempt $attemptId disappeared after finalize")
+            ?: run {
+                logger.error("Attempt disappeared right after finalize (attemptId={})", attemptId)
+                error("Attempt $attemptId disappeared after finalize")
+            }
     }
 
     private fun insertStepExpected(stepId: Long, step: Step) {

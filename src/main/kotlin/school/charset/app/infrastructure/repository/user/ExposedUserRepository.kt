@@ -8,6 +8,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.postgresql.util.PSQLState
+import org.slf4j.LoggerFactory
 import school.charset.app.domain.user.EmailAlreadyTakenException
 import school.charset.app.domain.user.PasswordHash
 import school.charset.app.domain.user.User
@@ -17,6 +18,8 @@ import kotlin.time.Clock
 class ExposedUserRepository(
     private val clock: Clock,
 ) : UserRepository {
+    private val logger = LoggerFactory.getLogger(ExposedUserRepository::class.java)
+
     override fun findById(id: Long): User? = transaction {
         UsersTable
             .selectAll()
@@ -56,6 +59,7 @@ class ExposedUserRepository(
             if (e.sqlState == PSQLState.UNIQUE_VIOLATION.state) {
                 throw EmailAlreadyTakenException(email)
             }
+            logger.error("Unexpected SQL error creating user (email={})", email, e)
             throw e
         }
     }
@@ -73,6 +77,7 @@ class ExposedUserRepository(
             if (e.sqlState == PSQLState.UNIQUE_VIOLATION.state && email != null) {
                 throw EmailAlreadyTakenException(email)
             }
+            logger.error("Unexpected SQL error updating user (userId={})", id, e)
             throw e
         }
         UsersTable

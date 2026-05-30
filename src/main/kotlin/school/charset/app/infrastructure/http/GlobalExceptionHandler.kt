@@ -1,8 +1,10 @@
 package school.charset.app.infrastructure.http
 
 import jakarta.servlet.http.HttpServletRequest
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -30,24 +32,35 @@ import school.charset.app.infrastructure.http.exercise.UnknownModuleException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+    private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
+
     @ExceptionHandler(EmailAlreadyTakenException::class)
-    fun handleEmailAlreadyTaken(ex: EmailAlreadyTakenException): ResponseEntity<ErrorResponse> = ResponseEntity.status(HttpStatus.CONFLICT).body(
-        ErrorResponse(
-            errorType = AuthErrorType.EMAIL_ALREADY_TAKEN,
-            params = mapOf("email" to ex.email),
-        ),
-    )
+    fun handleEmailAlreadyTaken(ex: EmailAlreadyTakenException): ResponseEntity<ErrorResponse> {
+        logger.warn("Registration rejected: email already taken (email={})", ex.email)
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+            ErrorResponse(
+                errorType = AuthErrorType.EMAIL_ALREADY_TAKEN,
+                params = mapOf("email" to ex.email),
+            ),
+        )
+    }
 
     @ExceptionHandler(BadCredentialsException::class)
-    fun handleBadCredentials(): ResponseEntity<ErrorResponse> = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-        ErrorResponse(errorType = AuthErrorType.BAD_CREDENTIALS),
-    )
+    fun handleBadCredentials(): ResponseEntity<ErrorResponse> {
+        logger.warn("Login rejected: bad credentials")
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+            ErrorResponse(errorType = AuthErrorType.BAD_CREDENTIALS),
+        )
+    }
 
     @ExceptionHandler(OrphanedSessionException::class)
     fun handleOrphanedSession(
         ex: OrphanedSessionException,
         request: HttpServletRequest,
     ): ResponseEntity<ErrorResponse> {
+        // Authenticated session pointing at a user that no longer exists in DB
+        // - indicates a data inconsistency, worth surfacing.
+        logger.warn("Orphaned session invalidated (userId={})", ex.userId)
         request.getSession(false)?.invalidate()
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
             ErrorResponse(errorType = AuthErrorType.SESSION_ORPHANED),
@@ -220,6 +233,24 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(
             ErrorResponse(errorType = "validation.failed", fieldErrors = fieldErrors),
         )
+    }
+
+    // Malformed / missing / unparseable JSON body. Handled explicitly so the
+    // catch-all below doesn't turn this client error into a 500.
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleUnreadableBody(): ResponseEntity<ErrorResponse> = ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .body(ErrorResponse(errorType = "request.malformed"))
+
+    // Last-resort handler: anything not matched above is an unexpected/technical
+    // failure. Log the full stack trace (we're otherwise blind in prod) and
+    // return a generic 500 - never leak internals to the client.
+    @ExceptionHandler(Exception::class)
+    fun handleUnexpected(ex: Exception): ResponseEntity<ErrorResponse> {
+        logger.error("Unhandled exception", ex)
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ErrorResponse(errorType = "internal.server-error"))
     }
 
     private fun FieldError.constraintRank(): Int = codes?.lastOrNull()?.let { CONSTRAINT_PRIORITY[it] } ?: Int.MAX_VALUE
