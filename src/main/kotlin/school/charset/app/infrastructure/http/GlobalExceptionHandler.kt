@@ -2,14 +2,17 @@ package school.charset.app.infrastructure.http
 
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
-import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.context.request.WebRequest
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 import school.charset.app.domain.auth.AuthErrorType
 import school.charset.app.domain.auth.OrphanedSessionException
 import school.charset.app.domain.encoding.DecoderException
@@ -30,13 +33,19 @@ import school.charset.app.domain.user.EmailAlreadyTakenException
 import school.charset.app.infrastructure.http.exercise.InvalidAnswerPayloadException
 import school.charset.app.infrastructure.http.exercise.UnknownModuleException
 
+// Extends ResponseEntityExceptionHandler so all standard Spring MVC framework
+// exceptions (wrong method, unsupported media type, type mismatch, missing
+// params, unreadable body, ...) keep their proper 4xx status instead of being
+// swallowed by the catch-all below as a 500. We override handleExceptionInternal
+// to render those in our ErrorResponse shape rather than the default RFC-7807
+// ProblemDetail.
 @RestControllerAdvice
-class GlobalExceptionHandler {
-    private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
+class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
+    private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     @ExceptionHandler(EmailAlreadyTakenException::class)
     fun handleEmailAlreadyTaken(ex: EmailAlreadyTakenException): ResponseEntity<ErrorResponse> {
-        logger.warn("Registration rejected: email already taken (email={})", ex.email)
+        log.warn("Registration rejected: email already taken (email={})", ex.email)
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
             ErrorResponse(
                 errorType = AuthErrorType.EMAIL_ALREADY_TAKEN,
@@ -47,7 +56,7 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException::class)
     fun handleBadCredentials(): ResponseEntity<ErrorResponse> {
-        logger.warn("Login rejected: bad credentials")
+        log.warn("Login rejected: bad credentials")
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
             ErrorResponse(errorType = AuthErrorType.BAD_CREDENTIALS),
         )
@@ -60,7 +69,7 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorResponse> {
         // Authenticated session pointing at a user that no longer exists in DB
         // - indicates a data inconsistency, worth surfacing.
-        logger.warn("Orphaned session invalidated (userId={})", ex.userId)
+        log.warn("Orphaned session invalidated (userId={})", ex.userId)
         request.getSession(false)?.invalidate()
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
             ErrorResponse(errorType = AuthErrorType.SESSION_ORPHANED),
@@ -218,8 +227,14 @@ class GlobalExceptionHandler {
             ),
         )
 
-    @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
+    // Bean Validation failures. Kept at 422 (not the framework default 400) to
+    // preserve existing client behavior, with per-field i18n keys.
+    override fun handleMethodArgumentNotValid(
+        ex: MethodArgumentNotValidException,
+        headers: HttpHeaders,
+        status: HttpStatusCode,
+        request: WebRequest,
+    ): ResponseEntity<Any>? {
         val fieldErrors = ex.bindingResult.fieldErrors
             .groupBy { it.field }
             .mapValues { (_, errors) ->
@@ -235,19 +250,35 @@ class GlobalExceptionHandler {
         )
     }
 
-    // Malformed / missing / unparseable JSON body. Handled explicitly so the
-    // catch-all below doesn't turn this client error into a 500.
-    @ExceptionHandler(HttpMessageNotReadableException::class)
-    fun handleUnreadableBody(): ResponseEntity<ErrorResponse> = ResponseEntity
-        .status(HttpStatus.BAD_REQUEST)
-        .body(ErrorResponse(errorType = "request.malformed"))
+    // Renders every other framework exception (handled by the base class:
+    // unreadable body, wrong method, unsupported media type, type mismatch,
+    // missing params, 404, ...) in our ErrorResponse shape, keeping the
+    // framework-computed status. `errorType` is derived from that status.
+    override fun handleExceptionInternal(
+        ex: Exception,
+        body: Any?,
+        headers: HttpHeaders,
+        statusCode: HttpStatusCode,
+        request: WebRequest,
+    ): ResponseEntity<Any>? {
+        val errorType = when (HttpStatus.resolve(statusCode.value())) {
+            HttpStatus.BAD_REQUEST -> "request.bad"
+            HttpStatus.NOT_FOUND -> "request.not-found"
+            HttpStatus.METHOD_NOT_ALLOWED -> "request.method-not-allowed"
+            HttpStatus.NOT_ACCEPTABLE -> "request.not-acceptable"
+            HttpStatus.UNSUPPORTED_MEDIA_TYPE -> "request.unsupported-media-type"
+            else -> "request.error"
+        }
+        return ResponseEntity.status(statusCode).headers(headers).body(ErrorResponse(errorType = errorType))
+    }
 
-    // Last-resort handler: anything not matched above is an unexpected/technical
-    // failure. Log the full stack trace (we're otherwise blind in prod) and
-    // return a generic 500 - never leak internals to the client.
+    // Last-resort handler: anything not matched above (and not a framework
+    // exception handled by the base class) is an unexpected/technical failure.
+    // Log the full stack trace (we're otherwise blind in prod) and return a
+    // generic 500 - never leak internals to the client.
     @ExceptionHandler(Exception::class)
     fun handleUnexpected(ex: Exception): ResponseEntity<ErrorResponse> {
-        logger.error("Unhandled exception", ex)
+        log.error("Unhandled exception", ex)
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ErrorResponse(errorType = "internal.server-error"))

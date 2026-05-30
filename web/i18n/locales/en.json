@@ -460,7 +460,7 @@
         "server-error": "An internal error occurred. Please try again shortly."
       },
       "request": {
-        "malformed": "Invalid request."
+        "bad": "Invalid request."
       },
       "unknown": "An error occurred."
     }

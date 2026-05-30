@@ -460,7 +460,7 @@
         "server-error": "Une erreur interne est survenue. Réessaie dans un instant."
       },
       "request": {
-        "malformed": "Requête invalide."
+        "bad": "Requête invalide."
       },
       "unknown": "Une erreur est survenue."
     }
