@@ -125,6 +125,11 @@ body { transition: background-color 220ms ease, color 220ms ease; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 
+@media (max-width: 396px) {
+  .bit { width: 1.65rem; height: 2rem; font-size: 0.95rem; }
+  .bit-row { gap: 2px; }
+}
+
 .bit {
   display: inline-flex;
   align-items: center;
@@ -150,6 +155,8 @@ body { transition: background-color 220ms ease, color 220ms ease; }
 
 .bit-row { display: inline-flex; gap: 3px; align-items: center; flex-wrap: wrap; }
 .bit-sep-mid { width: 8px; }
+
+
 
 .codepoint-glyph {
   font-family: var(--font-mono);
