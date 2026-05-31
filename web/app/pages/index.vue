@@ -17,8 +17,8 @@ useHead({
 const modules = [
   { id: 'utf8-encode', order: '01', to: '/exercise/encode/utf-8' },
   { id: 'utf8-decode', order: '02', to: '/exercise/decode/utf-8' },
-  { id: 'utf16-encode', order: '03', to: null },
-  { id: 'utf16-decode', order: '04', to: null },
+  { id: 'utf16-encode', order: '03', to: '/exercise/encode/utf-16' },
+  { id: 'utf16-decode', order: '04', to: '/exercise/decode/utf-16' },
   { id: 'utf32-encode', order: '05', to: null },
   { id: 'utf32-decode', order: '06', to: null },
   { id: 'latin1', order: '07', to: null },

@@ -37,6 +37,7 @@ data class AnswerWire(
     val bytes: List<Int>? = null,
     val codePoint: Int? = null,
     val count: Int? = null,
+    val offset: Int? = null,
 ) {
     fun toDomain(): Answer = when (type) {
         "format" -> Answer.FormatChoice(value ?: missing("value"))
@@ -45,6 +46,7 @@ data class AnswerWire(
         "hex-bytes" -> Answer.HexBytesValue(bytes ?: missing("bytes"))
         "code-point" -> Answer.CodePointValue(codePoint ?: missing("codePoint"))
         "useful-bit-count" -> Answer.UsefulBitCountValue(count ?: missing("count"))
+        "offset" -> Answer.OffsetValue(offset ?: missing("offset"))
         "endianness" -> Answer.EndiannessChoice(
             when (value) {
                 "big" -> Encoding.Endian.BigEndian

@@ -475,7 +475,9 @@
     "prompt_label": "Exercice",
     "code_point_label": "Code point",
     "code_point_input_label": "Saisis le code point en hexadécimal",
+    "offset_input_label": "Saisis la valeur en hexadécimal",
     "bytes_label": "Octets",
+    "byte_order_label": "Ordre des octets",
     "submit_button": "Soumettre",
     "next_button": "Exercice suivant",
     "step_title": {
@@ -485,7 +487,14 @@
       "hex-bytes": "Convertir en hexadécimal",
       "code-point": "Identifier le code point",
       "useful-bit-count": "Combien de bits utiles ?",
-      "endianness": "Choisir l'endianness"
+      "offset": "Soustraire 0x10000",
+      "offset_decode": "Convertir en hexadécimal",
+      "binary_decode": "Assembler la valeur 20 bits",
+      "code_point_decode": "Identifier le code point (ajouter 0x10000)"
+    },
+    "endianness": {
+      "big": "Big-endian · BE",
+      "little": "Little-endian · LE"
     },
     "useful_bit_count_input_label": "Nombre de bits utiles",
     "useful_bit_count_suffix": "bits utiles",
@@ -525,6 +534,14 @@
       "utf8-decode": {
         "title": "Charset Playground - Décoder UTF-8",
         "prompt": "Décode ces octets UTF-8 en code point."
+      },
+      "utf16-encode": {
+        "title": "Charset Playground - Encoder UTF-16",
+        "prompt": "Encode ce code point en UTF-16."
+      },
+      "utf16-decode": {
+        "title": "Charset Playground - Décoder UTF-16",
+        "prompt": "Décode ces octets UTF-16 en code point."
       }
     }
   },
@@ -554,6 +571,8 @@
     "code-point.wrong-value": "Code point incorrect. Vérifie ta conversion binaire → décimal puis décimal → hex.",
     "endianness.wrong-choice": "Mauvaise endianness. Compare l'ordre des octets attendu à l'ordre des octets natifs du format.",
     "useful-bit-count.non-positive": "`{got}` n'est pas un nombre positif. Compte les bits qui portent réellement de l'information.",
-    "useful-bit-count.wrong-value": "`{got}` n'est pas le bon nombre de bits utiles. Rappel UTF-8 (bits de payload, hors markers) : `1 octet = 7 bits utiles`, `2 octets = 11`, `3 octets = 16`, `4 octets = 21`."
+    "useful-bit-count.wrong-value": "`{got}` n'est pas le bon nombre de bits utiles. Rappel UTF-8 (bits de payload, hors markers) : `1 octet = 7 bits utiles`, `2 octets = 11`, `3 octets = 16`, `4 octets = 21`.",
+    "offset.out-of-range": "`{got}` est hors de `0..0xFFFFF` (la plage 20 bits).",
+    "offset.wrong-value": "Mauvaise valeur. C'est la valeur 20 bits écrite en hexadécimal."
   }
 }

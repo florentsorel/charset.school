@@ -84,3 +84,11 @@ CREATE TABLE attempt_step_useful_bit_count (
     expected    SMALLINT NOT NULL,
     user_answer SMALLINT
 );
+
+-- Child table for StepType.Offset: the UTF-16 supplementary "subtract 0x10000"
+-- step. Holds the 20-bit scalar (code point - 0x10000) the user must compute.
+CREATE TABLE attempt_step_offset (
+                                     step_id      BIGINT  PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
+                                     expected     INT     NOT NULL,
+                                     user_answer  INT
+);

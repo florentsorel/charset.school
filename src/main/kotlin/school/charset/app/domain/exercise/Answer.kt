@@ -10,4 +10,5 @@ sealed class Answer {
     data class CodePointValue(val value: Int) : Answer()
     data class UsefulBitCountValue(val value: Int) : Answer()
     data class EndiannessChoice(val value: Encoding.Endian) : Answer()
+    data class OffsetValue(val value: Int) : Answer()
 }

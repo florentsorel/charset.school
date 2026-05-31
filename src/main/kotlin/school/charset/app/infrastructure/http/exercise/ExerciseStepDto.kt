@@ -32,6 +32,10 @@ sealed class ExerciseStepDto {
     data object Endianness : ExerciseStepDto() {
         override val type: String = "endianness"
     }
+
+    data object Offset : ExerciseStepDto() {
+        override val type: String = "offset"
+    }
 }
 
 fun Step.toDto(): ExerciseStepDto = when (this) {
@@ -42,4 +46,5 @@ fun Step.toDto(): ExerciseStepDto = when (this) {
     is Step.CodePointEntry -> ExerciseStepDto.CodePointEntry
     is Step.UsefulBitCount -> ExerciseStepDto.UsefulBitCount
     is Step.Endianness -> ExerciseStepDto.Endianness
+    is Step.Offset -> ExerciseStepDto.Offset
 }

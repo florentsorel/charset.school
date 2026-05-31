@@ -2,7 +2,7 @@
 import type { Direction, EncodingSlug, ModuleId, ResumeExerciseResponse } from '~/types/exercise'
 import { Directions, EncodingSlugs, MaxLevelByModule, ModuleIdByRoute, STREAK_FOR_LEVEL_UP } from '~/types/exercise'
 
-const SUPPORTED_IN_SLICE: ModuleId[] = ['utf8-encode', 'utf8-decode']
+const SUPPORTED_IN_SLICE: ModuleId[] = ['utf8-encode', 'utf8-decode', 'utf16-encode', 'utf16-decode']
 
 definePageMeta({
   validate(route) {
@@ -84,6 +84,16 @@ const {
   revealCurrent,
   binaryLockedPrefix
 } = useExercise(moduleId)
+
+// UTF-16/UTF-32 carry a byte order. The exercise gives it (a random BE/LE)
+// rather than asking the user to pick, so we surface it in the prompt header.
+// Derived from the attempt's encoding id; null for single-order encodings.
+const endianness = computed<'big' | 'little' | null>(() => {
+  const enc = attempt.value?.encoding ?? ''
+  if (enc.endsWith('be')) return 'big'
+  if (enc.endsWith('le')) return 'little'
+  return null
+})
 
 // Zero-progress resumable: adopt it as the current exercise instead of
 // prompting OR generating a new one (which would orphan it). Runs in setup so
@@ -178,16 +188,68 @@ function codePointResolvedValue(index: number): number {
   return input?.type === 'code-point' && input.codePoint != null ? input.codePoint : 0
 }
 
+function offsetResolvedValue(index: number): number {
+  const revealed = statuses.value[index]?.revealedAnswer
+  if (revealed?.type === 'offset' && revealed.offset != null) return revealed.offset
+  const input = resolvedInput(index)
+  return input?.type === 'offset' && input.value != null ? input.value : 0
+}
+
 // UTF-8 marker pattern per byte: first byte has `1`+ ... `0` matching the
-// byte count, continuation bytes always start with `10`. This is UTF-8
-// specific (Latin1 / Windows1252 have no bit-groups; UTF-16 surrogates
-// would need a different pattern when we get there).
+// byte count, continuation bytes always start with `10`.
 function utf8MarkersForGroups(groupLengths: number[]): string[] {
   const byteCount = groupLengths.length
   if (byteCount <= 1) return []
   const firstMarker = '1'.repeat(byteCount) + '0'
   return [firstMarker, ...Array(byteCount - 1).fill('10')]
 }
+
+// UTF-16 supplementary: each 10-bit half is prefixed by a 6-bit surrogate
+// marker - 110110 for the high surrogate (base 0xD800), 110111 for the low
+// (base 0xDC00) - so marker + payload forms each 16-bit code unit. Without
+// these the hex bytes can't be derived from the visible bits.
+function utf16SurrogateMarkers(groupLengths: number[]): string[] {
+  if (groupLengths.length !== 2) return []
+  return ['110110', '110111']
+}
+
+// Marker bits shown as a fixed prefix on each bit group. UTF-8 and UTF-16
+// supplementary both carry markers; other encodings render bare groups.
+const isUtf8 = moduleId.startsWith('utf8')
+const isUtf16 = moduleId.startsWith('utf16')
+function bitGroupMarkers(groupLengths: number[]): string[] {
+  if (isUtf8) return utf8MarkersForGroups(groupLengths)
+  if (isUtf16) return utf16SurrogateMarkers(groupLengths)
+  return []
+}
+
+// The two UTF-16 surrogate markers ARE the bases 0xD800 (high) and 0xDC00 (low)
+// - i.e. marker bits + an all-zero payload. Labelling them under each group makes
+// it explicit that the payload is added onto these bases.
+function bitGroupLabels(groupLengths: number[]): string[] {
+  if (isUtf16 && groupLengths.length === 2) return ['0xD800', '0xDC00']
+  return []
+}
+
+// Some steps read differently per direction. The offset step subtracts (encode)
+// vs reads the binary as hex (decode); the UTF-16 decode binary step assembles
+// the two halves; and the decode code-point step is where 0x10000 is added back
+// (the offset step's presence marks that supplementary case - BMP / UTF-8 have none).
+function stepTitleKey(stepType: string): string {
+  if (stepType === 'offset') return direction === 'decode' ? 'exercise.step_title.offset_decode' : 'exercise.step_title.offset'
+  if (stepType === 'binary' && direction === 'decode' && isUtf16) return 'exercise.step_title.binary_decode'
+  if (stepType === 'code-point' && (attempt.value?.steps.some(s => s.type === 'offset') ?? false)) {
+    return 'exercise.step_title.code_point_decode'
+  }
+  return `exercise.step_title.${stepType}`
+}
+
+// Binary grouping separator. UTF-8 is byte-aligned (every 8). For UTF-16 we
+// group by nibble (every 4) at the binary step: the value being converted is a
+// hex number (code point - 0x10000), so 4-bit groups line up 1:1 with the hex
+// digits and are easier to transcribe. The 10|10 surrogate split is shown at
+// the bit-groups step instead.
+const binaryBoundary = isUtf16 ? 4 : 8
 
 type BitSegment = { length: number, role: 'marker' | 'payload' | 'cont' | 'boundary' | 'plain' }
 
@@ -196,6 +258,10 @@ type BitSegment = { length: number, role: 'marker' | 'payload' | 'cont' | 'bound
 // without re-counting bits. Padding bits stay neutral.
 function binarySegmentsFor(index: number): BitSegment[] | undefined {
   if (!attempt.value) return undefined
+  // UTF-16 binary is grouped by nibble (hex digits), not by the 10|10 surrogate
+  // split - so we keep it neutral here; the split is coloured at the bit-groups
+  // step instead.
+  if (isUtf16) return undefined
   const step = attempt.value.steps[index]
   if (!step || step.type !== 'binary') return undefined
 
@@ -320,6 +386,14 @@ useHead({
               <span class="codepoint-glyph">{{ attempt.codePointLabel }}</span>
             </div>
           </div>
+          <div v-if="endianness">
+            <p class="exercise-prompt-card-label">
+              {{ t('exercise.byte_order_label') }}
+            </p>
+            <div class="exercise-prompt-card-content">
+              <span class="endianness-value">{{ t(`exercise.endianness.${endianness}`) }}</span>
+            </div>
+          </div>
         </div>
 
         <div
@@ -338,6 +412,14 @@ useHead({
               >
                 {{ byte.toString(16).toUpperCase().padStart(2, '0') }}
               </span>
+            </div>
+          </div>
+          <div v-if="endianness">
+            <p class="exercise-prompt-card-label">
+              {{ t('exercise.byte_order_label') }}
+            </p>
+            <div class="exercise-prompt-card-content">
+              <span class="endianness-value">{{ t(`exercise.endianness.${endianness}`) }}</span>
             </div>
           </div>
         </div>
@@ -399,7 +481,7 @@ useHead({
             <div class="exercise-step-header">
               <span class="exercise-step-index">{{ String(index + 1).padStart(2, '0') }}</span>
               <h2 class="exercise-step-title">
-                {{ t(`exercise.step_title.${step.type}`) }}
+                {{ t(stepTitleKey(step.type)) }}
               </h2>
             </div>
 
@@ -417,7 +499,7 @@ useHead({
                 v-else-if="step.type === 'binary' && currentInput?.type === 'binary'"
                 :model-value="currentInput.bits"
                 :length="step.length"
-                :boundary-every="8"
+                :boundary-every="binaryBoundary"
                 :locked-prefix="binaryLockedPrefix(step)"
                 @update:model-value="setInput({ type: 'binary', bits: $event })"
               />
@@ -425,7 +507,8 @@ useHead({
                 v-else-if="step.type === 'bit-groups' && currentInput?.type === 'bit-groups'"
                 :model-value="currentInput.groups"
                 :group-lengths="step.groupLengths"
-                :marker-patterns="utf8MarkersForGroups(step.groupLengths)"
+                :marker-patterns="bitGroupMarkers(step.groupLengths)"
+                :marker-labels="bitGroupLabels(step.groupLengths)"
                 @update:model-value="setInput({ type: 'bit-groups', groups: $event })"
               />
               <HexInput
@@ -443,6 +526,11 @@ useHead({
                 v-else-if="step.type === 'useful-bit-count' && currentInput?.type === 'useful-bit-count'"
                 :model-value="currentInput.value"
                 @update:model-value="setInput({ type: 'useful-bit-count', value: $event })"
+              />
+              <OffsetInput
+                v-else-if="step.type === 'offset' && currentInput?.type === 'offset'"
+                :model-value="currentInput.value"
+                @update:model-value="setInput({ type: 'offset', value: $event })"
               />
 
               <FeedbackPanel
@@ -486,7 +574,7 @@ useHead({
                 <template v-else-if="step.type === 'binary'">
                   <BitDisplay
                     :bits="binaryResolvedValue(index)"
-                    :boundary-every="8"
+                    :boundary-every="binaryBoundary"
                     :segments="binarySegmentsFor(index)"
                   />
                 </template>
@@ -497,21 +585,27 @@ useHead({
                       :key="gi"
                     >
                       <span class="bit-groups-byte-resolved">
-                        <span
-                          v-if="utf8MarkersForGroups(step.groupLengths)[gi]"
-                          class="bit-row"
-                        >
+                        <span class="bit-groups-byte-cells">
                           <span
-                            v-for="(char, ci) in utf8MarkersForGroups(step.groupLengths)[gi]!.split('')"
-                            :key="ci"
-                            class="bit"
-                            :class="{
-                              'bit-marker': gi === 0,
-                              'bit-cont': gi > 0
-                            }"
-                          >{{ char }}</span>
+                            v-if="bitGroupMarkers(step.groupLengths)[gi]"
+                            class="bit-row"
+                          >
+                            <span
+                              v-for="(char, ci) in bitGroupMarkers(step.groupLengths)[gi]!.split('')"
+                              :key="ci"
+                              class="bit"
+                              :class="{
+                                'bit-marker': gi === 0,
+                                'bit-cont': gi > 0
+                              }"
+                            >{{ char }}</span>
+                          </span>
+                          <BitDisplay :bits="group" />
                         </span>
-                        <BitDisplay :bits="group" />
+                        <span
+                          v-if="bitGroupLabels(step.groupLengths)[gi]"
+                          class="bit-groups-byte-label"
+                        >{{ bitGroupLabels(step.groupLengths)[gi] }}</span>
                       </span>
                     </template>
                   </span>
@@ -532,6 +626,9 @@ useHead({
                 </template>
                 <template v-else-if="step.type === 'useful-bit-count'">
                   <span class="font-mono text-sm">{{ usefulBitCountResolvedValue(index) }} {{ t('exercise.useful_bit_count_suffix') }}</span>
+                </template>
+                <template v-else-if="step.type === 'offset'">
+                  <span class="font-mono text-sm">0x{{ offsetResolvedValue(index).toString(16).toUpperCase() }}</span>
                 </template>
               </div>
             </div>
@@ -569,7 +666,10 @@ useHead({
   flex-direction: column;
 }
 .exercise-container {
-  max-width: 760px;
+  /* 800px lets the 20-bit UTF-16 binary sit on a single line. Narrower
+     viewports (mobile/tablet) keep width:100% and the binary row wraps via
+     its autoFit flex layout - no overflow. */
+  max-width: 800px;
   width: 100%;
   margin: 0 auto;
   padding: 2rem 1.5rem 6rem;
@@ -613,12 +713,11 @@ useHead({
   margin-bottom: 1.4rem;
 }
 .exercise-prompt-card {
-  /* card shape via .surface-subtle */
   padding: 1.4rem 1.5rem;
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
-  align-items: center;
+  align-items: start;
 }
 .exercise-prompt-card-label {
   font-family: var(--font-mono);
@@ -638,6 +737,7 @@ useHead({
 .codepoint-glyph {
   font-family: var(--font-mono);
   font-size: 2.1rem;
+  line-height: 1;
   letter-spacing: 0.04em;
 }
 .byte-display {
@@ -646,6 +746,11 @@ useHead({
   background: var(--color-surface);
   border: 1px solid var(--color-rule);
   border-radius: 6px;
+  font-weight: 600;
+}
+.endianness-value {
+  font-size: 1.05rem;
+  line-height: 1;
   font-weight: 600;
 }
 .exercise-steps {
@@ -663,6 +768,18 @@ useHead({
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+/* Phones: drop the step timeline (dot + connector) so the bit rows get the full
+   column width. The step number still shows in the header. Rule placed after
+   the base .exercise-step-track so it wins at equal specificity when matched. */
+@media (max-width: 455px) {
+  .exercise-step-track {
+    display: none;
+  }
+  .exercise-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }
 .exercise-step-content {
   flex: 1;
@@ -719,12 +836,9 @@ useHead({
   background: var(--color-warn-soft);
 }
 .exercise-step-resolved-answer {
-  padding: 0.6rem 0.85rem;
-  background: var(--color-subtle);
-  border-radius: 6px;
+  padding: 0.6rem 0;
   display: inline-flex;
   align-items: center;
-  width: fit-content;
 }
 .bit-groups-display {
   display: inline-flex;
@@ -734,8 +848,19 @@ useHead({
 }
 .bit-groups-byte-resolved {
   display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+.bit-groups-byte-resolved .bit-groups-byte-cells {
+  display: inline-flex;
   gap: 4px;
   align-items: center;
+}
+.bit-groups-byte-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-bit-marker);
 }
 .bytes-display {
   display: inline-flex;

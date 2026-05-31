@@ -125,11 +125,6 @@ body { transition: background-color 220ms ease, color 220ms ease; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 
-@media (max-width: 396px) {
-  .bit { width: 1.65rem; height: 2rem; font-size: 0.95rem; }
-  .bit-row { gap: 2px; }
-}
-
 .bit {
   display: inline-flex;
   align-items: center;

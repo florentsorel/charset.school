@@ -153,6 +153,33 @@ class ExposedExerciseAttemptRepositoryTest(
     }
 
     @Test
+    fun `Offset step persists and round-trips`() {
+        val userId = createUser()
+        val attempt = repository.create(
+            userId = userId,
+            module = ExerciseModule.Utf16Encode,
+            level = 2,
+            codePoint = CodePoint(0x1F389),
+            encoding = Encoding.Utf16Be,
+            steps = listOf(Step.Offset(expected = 0xF389)),
+        )
+        val stepId = attempt.steps[0].id
+
+        repository.recordStepSubmission(
+            stepId = stepId,
+            userAnswer = Answer.OffsetValue(0xF389),
+            correct = true,
+            errorType = null,
+        )
+
+        val reloaded = repository.findById(attempt.id)!!
+        val step = reloaded.steps.single()
+        step.step shouldBe Step.Offset(expected = 0xF389)
+        step.correct shouldBe true
+        step.userAnswer shouldBe Answer.OffsetValue(0xF389)
+    }
+
+    @Test
     fun `findLatestUnfinalizedByUserAndModule returns null when no attempt exists`() {
         val userId = createUser()
         repository.findLatestUnfinalizedByUserAndModule(userId, ExerciseModule.Utf8Encode) shouldBe null

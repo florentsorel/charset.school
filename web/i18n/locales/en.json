@@ -475,7 +475,9 @@
     "prompt_label": "Exercise",
     "code_point_label": "Code point",
     "code_point_input_label": "Enter the code point in hex",
+    "offset_input_label": "Enter the value in hex",
     "bytes_label": "Bytes",
+    "byte_order_label": "Byte order",
     "submit_button": "Submit",
     "next_button": "Next exercise",
     "step_title": {
@@ -485,7 +487,14 @@
       "hex-bytes": "Convert to hex",
       "code-point": "Identify the code point",
       "useful-bit-count": "How many useful bits?",
-      "endianness": "Pick the endianness"
+      "offset": "Subtract 0x10000",
+      "offset_decode": "Convert to hex",
+      "binary_decode": "Assemble the 20-bit value",
+      "code_point_decode": "Identify the code point (add 0x10000)"
+    },
+    "endianness": {
+      "big": "Big-endian · BE",
+      "little": "Little-endian · LE"
     },
     "useful_bit_count_input_label": "Useful bit count",
     "useful_bit_count_suffix": "useful bits",
@@ -525,6 +534,14 @@
       "utf8-decode": {
         "title": "Charset Playground - Decode UTF-8",
         "prompt": "Decode these UTF-8 bytes into a code point."
+      },
+      "utf16-encode": {
+        "title": "Charset Playground - Encode UTF-16",
+        "prompt": "Encode this code point in UTF-16."
+      },
+      "utf16-decode": {
+        "title": "Charset Playground - Decode UTF-16",
+        "prompt": "Decode these UTF-16 bytes into a code point."
       }
     }
   },
@@ -554,6 +571,8 @@
     "code-point.wrong-value": "Wrong code point. Check your binary → decimal then decimal → hex conversion.",
     "endianness.wrong-choice": "Wrong endianness. Compare the expected byte order with the format's native order.",
     "useful-bit-count.non-positive": "`{got}` isn't a positive number. Count the bits that actually carry information.",
-    "useful-bit-count.wrong-value": "`{got}` isn't the right useful bit count. UTF-8 reminder (payload bits, excluding markers): `1-byte = 7 useful bits`, `2-byte = 11`, `3-byte = 16`, `4-byte = 21`."
+    "useful-bit-count.wrong-value": "`{got}` isn't the right useful bit count. UTF-8 reminder (payload bits, excluding markers): `1-byte = 7 useful bits`, `2-byte = 11`, `3-byte = 16`, `4-byte = 21`.",
+    "offset.out-of-range": "`{got}` is outside `0..0xFFFFF` (the 20-bit range).",
+    "offset.wrong-value": "Wrong value. It's the 20-bit value written in hex."
   }
 }

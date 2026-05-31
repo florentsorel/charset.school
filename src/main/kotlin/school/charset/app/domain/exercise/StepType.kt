@@ -8,6 +8,7 @@ enum class StepType(val id: String) {
     CodePointEntry("code-point"),
     UsefulBitCount("useful-bit-count"),
     Endianness("endianness"),
+    Offset("offset"),
     ;
 
     companion object {

@@ -69,6 +69,12 @@ class StepSerializer : ValueSerializer<Step>() {
                     },
                 )
             }
+
+            // Exercise-only step (the sandbox explains the subtraction in prose);
+            // mapped here to satisfy the exhaustive `when` over sealed Step.
+            is Step.Offset -> {
+                gen.writeNumberProperty("value", step.expected)
+            }
         }
         gen.writeEndObject()
     }
