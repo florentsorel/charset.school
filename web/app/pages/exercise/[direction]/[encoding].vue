@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Direction, EncodingSlug, ModuleId } from '~/types/exercise'
+import type { Direction, EncodingSlug, ModuleId, ResumeExerciseResponse } from '~/types/exercise'
 import { Directions, EncodingSlugs, MaxLevelByModule, ModuleIdByRoute, STREAK_FOR_LEVEL_UP } from '~/types/exercise'
 
 const SUPPORTED_IN_SLICE: ModuleId[] = ['utf8-encode', 'utf8-decode']
@@ -51,7 +51,19 @@ const maxLevel = MaxLevelByModule[moduleId]
 const atMaxLevel = computed(() => level.value >= maxLevel)
 const progressionThreshold = STREAK_FOR_LEVEL_UP
 
-const pendingResume = ref(bootstrap.value?.resumable ?? null)
+// Number of steps already resolved (answered or revealed) in a resumable
+// attempt. A freshly-generated attempt sits at 0.
+function resolvedCount(r: ResumeExerciseResponse): number {
+  return r.stepStates.filter(s => s.correct || s.revealed).length
+}
+
+const resumable = bootstrap.value?.resumable ?? null
+
+// Only offer a resume banner when the attempt has real progress. A 0/N attempt
+// (just generated, never touched) is adopted silently as the current exercise
+// further down - resuming it would be identical, and the banner reads as a
+// misleading "exercise in progress" right after finishing one.
+const pendingResume = ref(resumable && resolvedCount(resumable) > 0 ? resumable : null)
 
 const {
   attempt,
@@ -71,6 +83,13 @@ const {
   submitCurrent,
   revealCurrent
 } = useExercise(moduleId)
+
+// Zero-progress resumable: adopt it as the current exercise instead of
+// prompting OR generating a new one (which would orphan it). Runs in setup so
+// it's already rendered server-side.
+if (resumable && resolvedCount(resumable) === 0) {
+  hydrate(resumable)
+}
 
 const pendingResumeProgress = computed(() => {
   if (!pendingResume.value) return null
@@ -92,9 +111,11 @@ onMounted(async () => {
   // user's in-progress attempt. Also refresh the progression the bootstrap
   // couldn't provide.
   if (bootstrapError.value) {
-    const { attempt: resumable } = await exerciseApi.current(moduleId)
-    if (resumable) {
-      pendingResume.value = resumable
+    const { attempt: recovered } = await exerciseApi.current(moduleId)
+    if (recovered) {
+      // Same rule as setup: prompt only if there's real progress, else adopt.
+      if (resolvedCount(recovered) > 0) pendingResume.value = recovered
+      else hydrate(recovered)
       return
     }
     await refreshProgress()

@@ -509,7 +509,7 @@
     },
     "finalized": {
       "success": "Bien joué ! Exercice complété sans aide.",
-      "failed": "Exercice terminé. Au prochain essai sans révéler !"
+      "failed": "Exercice terminé avec de l'aide. Réessaie sans révéler pour le compléter en autonomie !"
     },
     "resume": {
       "banner_label": "Exercice en cours",

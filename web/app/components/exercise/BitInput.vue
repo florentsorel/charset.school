@@ -9,6 +9,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
+  // Fired when focus would move past this input's edges, so a parent (e.g.
+  // BitGroupsInput) can hand focus to a sibling group.
+  'overflow': []
+  'underflow': []
 }>()
 
 // Default: 8 bits per row on narrow viewports, 16 once 685px is reached
@@ -35,7 +39,16 @@ const rows = computed(() => {
   return out
 })
 
-const refs = ref<HTMLInputElement[]>([])
+const container = ref<HTMLElement | null>(null)
+
+// Inputs in DOM order == bit order (rows render in order, cells within a row
+// in order), so the i-th input is bit i regardless of how many rows/byte
+// separators are between them. More robust than tracking a per-cell ref array
+// across re-renders / responsive row reflows.
+function inputAt(index: number): HTMLInputElement | undefined {
+  const clamped = Math.min(props.length - 1, Math.max(0, index))
+  return container.value?.querySelectorAll<HTMLInputElement>('input.bit-input')[clamped]
+}
 
 function setCell(index: number, char: string) {
   const next = cells.value.slice()
@@ -71,6 +84,15 @@ function onKeydown(index: number, ev: KeyboardEvent) {
   } else if (ev.key === 'ArrowRight') {
     ev.preventDefault()
     focusNext(index)
+  } else if (ev.key === 'ArrowUp') {
+    // Up = 1, Down = 0, then advance to the next cell - same flow as typing 0/1.
+    ev.preventDefault()
+    setCell(index, '1')
+    focusNext(index)
+  } else if (ev.key === 'ArrowDown') {
+    ev.preventDefault()
+    setCell(index, '0')
+    focusNext(index)
   } else if (ev.key === '0' || ev.key === '1') {
     ev.preventDefault()
     setCell(index, ev.key)
@@ -79,16 +101,38 @@ function onKeydown(index: number, ev: KeyboardEvent) {
 }
 
 function focusNext(index: number) {
-  refs.value[Math.min(props.length - 1, index + 1)]?.focus()
+  if (index >= props.length - 1) {
+    emit('overflow')
+    return
+  }
+  inputAt(index + 1)?.focus()
 }
 
 function focusPrev(index: number) {
-  refs.value[Math.max(0, index - 1)]?.focus()
+  if (index <= 0) {
+    emit('underflow')
+    return
+  }
+  inputAt(index - 1)?.focus()
 }
+
+// Let a parent move focus into this input from a sibling.
+function focusFirst() {
+  inputAt(0)?.focus()
+}
+
+function focusLast() {
+  inputAt(props.length - 1)?.focus()
+}
+
+defineExpose({ focusFirst, focusLast })
 </script>
 
 <template>
-  <span class="bit-rows">
+  <span
+    ref="container"
+    class="bit-rows"
+  >
     <span
       v-for="(row, ri) in rows"
       :key="ri"
@@ -103,7 +147,6 @@ function focusPrev(index: number) {
           class="bit-sep-mid"
         />
         <input
-          :ref="el => { if (el) refs[i] = el as HTMLInputElement }"
           class="bit bit-input"
           type="text"
           inputmode="numeric"
