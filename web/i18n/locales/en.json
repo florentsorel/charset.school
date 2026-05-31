@@ -509,7 +509,7 @@
     },
     "finalized": {
       "success": "Nice! Exercise solved unaided.",
-      "failed": "Exercise done. Try again without revealing!"
+      "failed": "Exercise done with help. Try again without revealing to solve it on your own!"
     },
     "resume": {
       "banner_label": "Exercise in progress",

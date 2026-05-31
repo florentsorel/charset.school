@@ -11,7 +11,9 @@ const emit = defineEmits<{
 }>()
 
 type BitInputExposed = { focusFirst: () => void, focusLast: () => void }
-const groups = ref<BitInputExposed[]>([])
+// Nullable: Vue invokes the function ref with `null` on unmount/patch, and we
+// assign it so stale instances are cleared (e.g. when groupLengths changes).
+const groups = ref<(BitInputExposed | null)[]>([])
 
 function setGroup(index: number, value: string) {
   const next = props.modelValue.slice()
@@ -62,7 +64,7 @@ function markerRole(_char: string, byteIndex: number): 'marker' | 'cont' {
         >{{ char }}</span>
       </span>
       <BitInput
-        :ref="el => { if (el) groups[i] = el as unknown as BitInputExposed }"
+        :ref="el => { groups[i] = (el as unknown as BitInputExposed | null) }"
         :model-value="modelValue[i] ?? ''"
         :length="length"
         :disabled="disabled"
