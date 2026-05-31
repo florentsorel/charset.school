@@ -5,7 +5,10 @@ const props = defineProps<{
   boundaryEvery?: number
   wrapEvery?: number
   disabled?: boolean
+  lockedPrefix?: number
 }>()
+
+const lockedCount = computed(() => props.lockedPrefix ?? 0)
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
@@ -46,7 +49,7 @@ const container = ref<HTMLElement | null>(null)
 // separators are between them. More robust than tracking a per-cell ref array
 // across re-renders / responsive row reflows.
 function inputAt(index: number): HTMLInputElement | undefined {
-  const clamped = Math.min(props.length - 1, Math.max(0, index))
+  const clamped = Math.min(props.length - 1, Math.max(lockedCount.value, index))
   return container.value?.querySelectorAll<HTMLInputElement>('input.bit-input')[clamped]
 }
 
@@ -74,9 +77,10 @@ function onKeydown(index: number, ev: KeyboardEvent) {
     ev.preventDefault()
     if (cells.value[index]) {
       setCell(index, '')
-    } else {
+    } else if (index > lockedCount.value) {
+      // Only step back into editable cells - never clear a locked padding bit.
       focusPrev(index)
-      setCell(Math.max(0, index - 1), '')
+      setCell(index - 1, '')
     }
   } else if (ev.key === 'ArrowLeft') {
     ev.preventDefault()
@@ -109,16 +113,17 @@ function focusNext(index: number) {
 }
 
 function focusPrev(index: number) {
-  if (index <= 0) {
+  if (index <= lockedCount.value) {
     emit('underflow')
     return
   }
   inputAt(index - 1)?.focus()
 }
 
-// Let a parent move focus into this input from a sibling.
+// Let a parent move focus into this input from a sibling. Starts at the first
+// editable cell (skips any locked padding prefix).
 function focusFirst() {
-  inputAt(0)?.focus()
+  inputAt(lockedCount.value)?.focus()
 }
 
 function focusLast() {
@@ -148,11 +153,12 @@ defineExpose({ focusFirst, focusLast })
         />
         <input
           class="bit bit-input"
+          :class="{ 'bit-input-locked': i < lockedCount }"
           type="text"
           inputmode="numeric"
           maxlength="1"
           :value="cells[i]"
-          :disabled="disabled"
+          :disabled="disabled || i < lockedCount"
           :aria-label="$t('exercise.bit_input_label', { n: i + 1 })"
           @input="onInput(i, $event)"
           @keydown="onKeydown(i, $event)"
@@ -183,5 +189,12 @@ defineExpose({ focusFirst, focusLast })
 }
 .bit-input:disabled {
   opacity: 0.5;
+}
+/* Pre-filled padding bits: given, not opacity-dimmed like a disabled field -
+   shown muted to read as "fixed context" rather than "unavailable". */
+.bit-input-locked {
+  opacity: 1;
+  color: var(--color-faint);
+  background: var(--color-subtle);
 }
 </style>

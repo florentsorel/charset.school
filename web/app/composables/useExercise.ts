@@ -1,5 +1,6 @@
 import type {
   AnswerPayload,
+  Direction,
   ExerciseStep,
   GenerateExerciseResponse,
   ModuleId,
@@ -68,7 +69,7 @@ export function useExercise(moduleId: ModuleId) {
       const fresh = await api.generate({ moduleId })
       const seededInputs: Record<number, StepInput> = {}
       fresh.steps.forEach((step, i) => {
-        seededInputs[i] = initialInput(step)
+        seededInputs[i] = initialInput(step, fresh.steps, fresh.direction)
       })
       attempt.value = fresh
       currentStepIndex.value = 0
@@ -87,7 +88,7 @@ export function useExercise(moduleId: ModuleId) {
     resume.steps.forEach((step, i) => {
       const state = resume.stepStates[i]
       const restoredInput = state?.userAnswer ? revealedAnswerToInput(step, state.userAnswer) : null
-      seededInputs[i] = restoredInput ?? initialInput(step)
+      seededInputs[i] = restoredInput ?? initialInput(step, resume.steps, resume.direction)
       if (state) {
         // A revealed step is resolved (read-only) even though the DB stores
         // `correct = false`. Treat it as done for rendering so the user sees
@@ -203,6 +204,13 @@ export function useExercise(moduleId: ModuleId) {
     }
   }
 
+  // Locked (pre-filled) leading cells for a step's BitInput - the decode
+  // binary padding zeros. 0 for everything else.
+  function binaryLockedPrefix(step: ExerciseStep): number {
+    if (!attempt.value) return 0
+    return decodeBinaryPadding(step, attempt.value.steps, attempt.value.direction)
+  }
+
   return {
     attempt,
     currentStepIndex,
@@ -220,7 +228,8 @@ export function useExercise(moduleId: ModuleId) {
     hydrate,
     setInput,
     submitCurrent,
-    revealCurrent
+    revealCurrent,
+    binaryLockedPrefix
   }
 }
 
@@ -257,10 +266,24 @@ function revealedAnswerToInput(step: ExerciseStep, answer: RevealedAnswer): Step
   }
 }
 
-function initialInput(step: ExerciseStep): StepInput {
+// In a decode exercise, the binary step's leading bits are pure byte-alignment
+// padding (zeros): length minus the useful bits (= sum of the bit-groups step's
+// group lengths, which the user already established). We pre-fill that padding
+// instead of making the user type it. Encode keeps padding manual (its binary
+// step comes before the count, so the padding is part of the work). Returns 0
+// when not applicable.
+function decodeBinaryPadding(step: ExerciseStep, steps: ExerciseStep[], direction: Direction): number {
+  if (direction !== 'decode' || step.type !== 'binary') return 0
+  const bitGroups = steps.find(s => s.type === 'bit-groups')
+  if (!bitGroups || bitGroups.type !== 'bit-groups') return 0
+  const useful = bitGroups.groupLengths.reduce((sum, n) => sum + n, 0)
+  return Math.max(0, step.length - useful)
+}
+
+function initialInput(step: ExerciseStep, steps: ExerciseStep[], direction: Direction): StepInput {
   switch (step.type) {
     case 'format': return { type: 'format', value: null }
-    case 'binary': return { type: 'binary', bits: '' }
+    case 'binary': return { type: 'binary', bits: '0'.repeat(decodeBinaryPadding(step, steps, direction)) }
     case 'bit-groups': return { type: 'bit-groups', groups: step.groupLengths.map(() => '') }
     case 'hex-bytes': return { type: 'hex-bytes', bytes: [] }
     case 'code-point': return { type: 'code-point', codePoint: null }

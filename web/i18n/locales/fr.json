@@ -41,12 +41,11 @@
       "Validation étape par étape, pas seulement à la fin",
       "Erreurs expliquées en français, pas en codes",
       "Code points tirés au hasard - pas de fin",
-      "9 modules - UTF-8, UTF-16, UTF-32, Latin-1, mojibake…"
+      "9 modules - UTF-8, UTF-16, UTF-32, Latin-1, mojibake..."
     ],
     "coach": {
-      "step_label": "encoder UTF-8 · insérer les marqueurs",
-      "your_answer": "Ta réponse",
-      "feedback": "Tu as oublié le marqueur. U+00E9 (entre U+0080 et U+07FF) tient en 2 octets → premier octet commence par 110xxxxx."
+      "step_label": "encoder UTF-8 · découper les bits utiles",
+      "feedback": "Les marqueurs (110, 10) sont fixes - tu ne remplis que le payload. Bonne taille, mauvais bits : revois ton découpage du code point."
     },
     "modules_kicker": "9 modules pour t'entraîner",
     "modules": {
@@ -531,6 +530,8 @@
   },
   "feedback": {
     "default": "La réponse n'est pas correcte. Réessaie.",
+    "answer.type-mismatch": "Type de réponse inattendu pour cette étape.",
+    "format.empty": "Choisis un format.",
     "format.unknown-choice": "Le choix `{got}` n'est pas dans les options proposées.",
     "format.wrong-choice": "Ce n'est pas le bon format. Regarde la plage de valeurs où tombe le code point.",
     "binary.empty": "Saisis une suite de bits.",
@@ -544,10 +545,10 @@
     "bit-groups.invalid-character": "Le groupe à la position `{position}` contient des caractères autres que `0` et `1`.",
     "bit-groups.wrong-value": "Les groupes ont la bonne taille mais le contenu ne correspond pas. Vérifie que tu as bien réparti les bits du code point dans le format.",
     "hex-bytes.empty": "Saisis les octets en hexadécimal.",
-    "hex-bytes.wrong-byte-count": "Tu as saisi `{got-count}` octet(s), `{expected-count}` attendu(s).",
-    "hex-bytes.invalid-byte": "L'octet à la position `{position}` (`{got}`) n'est pas valide (0..255).",
+    "hex-bytes.too-few-bytes": "Il manque des octets : tu en as `{got-count}` sur `{expected-count}`.",
+    "hex-bytes.too-many-bytes": "Trop d'octets : tu en as `{got-count}`, on en attend exactement `{expected-count}`.",
+    "hex-bytes.byte-out-of-range": "L'octet à la position `{position}` (`{got}`) est hors plage (0..255).",
     "hex-bytes.wrong-value": "Le nombre d'octets est bon mais la valeur ne correspond pas. Recompose les bits du format en hex (4 bits par chiffre).",
-    "code-point.empty": "Saisis le code point.",
     "code-point.out-of-range": "`{got}` est hors de la plage Unicode (`U+0000` → `U+10FFFF`).",
     "code-point.surrogate": "`{got}` est dans la plage des surrogates (`U+D800` → `U+DFFF`), interdite en Unicode.",
     "code-point.wrong-value": "Code point incorrect. Vérifie ta conversion binaire → décimal puis décimal → hex.",

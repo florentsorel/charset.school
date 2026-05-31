@@ -41,12 +41,11 @@
       "Step-by-step validation, not just at the end",
       "Errors explained in plain English, not error codes",
       "Code points drawn at random - no end",
-      "9 modules - UTF-8, UTF-16, UTF-32, Latin-1, mojibake…"
+      "9 modules - UTF-8, UTF-16, UTF-32, Latin-1, mojibake..."
     ],
     "coach": {
-      "step_label": "encode UTF-8 · insert markers",
-      "your_answer": "Your answer",
-      "feedback": "The first byte must start with 110 (the '2-byte sequence' marker). Without it, the decoder reads it as ASCII."
+      "step_label": "encode UTF-8 · split the useful bits",
+      "feedback": "The markers (110, 10) are fixed - you only fill the payload. Right size, wrong bits: recheck how you split the code point."
     },
     "modules_kicker": "9 modules to practise with",
     "modules": {
@@ -531,6 +530,8 @@
   },
   "feedback": {
     "default": "Not quite right. Try again.",
+    "answer.type-mismatch": "Unexpected answer type for this step.",
+    "format.empty": "Pick a format.",
     "format.unknown-choice": "The choice `{got}` is not in the offered options.",
     "format.wrong-choice": "Wrong format. Check which value range the code point falls into.",
     "binary.empty": "Enter a sequence of bits.",
@@ -544,10 +545,10 @@
     "bit-groups.invalid-character": "The group at position `{position}` contains characters other than `0` and `1`.",
     "bit-groups.wrong-value": "Groups have the right size but content doesn't match. Check how you split the code point bits into the format.",
     "hex-bytes.empty": "Enter the hex bytes.",
-    "hex-bytes.wrong-byte-count": "You entered `{got-count}` byte(s), `{expected-count}` expected.",
-    "hex-bytes.invalid-byte": "Byte at position `{position}` (`{got}`) is not valid (0..255).",
+    "hex-bytes.too-few-bytes": "Bytes are missing: you have `{got-count}` of `{expected-count}`.",
+    "hex-bytes.too-many-bytes": "Too many bytes: you have `{got-count}`, exactly `{expected-count}` expected.",
+    "hex-bytes.byte-out-of-range": "Byte at position `{position}` (`{got}`) is out of range (0..255).",
     "hex-bytes.wrong-value": "Byte count is right but the value doesn't match. Re-assemble the format bits into hex (4 bits per hex digit).",
-    "code-point.empty": "Enter the code point.",
     "code-point.out-of-range": "`{got}` is outside the Unicode range (`U+0000` → `U+10FFFF`).",
     "code-point.surrogate": "`{got}` is in the surrogate range (`U+D800` → `U+DFFF`), which is forbidden in Unicode.",
     "code-point.wrong-value": "Wrong code point. Check your binary → decimal then decimal → hex conversion.",

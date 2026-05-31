@@ -81,7 +81,8 @@ const {
   hydrate,
   setInput,
   submitCurrent,
-  revealCurrent
+  revealCurrent,
+  binaryLockedPrefix
 } = useExercise(moduleId)
 
 // Zero-progress resumable: adopt it as the current exercise instead of
@@ -417,6 +418,7 @@ useHead({
                 :model-value="currentInput.bits"
                 :length="step.length"
                 :boundary-every="8"
+                :locked-prefix="binaryLockedPrefix(step)"
                 @update:model-value="setInput({ type: 'binary', bits: $event })"
               />
               <BitGroupsInput

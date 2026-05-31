@@ -1,5 +1,5 @@
 export default defineI18nConfig(() => ({
-  legacy: false,
+  flatJson: true,
   datetimeFormats: {
     fr: {
       long: {
