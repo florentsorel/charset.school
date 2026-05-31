@@ -9,7 +9,7 @@ RUN corepack enable
 COPY . .
 
 RUN pnpm install --frozen-lockfile
-RUN pnpm build
+RUN NODE_OPTIONS=--max-old-space-size=6144 pnpm build
 
 FROM node:24-alpine
 
