@@ -1,30 +1,30 @@
 <script setup lang="ts">
-// Static "coach correcting a mistake" preview for the landing aperçu
-// section. Shows the user mid-exercise (step 4 of "encode UTF-8" for
-// U+00E9) with a wrong marker on byte 1, plus the coach explaining what's
-// missing. Illustrates the "Un coach qui te corrige bit à bit" promise
-// without re-doing the encoding demo from the hero.
+// Static "coach correcting a mistake" preview for the landing aperçu section.
+// Mirrors the real BitGroups step ("split the useful bits") for U+00E9 (é,
+// 2 bytes): the UTF-8 markers (110 / 10) are shown as FIXED context - the
+// user only fills the useful payload bits - and the coach catches a wrong
+// payload bit, not a marker. Illustrates "a coach that corrects you bit by
+// bit" without re-doing the hero's encoding demo.
 
 const { t } = useI18n()
 
-// Byte 1 — wrong: the user forgot to insert the `110` 2-byte marker
-// and wrote the raw padding zeros + tail bits into the byte. The first
-// 3 bits are highlighted as wrong; the trailing 5 happen to match the
-// correct payload.
-const byte1 = [
-  { bit: '0', wrong: true },
-  { bit: '0', wrong: true },
-  { bit: '0', wrong: true },
-  { bit: '0', wrong: false },
-  { bit: '0', wrong: false },
-  { bit: '0', wrong: false },
-  { bit: '1', wrong: false },
-  { bit: '1', wrong: false }
+type Kind = 'marker' | 'cont' | 'boundary' | 'payload' | 'wrong'
+
+// Byte 0 (target 0xC3 = 11000011): marker `110` then payload `00011`. The
+// user got the last payload bit wrong (typed 0, should be 1).
+const byte0: Array<{ bit: string, kind: Kind }> = [
+  { bit: '1', kind: 'marker' },
+  { bit: '1', kind: 'marker' },
+  { bit: '0', kind: 'boundary' },
+  { bit: '0', kind: 'payload' },
+  { bit: '0', kind: 'payload' },
+  { bit: '0', kind: 'payload' },
+  { bit: '1', kind: 'payload' },
+  { bit: '0', kind: 'wrong' }
 ]
 
-// Byte 2 — correct: `10` (cont prefix) + `101001` (payload).
-type Kind = 'cont' | 'boundary' | 'payload'
-const byte2: Array<{ bit: string, kind: Kind }> = [
+// Byte 1 (0xA9 = 10101001): cont marker `10` then payload `101001` - correct.
+const byte1: Array<{ bit: string, kind: Kind }> = [
   { bit: '1', kind: 'cont' },
   { bit: '0', kind: 'boundary' },
   { bit: '1', kind: 'payload' },
@@ -56,20 +56,16 @@ const byte2: Array<{ bit: string, kind: Kind }> = [
       >é</span>
     </div>
 
-    <p class="font-mono text-xs uppercase tracking-widest text-faint mb-2">
-      {{ t('landing.coach.your_answer') }}
-    </p>
-
     <div class="flex flex-col gap-1.5 mb-5">
       <div
         class="bit-row"
         style="gap: 2px;"
       >
         <span
-          v-for="(b, i) in byte1"
-          :key="`b1-${i}`"
+          v-for="(b, i) in byte0"
+          :key="`b0-${i}`"
           class="bit"
-          :class="b.wrong ? 'bit-wrong' : 'bit-payload'"
+          :class="`bit-${b.kind}`"
           style="width: 1.5rem; height: 1.85rem; font-size: 13px;"
         >{{ b.bit }}</span>
       </div>
@@ -78,8 +74,8 @@ const byte2: Array<{ bit: string, kind: Kind }> = [
         style="gap: 2px;"
       >
         <span
-          v-for="(b, i) in byte2"
-          :key="`b2-${i}`"
+          v-for="(b, i) in byte1"
+          :key="`b1-${i}`"
           class="bit"
           :class="`bit-${b.kind}`"
           style="width: 1.5rem; height: 1.85rem; font-size: 13px;"
