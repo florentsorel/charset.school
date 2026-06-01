@@ -244,6 +244,17 @@ function stepTitleKey(stepType: string): string {
   return `exercise.step_title.${stepType}`
 }
 
+// In the UTF-8 module, flag which legacy single-byte encoding also covers this
+// code point: <= 0x7F is the ASCII range (1 byte, identical in ASCII/Latin-1/UTF-8);
+// 0x80-0xFF is the Latin-1 range (1 byte in Latin-1, but 2 bytes in UTF-8 - the
+// divergence behind mojibake). Above 0xFF: Unicode-only, no badge.
+function legacyBadge(codePoint: number | null | undefined): 'ascii' | 'latin1' | null {
+  if (!isUtf8 || codePoint == null) return null
+  if (codePoint <= 0x7F) return 'ascii'
+  if (codePoint <= 0xFF) return 'latin1'
+  return null
+}
+
 // Binary grouping separator. UTF-8 is byte-aligned (every 8). For UTF-16 we
 // group by nibble (every 4) at the binary step: the value being converted is a
 // hex number (code point - 0x10000), so 4-bit groups line up 1:1 with the hex
@@ -384,6 +395,12 @@ useHead({
             </p>
             <div class="exercise-prompt-card-content">
               <span class="codepoint-glyph">{{ attempt.codePointLabel }}</span>
+              <abbr
+                v-if="legacyBadge(attempt.codePoint)"
+                class="legacy-badge"
+                :title="t(`exercise.legacy_badge.${legacyBadge(attempt.codePoint)}_hint`)"
+                :aria-label="t(`exercise.legacy_badge.${legacyBadge(attempt.codePoint)}_hint`)"
+              >{{ t(`exercise.legacy_badge.${legacyBadge(attempt.codePoint)}`) }}</abbr>
             </div>
           </div>
           <div v-if="endianness">
@@ -623,6 +640,12 @@ useHead({
                 </template>
                 <template v-else-if="step.type === 'code-point'">
                   <span class="codepoint-glyph">U+{{ codePointResolvedValue(index).toString(16).toUpperCase().padStart(4, '0') }}</span>
+                  <abbr
+                    v-if="legacyBadge(codePointResolvedValue(index))"
+                    class="legacy-badge"
+                    :title="t(`exercise.legacy_badge.${legacyBadge(codePointResolvedValue(index))}_hint`)"
+                    :aria-label="t(`exercise.legacy_badge.${legacyBadge(codePointResolvedValue(index))}_hint`)"
+                  >{{ t(`exercise.legacy_badge.${legacyBadge(codePointResolvedValue(index))}`) }}</abbr>
                 </template>
                 <template v-else-if="step.type === 'useful-bit-count'">
                   <span class="font-mono text-sm">{{ usefulBitCountResolvedValue(index) }} {{ t('exercise.useful_bit_count_suffix') }}</span>
@@ -739,6 +762,20 @@ useHead({
   font-size: 2.1rem;
   line-height: 1;
   letter-spacing: 0.04em;
+}
+.legacy-badge {
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-mute);
+  background: var(--color-subtle);
+  border: 1px solid var(--color-rule);
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  cursor: help;
+  text-decoration: none;
 }
 .byte-display {
   display: inline-flex;

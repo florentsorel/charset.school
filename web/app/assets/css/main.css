@@ -104,6 +104,15 @@
   --color-bit-payload-soft: #1B2A3D;
 }
 
+:root {
+  --ui-border: var(--color-rule);
+  --ui-border-muted: var(--color-rule);
+  --ui-border-accented: var(--color-rule-strong);
+  --ui-bg: var(--color-surface);
+  --ui-bg-muted: var(--color-subtle);
+  --ui-bg-elevated: var(--color-subtle);
+}
+
 html {
   scrollbar-gutter: stable;
   /* Authoritative header height: AppHeader is pinned to exactly this value
@@ -654,6 +663,12 @@ abbr[title] {
 .app-dropdown-item:hover,
 .app-dropdown-item[data-highlighted] {
   background: var(--color-subtle);
+}
+
+.app-dropdown-subitem {
+  padding-left: 2.35rem;
+  font-size: 0.85rem;
+  color: var(--color-mute);
 }
 
 .app-dropdown-item-icon {

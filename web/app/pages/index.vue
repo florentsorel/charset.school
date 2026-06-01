@@ -11,20 +11,11 @@ useHead({
   titleTemplate: () => `${t('landing.title_tagline')} · charset.school`
 })
 
-// Modules listed in the landing teaser. `to` is set only for modules that
-// are actually playable today (the rest are previews). Built modules render
-// as links to their exercise route.
-const modules = [
-  { id: 'utf8-encode', order: '01', to: '/exercise/encode/utf-8' },
-  { id: 'utf8-decode', order: '02', to: '/exercise/decode/utf-8' },
-  { id: 'utf16-encode', order: '03', to: '/exercise/encode/utf-16' },
-  { id: 'utf16-decode', order: '04', to: '/exercise/decode/utf-16' },
-  { id: 'utf32-encode', order: '05', to: '/exercise/encode/utf-32' },
-  { id: 'utf32-decode', order: '06', to: '/exercise/decode/utf-32' },
-  { id: 'latin1', order: '07', to: null },
-  { id: 'identify', order: '08', to: null },
-  { id: 'mojibake', order: '09', to: null }
-] as const
+// Modules listed in the landing teaser, each linking to its exercise route
+// (shared with the header "Exercises" menu). ASCII / Latin-1 are folded into the
+// UTF-8 module (range badge), not separate modules; Windows-1252 / mojibake /
+// identify-encoding are out of scope.
+const modules = useExerciseModules()
 
 // `tm` returns the raw messages array (vue-i18n compiles each entry to an
 // AST node when the message compiler is enabled). `rt` resolves an AST node
@@ -141,16 +132,14 @@ const bulletItems = computed(() => tm('landing.bullets') as unknown as string[])
         {{ t('landing.modules_kicker') }}
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        <component
-          :is="m.to ? NuxtLink : 'div'"
-          v-for="m in modules"
+        <NuxtLink
+          v-for="(m, i) in modules"
           :key="m.id"
-          :to="m.to ? localePath(m.to) : undefined"
-          class="block p-4 rounded-md border border-rule transition-colors"
-          :class="m.to ? 'hover:border-rule-strong' : 'opacity-55'"
+          :to="localePath(m.to)"
+          class="block p-4 rounded-md border border-rule transition-colors hover:border-rule-strong"
         >
           <div class="font-mono text-xs uppercase tracking-widest text-faint mb-1">
-            {{ m.order }}
+            {{ String(i + 1).padStart(2, '0') }}
           </div>
           <div class="text-sm font-medium leading-tight">
             {{ t(`landing.modules.${m.id}.title`) }}
@@ -158,7 +147,7 @@ const bulletItems = computed(() => tm('landing.bullets') as unknown as string[])
           <p class="text-xs text-mute mt-1">
             {{ t(`landing.modules.${m.id}.subtitle`) }}
           </p>
-        </component>
+        </NuxtLink>
       </div>
     </section>
   </main>
