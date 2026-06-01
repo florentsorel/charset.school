@@ -197,6 +197,11 @@ class ExposedExerciseAttemptRepository(
                 it[AttemptStepEndiannessTable.stepId] = stepId
                 it[expected] = step.expected
             }
+
+            is Step.Offset -> AttemptStepOffsetTable.insert {
+                it[AttemptStepOffsetTable.stepId] = stepId
+                it[expected] = step.expected
+            }
         }
     }
 
@@ -227,6 +232,10 @@ class ExposedExerciseAttemptRepository(
             }
 
             is Answer.EndiannessChoice -> AttemptStepEndiannessTable.update({ AttemptStepEndiannessTable.stepId eq stepId }) {
+                it[userAnswer] = answer.value
+            }
+
+            is Answer.OffsetValue -> AttemptStepOffsetTable.update({ AttemptStepOffsetTable.stepId eq stepId }) {
                 it[userAnswer] = answer.value
             }
         }

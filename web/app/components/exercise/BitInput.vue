@@ -18,13 +18,15 @@ const emit = defineEmits<{
   'underflow': []
 }>()
 
-// Default: 8 bits per row on narrow viewports, 16 once 685px is reached
-// (= width below which 16 bits + container padding overflow the input box).
-// Caller can override via `wrapEvery` prop if needed.
-const fitsWide = useFitsWideBitRow()
+// md+ : the whole value on one line (the boundary separator shows the grouping).
+// Below md : a separated binary (boundaryEvery set) wraps at 8 (one byte / two
+// nibbles per line); an unseparated value (e.g. a single bit-group) stays whole.
+// Caller can override with `wrapEvery`.
+const mdUp = useMediaQuery('(min-width: 768px)')
 const effectiveWrap = computed(() => {
   if (props.wrapEvery && props.wrapEvery > 0) return props.wrapEvery
-  return fitsWide.value ? 16 : 8
+  if (mdUp.value) return props.length
+  return props.boundaryEvery && props.boundaryEvery > 0 ? 8 : props.length
 })
 
 const cells = computed(() => {

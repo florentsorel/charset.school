@@ -17,7 +17,7 @@ type StepInput
     | { type: 'hex-bytes', bytes: number[] }
     | { type: 'code-point', codePoint: number | null }
     | { type: 'useful-bit-count', value: number | null }
-    | { type: 'endianness', value: 'big' | 'little' | null }
+    | { type: 'offset', value: number | null }
 
 type StepStatus = {
   correct: boolean
@@ -259,10 +259,8 @@ function revealedAnswerToInput(step: ExerciseStep, answer: RevealedAnswer): Step
       return answer.type === 'code-point' && answer.codePoint != null ? { type: 'code-point', codePoint: answer.codePoint } : null
     case 'useful-bit-count':
       return answer.type === 'useful-bit-count' && answer.count != null ? { type: 'useful-bit-count', value: answer.count } : null
-    case 'endianness':
-      if (answer.type !== 'endianness' || !answer.value) return null
-      if (answer.value !== 'big' && answer.value !== 'little') return null
-      return { type: 'endianness', value: answer.value }
+    case 'offset':
+      return answer.type === 'offset' && answer.offset != null ? { type: 'offset', value: answer.offset } : null
   }
 }
 
@@ -288,7 +286,7 @@ function initialInput(step: ExerciseStep, steps: ExerciseStep[], direction: Dire
     case 'hex-bytes': return { type: 'hex-bytes', bytes: [] }
     case 'code-point': return { type: 'code-point', codePoint: null }
     case 'useful-bit-count': return { type: 'useful-bit-count', value: null }
-    case 'endianness': return { type: 'endianness', value: null }
+    case 'offset': return { type: 'offset', value: null }
   }
 }
 
@@ -307,7 +305,7 @@ function inputToPayload(input: StepInput): AnswerPayload | null {
       return input.codePoint != null ? { type: 'code-point', codePoint: input.codePoint } : null
     case 'useful-bit-count':
       return input.value != null ? { type: 'useful-bit-count', count: input.value } : null
-    case 'endianness':
-      return input.value ? { type: 'endianness', value: input.value } : null
+    case 'offset':
+      return input.value != null ? { type: 'offset', offset: input.value } : null
   }
 }

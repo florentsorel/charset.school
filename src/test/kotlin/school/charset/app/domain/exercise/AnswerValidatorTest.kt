@@ -423,4 +423,51 @@ class AnswerValidatorTest :
                 result.params[ParamKey.EXPECTED_TYPE] shouldBe "useful-bit-count"
             }
         }
+
+        "offset" - {
+            val step = Step.Offset(expected = 0xF389)
+
+            "correct value -> ok" {
+                sut.validate(step, Answer.OffsetValue(0xF389)) shouldBe
+                    ValidationResult.correct()
+            }
+
+            "negative -> offset.out-of-range" {
+                sut.validate(step, Answer.OffsetValue(-1)) shouldBe
+                    ValidationResult.incorrect(
+                        errorType = ErrorType.Offset.OUT_OF_RANGE,
+                        params = mapOf(
+                            ParamKey.GOT to "-1",
+                            ParamKey.MIN to "0",
+                            ParamKey.MAX to "0xFFFFF",
+                        ),
+                    )
+            }
+
+            "above 0xFFFFF -> offset.out-of-range" {
+                sut.validate(step, Answer.OffsetValue(0x100000)) shouldBe
+                    ValidationResult.incorrect(
+                        errorType = ErrorType.Offset.OUT_OF_RANGE,
+                        params = mapOf(
+                            ParamKey.GOT to "1048576",
+                            ParamKey.MIN to "0",
+                            ParamKey.MAX to "0xFFFFF",
+                        ),
+                    )
+            }
+
+            "valid but wrong -> offset.wrong-value (no expected leak)" {
+                sut.validate(step, Answer.OffsetValue(0xF38A)) shouldBe
+                    ValidationResult.incorrect(
+                        errorType = ErrorType.Offset.WRONG_VALUE,
+                        params = mapOf(ParamKey.GOT to "0xF38A"),
+                    )
+            }
+
+            "wrong Answer type -> answer.type-mismatch" {
+                val result = sut.validate(step, Answer.BinaryValue("11"))
+                result.errorType shouldBe ErrorType.Answer.TYPE_MISMATCH
+                result.params[ParamKey.EXPECTED_TYPE] shouldBe "offset"
+            }
+        }
     })

@@ -99,4 +99,16 @@ sealed class Step {
     ) : Step() {
         override val type: StepType = StepType.Endianness
     }
+
+    data class Offset(
+        val expected: Int,
+    ) : Step() {
+        override val type: StepType = StepType.Offset
+
+        init {
+            require(expected in 0..0xFFFFF) {
+                "Offset step expected must be a 20-bit value (0..0xFFFFF), got $expected"
+            }
+        }
+    }
 }

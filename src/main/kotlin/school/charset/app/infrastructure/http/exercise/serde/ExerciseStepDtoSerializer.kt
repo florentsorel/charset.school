@@ -25,6 +25,7 @@ class ExerciseStepDtoSerializer : ValueSerializer<ExerciseStepDto>() {
             ExerciseStepDto.CodePointEntry,
             ExerciseStepDto.UsefulBitCount,
             ExerciseStepDto.Endianness,
+            ExerciseStepDto.Offset,
             -> {
             }
         }

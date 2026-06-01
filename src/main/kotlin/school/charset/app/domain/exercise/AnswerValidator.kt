@@ -9,6 +9,30 @@ class AnswerValidator {
         is Step.CodePointEntry -> validateCodePoint(step, answer)
         is Step.UsefulBitCount -> validateUsefulBitCount(step, answer)
         is Step.Endianness -> validateEndianness(step, answer)
+        is Step.Offset -> validateOffset(step, answer)
+    }
+
+    private fun validateOffset(step: Step.Offset, answer: Answer): ValidationResult {
+        if (answer !is Answer.OffsetValue) return typeMismatch(step, answer)
+
+        return when {
+            // The 20-bit range is public structure, not the answer - safe to echo bounds.
+            answer.value !in 0..0xFFFFF -> ValidationResult.incorrect(
+                errorType = ErrorType.Offset.OUT_OF_RANGE,
+                params = mapOf(
+                    ParamKey.GOT to answer.value.toString(),
+                    ParamKey.MIN to "0",
+                    ParamKey.MAX to "0xFFFFF",
+                ),
+            )
+
+            answer.value != step.expected -> ValidationResult.incorrect(
+                errorType = ErrorType.Offset.WRONG_VALUE,
+                params = mapOf(ParamKey.GOT to "0x%X".format(answer.value)),
+            )
+
+            else -> ValidationResult.correct()
+        }
     }
 
     private fun validateUsefulBitCount(step: Step.UsefulBitCount, answer: Answer): ValidationResult {

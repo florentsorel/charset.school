@@ -185,4 +185,30 @@ class StepTest :
                 }
             }
         }
+
+        "Offset" - {
+            "valid value builds" {
+                Step.Offset(expected = 0xF389).expected shouldBe 0xF389
+            }
+
+            "lower bound 0 builds" {
+                Step.Offset(expected = 0).expected shouldBe 0
+            }
+
+            "upper bound 0xFFFFF builds" {
+                Step.Offset(expected = 0xFFFFF).expected shouldBe 0xFFFFF
+            }
+
+            "negative throws" {
+                shouldThrow<IllegalArgumentException> {
+                    Step.Offset(expected = -1)
+                }
+            }
+
+            "above 0xFFFFF throws" {
+                shouldThrow<IllegalArgumentException> {
+                    Step.Offset(expected = 0x100000)
+                }
+            }
+        }
     })

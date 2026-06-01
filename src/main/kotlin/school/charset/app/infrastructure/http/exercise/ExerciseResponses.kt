@@ -71,6 +71,7 @@ data class RevealedAnswer(
     val bytes: List<Int>? = null,
     val codePoint: Int? = null,
     val count: Int? = null,
+    val offset: Int? = null,
 )
 
 fun ExerciseAttempt.toResumeResponse(decodeBytes: List<Int>?): ResumeExerciseResponse {
@@ -155,6 +156,8 @@ private fun Step.toRevealedAnswer(): RevealedAnswer = when (this) {
             Encoding.Endian.LittleEndian -> "little"
         },
     )
+
+    is Step.Offset -> RevealedAnswer(type = "offset", offset = expected)
 }
 
 private fun Answer.toRevealedAnswer(): RevealedAnswer = when (this) {
@@ -177,4 +180,6 @@ private fun Answer.toRevealedAnswer(): RevealedAnswer = when (this) {
             Encoding.Endian.LittleEndian -> "little"
         },
     )
+
+    is Answer.OffsetValue -> RevealedAnswer(type = "offset", offset = value)
 }

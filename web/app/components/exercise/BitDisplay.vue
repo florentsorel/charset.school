@@ -17,10 +17,13 @@ const props = withDefaults(
   }
 )
 
-const fitsWide = useFitsWideBitRow()
+// Mirrors BitInput: md+ shows the whole value on one line; below md a separated
+// binary wraps at 8 (byte / two nibbles per line), an unseparated value stays whole.
+const mdUp = useMediaQuery('(min-width: 768px)')
 const effectiveWrap = computed(() => {
   if (props.wrapEvery && props.wrapEvery > 0) return props.wrapEvery
-  return fitsWide.value ? 16 : 8
+  if (mdUp.value) return props.bits.length
+  return props.boundaryEvery && props.boundaryEvery > 0 ? 8 : props.bits.length
 })
 
 const roleClass: Record<BitRole, string> = {

@@ -59,6 +59,14 @@ object AttemptStepUsefulBitCountTable : Table("attempt_step_useful_bit_count") {
     override val primaryKey = PrimaryKey(stepId)
 }
 
+object AttemptStepOffsetTable : Table("attempt_step_offset") {
+    val stepId = long("step_id").references(AttemptStepsTable.id)
+    val expected = integer("expected")
+    val userAnswer = integer("user_answer").nullable()
+
+    override val primaryKey = PrimaryKey(stepId)
+}
+
 object AttemptStepEndiannessTable : Table("attempt_step_endianness") {
     val stepId = long("step_id").references(AttemptStepsTable.id)
     val expected = varchar("expected", 16).transform(
@@ -168,6 +176,17 @@ fun selectChildRows(type: StepType, stepIds: List<Long>): List<Pair<Long, Pair<S
                 row[AttemptStepEndiannessTable.stepId] to (
                     Step.Endianness(expected = row[AttemptStepEndiannessTable.expected]) to
                         row[AttemptStepEndiannessTable.userAnswer]?.let(Answer::EndiannessChoice)
+                    )
+            }
+
+    StepType.Offset ->
+        AttemptStepOffsetTable
+            .selectAll()
+            .where { AttemptStepOffsetTable.stepId inList stepIds }
+            .map { row ->
+                row[AttemptStepOffsetTable.stepId] to (
+                    Step.Offset(expected = row[AttemptStepOffsetTable.expected]) to
+                        row[AttemptStepOffsetTable.userAnswer]?.let(Answer::OffsetValue)
                     )
             }
 }

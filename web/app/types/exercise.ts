@@ -70,7 +70,7 @@ export type StepType
     | 'hex-bytes'
     | 'code-point'
     | 'useful-bit-count'
-    | 'endianness'
+    | 'offset'
 
 export type ExerciseStep
   = | { type: 'format', choices: string[] }
@@ -79,7 +79,7 @@ export type ExerciseStep
     | { type: 'hex-bytes', byteCount: number }
     | { type: 'code-point' }
     | { type: 'useful-bit-count' }
-    | { type: 'endianness' }
+    | { type: 'offset' }
 
 export type GenerateExerciseRequest = {
   moduleId: ModuleId
@@ -122,7 +122,7 @@ export type AnswerPayload
     | { type: 'hex-bytes', bytes: number[] }
     | { type: 'code-point', codePoint: number }
     | { type: 'useful-bit-count', count: number }
-    | { type: 'endianness', value: 'big' | 'little' }
+    | { type: 'offset', offset: number }
 
 export type ValidateStepRequest = {
   attemptId: number
@@ -152,6 +152,7 @@ export type RevealedAnswer = {
   bytes?: number[] | null
   codePoint?: number | null
   count?: number | null
+  offset?: number | null
 }
 
 export type RevealStepResponse = {

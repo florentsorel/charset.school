@@ -50,4 +50,9 @@ object ErrorType {
         const val NON_POSITIVE = "useful-bit-count.non-positive"
         const val WRONG_VALUE = "useful-bit-count.wrong-value"
     }
+
+    object Offset {
+        const val OUT_OF_RANGE = "offset.out-of-range"
+        const val WRONG_VALUE = "offset.wrong-value"
+    }
 }
