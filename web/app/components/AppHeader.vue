@@ -143,6 +143,8 @@ const mobileDropdownUi = {
           <button
             type="button"
             class="btn btn-ghost text-sm gap-1"
+            aria-haspopup="true"
+            aria-controls="header-exercises-menu"
             :aria-expanded="exercisesOpen"
             @click="exercisesOpen = !exercisesOpen"
           >
@@ -230,9 +232,11 @@ const mobileDropdownUi = {
       >
         <div
           class="fixed inset-0 z-30"
+          aria-hidden="true"
           @click="closeExercises"
         />
         <nav
+          id="header-exercises-menu"
           class="fixed left-0 right-0 z-40 bg-page border-b border-rule shadow-sm top-[var(--header-height)]"
           :aria-label="t('header.exercises')"
         >

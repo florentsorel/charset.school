@@ -395,11 +395,12 @@ useHead({
             </p>
             <div class="exercise-prompt-card-content">
               <span class="codepoint-glyph">{{ attempt.codePointLabel }}</span>
-              <span
+              <abbr
                 v-if="legacyBadge(attempt.codePoint)"
                 class="legacy-badge"
                 :title="t(`exercise.legacy_badge.${legacyBadge(attempt.codePoint)}_hint`)"
-              >{{ t(`exercise.legacy_badge.${legacyBadge(attempt.codePoint)}`) }}</span>
+                :aria-label="t(`exercise.legacy_badge.${legacyBadge(attempt.codePoint)}_hint`)"
+              >{{ t(`exercise.legacy_badge.${legacyBadge(attempt.codePoint)}`) }}</abbr>
             </div>
           </div>
           <div v-if="endianness">
@@ -639,11 +640,12 @@ useHead({
                 </template>
                 <template v-else-if="step.type === 'code-point'">
                   <span class="codepoint-glyph">U+{{ codePointResolvedValue(index).toString(16).toUpperCase().padStart(4, '0') }}</span>
-                  <span
+                  <abbr
                     v-if="legacyBadge(codePointResolvedValue(index))"
                     class="legacy-badge"
                     :title="t(`exercise.legacy_badge.${legacyBadge(codePointResolvedValue(index))}_hint`)"
-                  >{{ t(`exercise.legacy_badge.${legacyBadge(codePointResolvedValue(index))}`) }}</span>
+                    :aria-label="t(`exercise.legacy_badge.${legacyBadge(codePointResolvedValue(index))}_hint`)"
+                  >{{ t(`exercise.legacy_badge.${legacyBadge(codePointResolvedValue(index))}`) }}</abbr>
                 </template>
                 <template v-else-if="step.type === 'useful-bit-count'">
                   <span class="font-mono text-sm">{{ usefulBitCountResolvedValue(index) }} {{ t('exercise.useful_bit_count_suffix') }}</span>
@@ -773,6 +775,7 @@ useHead({
   padding: 0.12rem 0.4rem;
   border-radius: 4px;
   cursor: help;
+  text-decoration: none;
 }
 .byte-display {
   display: inline-flex;
