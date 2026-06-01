@@ -18,15 +18,21 @@ const emit = defineEmits<{
   'underflow': []
 }>()
 
-// md+ : the whole value on one line (the boundary separator shows the grouping).
-// Below md : a separated binary (boundaryEvery set) wraps at 8 (one byte / two
-// nibbles per line); an unseparated value (e.g. a single bit-group) stays whole.
-// Caller can override with `wrapEvery`.
+// A separated binary (boundaryEvery set) wraps; an unseparated value (a single
+// bit-group) stays whole. For the binary: below md it's 8 per row (one byte /
+// two nibbles); on md+ the whole value sits on one line when it fits (<= 20
+// bits, e.g. UTF-16), otherwise it wraps at the boundary so long binaries
+// (UTF-8 4-byte = 24, UTF-32 = 32) don't overflow. Caller can override via `wrapEvery`.
 const mdUp = useMediaQuery('(min-width: 768px)')
 const effectiveWrap = computed(() => {
   if (props.wrapEvery && props.wrapEvery > 0) return props.wrapEvery
-  if (mdUp.value) return props.length
-  return props.boundaryEvery && props.boundaryEvery > 0 ? 8 : props.length
+  if (props.boundaryEvery && props.boundaryEvery > 0) {
+    if (!mdUp.value) return 8
+    // One line when it fits (<= 20 bits), else two groups per row (e.g. UTF-32
+    // 32-bit -> 16 | 16, UTF-8 4-byte -> 16 | 8) so long binaries don't overflow.
+    return props.length <= 20 ? props.length : props.boundaryEvery * 2
+  }
+  return props.length
 })
 
 const cells = computed(() => {

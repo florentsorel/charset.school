@@ -2,7 +2,7 @@
 import type { Direction, EncodingSlug, ModuleId, ResumeExerciseResponse } from '~/types/exercise'
 import { Directions, EncodingSlugs, MaxLevelByModule, ModuleIdByRoute, STREAK_FOR_LEVEL_UP } from '~/types/exercise'
 
-const SUPPORTED_IN_SLICE: ModuleId[] = ['utf8-encode', 'utf8-decode', 'utf16-encode', 'utf16-decode']
+const SUPPORTED_IN_SLICE: ModuleId[] = ['utf8-encode', 'utf8-decode', 'utf16-encode', 'utf16-decode', 'utf32-encode', 'utf32-decode']
 
 definePageMeta({
   validate(route) {
