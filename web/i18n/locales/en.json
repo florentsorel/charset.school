@@ -542,6 +542,14 @@
       "utf16-decode": {
         "title": "Charset Playground - Decode UTF-16",
         "prompt": "Decode these UTF-16 bytes into a code point."
+      },
+      "utf32-encode": {
+        "title": "Charset Playground - Encode UTF-32",
+        "prompt": "Encode this code point in UTF-32."
+      },
+      "utf32-decode": {
+        "title": "Charset Playground - Decode UTF-32",
+        "prompt": "Decode these UTF-32 bytes into a code point."
       }
     }
   },

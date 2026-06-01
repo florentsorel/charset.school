@@ -19,8 +19,8 @@ const modules = [
   { id: 'utf8-decode', order: '02', to: '/exercise/decode/utf-8' },
   { id: 'utf16-encode', order: '03', to: '/exercise/encode/utf-16' },
   { id: 'utf16-decode', order: '04', to: '/exercise/decode/utf-16' },
-  { id: 'utf32-encode', order: '05', to: null },
-  { id: 'utf32-decode', order: '06', to: null },
+  { id: 'utf32-encode', order: '05', to: '/exercise/encode/utf-32' },
+  { id: 'utf32-decode', order: '06', to: '/exercise/decode/utf-32' },
   { id: 'latin1', order: '07', to: null },
   { id: 'identify', order: '08', to: null },
   { id: 'mojibake', order: '09', to: null }

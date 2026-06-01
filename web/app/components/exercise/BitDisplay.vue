@@ -17,13 +17,18 @@ const props = withDefaults(
   }
 )
 
-// Mirrors BitInput: md+ shows the whole value on one line; below md a separated
-// binary wraps at 8 (byte / two nibbles per line), an unseparated value stays whole.
+// Mirrors BitInput: a separated binary wraps (8/row below md; one line on md+
+// when <= 20 bits, else at the boundary so 24/32-bit binaries don't overflow);
+// an unseparated value stays whole.
 const mdUp = useMediaQuery('(min-width: 768px)')
 const effectiveWrap = computed(() => {
   if (props.wrapEvery && props.wrapEvery > 0) return props.wrapEvery
-  if (mdUp.value) return props.bits.length
-  return props.boundaryEvery && props.boundaryEvery > 0 ? 8 : props.bits.length
+  if (props.boundaryEvery && props.boundaryEvery > 0) {
+    if (!mdUp.value) return 8
+    // One line when it fits (<= 20 bits), else two groups per row (UTF-32 -> 16 | 16).
+    return props.bits.length <= 20 ? props.bits.length : props.boundaryEvery * 2
+  }
+  return props.bits.length
 })
 
 const roleClass: Record<BitRole, string> = {

@@ -4,6 +4,7 @@ import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Exercise
 import school.charset.app.domain.exercise.ExerciseGenerationException
+import school.charset.app.domain.exercise.Step
 
 class Utf32ExerciseGenerator(
     private val codec: Codec,
@@ -25,7 +26,7 @@ class Utf32ExerciseGenerator(
     override fun generateEncode(level: Int): Exercise.Encode {
         val utf32Level = parseLevel(level)
         val codePoint = codePointGenerator.randomUtf32(utf32Level)
-        val steps = utf32Generator.buildEncodeStepsFor(codePoint, endian)
+        val steps = utf32Generator.buildEncodeStepsFor(codePoint, endian).withoutEndianness()
         return Exercise.Encode(codePoint, encoding, level, steps)
     }
 
@@ -33,9 +34,15 @@ class Utf32ExerciseGenerator(
         val utf32Level = parseLevel(level)
         val bytes = byteArrayGenerator.randomUtf32(utf32Level, encoding)
         val codePoint = codec.decode(bytes, encoding)
-        val steps = utf32Generator.buildDecodeStepsFor(bytes, codePoint, endian)
+        val steps = utf32Generator.buildDecodeStepsFor(bytes, codePoint, endian).withoutEndianness()
         return Exercise.Decode(bytes, codePoint, encoding, level, steps)
     }
+
+    // The exercise gives the target endianness in its header (a random BE/LE), it
+    // isn't something the learner derives - so it's not a step. Byte order is
+    // still tested via the hex-bytes step. The sandbox keeps the endianness step
+    // (shared Utf32Generator) for its explanation panel.
+    private fun List<Step>.withoutEndianness(): List<Step> = filterNot { it is Step.Endianness }
 
     private fun parseLevel(level: Int): Utf32Level = Utf32Level.fromNumber(level)
         ?: throw ExerciseGenerationException(
