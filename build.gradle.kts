@@ -57,7 +57,7 @@ dependencies {
     testImplementation(platform("io.kotest:kotest-bom:6.1.11"))
     testImplementation("io.kotest:kotest-runner-junit5")
     testImplementation("io.kotest:kotest-assertions-core")
-    testImplementation("io.mockk:mockk:1.14.9")
+    testImplementation("io.mockk:mockk:1.14.11")
 
     "intTestImplementation"("org.testcontainers:testcontainers-junit-jupiter")
     "intTestImplementation"("org.springframework.boot:spring-boot-testcontainers")
