@@ -15,18 +15,18 @@ class ExposedProgressRepository(
     private val clock: Clock,
 ) : ProgressRepository {
 
-    override fun findByUserAndModule(userId: Long, module: ExerciseModule): ModuleProgress? = transaction {
+    override fun findByTokenAndModule(token: String, module: ExerciseModule): ModuleProgress? = transaction {
         ModuleProgressTable
             .selectAll()
-            .where { (ModuleProgressTable.userId eq userId) and (ModuleProgressTable.moduleId eq module) }
+            .where { (ModuleProgressTable.token eq token) and (ModuleProgressTable.moduleId eq module) }
             .singleOrNull()
             ?.toModuleProgress()
     }
 
-    override fun findAllByUser(userId: Long): List<ModuleProgress> = transaction {
+    override fun findAllByToken(token: String): List<ModuleProgress> = transaction {
         ModuleProgressTable
             .selectAll()
-            .where { ModuleProgressTable.userId eq userId }
+            .where { ModuleProgressTable.token eq token }
             .map { it.toModuleProgress() }
     }
 
@@ -34,12 +34,12 @@ class ExposedProgressRepository(
         val now = clock.now()
         val existing = ModuleProgressTable
             .selectAll()
-            .where { (ModuleProgressTable.userId eq progress.userId) and (ModuleProgressTable.moduleId eq progress.module) }
+            .where { (ModuleProgressTable.token eq progress.token) and (ModuleProgressTable.moduleId eq progress.module) }
             .singleOrNull()
 
         if (existing == null) {
             ModuleProgressTable.insert {
-                it[userId] = progress.userId
+                it[token] = progress.token
                 it[moduleId] = progress.module
                 it[level] = progress.level.toShort()
                 it[streak] = progress.streak
@@ -51,7 +51,7 @@ class ExposedProgressRepository(
             }
         } else {
             ModuleProgressTable.update(
-                { (ModuleProgressTable.userId eq progress.userId) and (ModuleProgressTable.moduleId eq progress.module) },
+                { (ModuleProgressTable.token eq progress.token) and (ModuleProgressTable.moduleId eq progress.module) },
             ) {
                 it[level] = progress.level.toShort()
                 it[streak] = progress.streak

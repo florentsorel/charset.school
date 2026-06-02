@@ -251,14 +251,6 @@ abbr[title] {
   background: var(--color-subtle);
   font-weight: 500;
 }
-.sandbox-nav-link-disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-.sandbox-nav-link-disabled:hover {
-  background: transparent;
-  color: var(--color-mute);
-}
 
 /* Sandbox-specific sizing: bigger headline glyph + tighter result-byte cells. */
 .codepoint-label-lg { font-size: 1.75rem; line-height: 1; }

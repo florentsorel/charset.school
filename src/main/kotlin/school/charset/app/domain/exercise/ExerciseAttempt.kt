@@ -6,7 +6,7 @@ import kotlin.time.Instant
 
 data class ExerciseAttempt(
     val id: Long,
-    val userId: Long,
+    val token: String,
     val module: ExerciseModule,
     val level: Int,
     val codePoint: CodePoint,

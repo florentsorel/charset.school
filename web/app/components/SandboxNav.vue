@@ -23,22 +23,12 @@ const { groups, isActive } = useSandboxModules()
           :key="m.to"
         >
           <NuxtLink
-            v-if="m.available"
             :to="localePath(m.to)"
             class="sandbox-nav-link"
             :class="{ 'sandbox-nav-link-active': isActive(m.to) }"
           >
             {{ t(`landing.modules.${m.catalogKey}.title`) }}
           </NuxtLink>
-          <div
-            v-else
-            class="sandbox-nav-link sandbox-nav-link-disabled"
-          >
-            <span>{{ t(`landing.modules.${m.catalogKey}.title`) }}</span>
-            <span class="text-[10px] uppercase tracking-wider text-faint">
-              {{ t('sandbox.landing.coming_soon') }}
-            </span>
-          </div>
         </li>
       </ul>
     </div>

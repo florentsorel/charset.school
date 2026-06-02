@@ -12,7 +12,7 @@ class ModuleProgressTest :
         // Utf8Encode caps at level 4, so there is headroom to test mid-ladder
         // advancement as well as the ceiling.
         fun progress(level: Int, streak: Int): ModuleProgress = ModuleProgress(
-            userId = 1,
+            token = "tok-1",
             module = ExerciseModule.Utf8Encode,
             level = level,
             streak = streak,

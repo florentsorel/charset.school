@@ -1,9 +1,6 @@
 <script setup lang="ts">
-definePageMeta({ auth: false })
-
 const { t, tm, rt } = useI18n()
 const localePath = useLocalePath()
-const { isAuthenticated } = useAuth()
 
 const NuxtLink = resolveComponent('NuxtLink')
 
@@ -46,22 +43,14 @@ const bulletItems = computed(() => tm('landing.bullets') as unknown as string[])
           </p>
           <div class="flex items-center gap-3 flex-wrap">
             <NuxtLink
-              v-if="!isAuthenticated"
-              :to="localePath('/register')"
+              :to="localePath('/exercise/encode/utf-8')"
               class="btn btn-primary"
             >
               {{ t('landing.cta_primary') }}
             </NuxtLink>
             <NuxtLink
-              v-if="!isAuthenticated"
-              :to="localePath('/login')"
-              class="btn btn-ghost"
-            >
-              {{ t('landing.cta_secondary') }}
-            </NuxtLink>
-            <NuxtLink
               :to="localePath('/sandbox')"
-              :class="isAuthenticated ? 'btn btn-primary' : 'btn btn-ghost'"
+              class="btn btn-ghost"
             >
               {{ t('landing.cta_sandbox') }}
             </NuxtLink>

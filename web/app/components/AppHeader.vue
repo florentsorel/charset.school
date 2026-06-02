@@ -2,7 +2,6 @@
 const { t } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
-const { isAuthenticated, user, logout } = useAuth()
 
 // The 6 playable exercise modules (shared with the home grid), with localized
 // labels from `landing.modules.<id>`.
@@ -34,51 +33,16 @@ watch(() => route.fullPath, () => {
   exercisesExpanded.value = false
 })
 
-async function onLogout() {
-  try {
-    await logout()
-  } finally {
-    await navigateTo(localePath('/login'))
-  }
-}
-
-// First letters of `user.name`, falling back to the email prefix. Code-point
-// aware (Array.from) so emojis / multi-byte glyphs don't break.
-const initials = computed(() => {
-  if (!user.value) return ''
-  const source = user.value.name?.trim() || user.value.email
-  const words = source.split(/\s+/)
-  return words
-    .map(w => Array.from(w)[0] ?? '')
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-})
-
-// Dropdown items for the authenticated user avatar (desktop) and the mobile
-// hamburger. The locale switcher used to live here too, but it overrode the
-// per-user locale stored in the profile — language is now managed solely
-// from the profile settings.
-const authedItems = computed(() => [
-  { label: t('header.my_profile'), icon: 'i-lucide-user', to: localePath('/profile') },
-  { label: t('auth.logout'), icon: 'i-lucide-log-out', onSelect: onLogout }
-])
-
-const guestItems = computed(() => [
-  { label: t('auth.login'), icon: 'i-lucide-log-in', to: localePath('/login') },
-  { label: t('auth.register'), icon: 'i-lucide-user-plus', to: localePath('/register') }
-])
-
 const sandboxItem = computed(() => ({
   label: t('header.sandbox'),
   icon: 'i-lucide-flask-conical',
   to: localePath('/sandbox')
 }))
 
-// Burger groups: an expandable "Exercises" sub-menu first, then sandbox + auth.
-// The toggle item calls preventDefault so selecting it grows the list in place
+// Burger groups: an expandable "Exercises" sub-menu first, then sandbox. The
+// toggle item calls preventDefault so selecting it grows the list in place
 // rather than closing the menu; its 6 links are injected (indented) when open.
+// Theme + locale live outside the menu, as toggle pills next to the burger.
 const mobileMenuItems = computed(() => {
   const exercisesToggle = {
     label: t('header.exercises'),
@@ -94,7 +58,7 @@ const mobileMenuItems = computed(() => {
     : []
   return [
     [exercisesToggle, ...exerciseChildren],
-    [sandboxItem.value, ...(isAuthenticated.value ? authedItems.value : guestItems.value)]
+    [sandboxItem.value]
   ]
 })
 
@@ -169,41 +133,16 @@ const mobileDropdownUi = {
           {{ t('header.sandbox') }}
         </NuxtLink>
 
-        <template v-if="!isAuthenticated">
-          <NuxtLink
-            :to="localePath('/login')"
-            class="btn btn-ghost text-sm"
-          >
-            {{ t('auth.login') }}
-          </NuxtLink>
-          <NuxtLink
-            :to="localePath('/register')"
-            class="btn btn-primary text-sm"
-          >
-            {{ t('auth.register') }}
-          </NuxtLink>
-        </template>
-
-        <UDropdownMenu
-          v-else
-          :items="authedItems"
-          :ui="dropdownUi"
-        >
-          <button
-            type="button"
-            class="user-avatar"
-            :aria-label="t('header.user_menu')"
-            :title="t('header.user_menu')"
-          >
-            {{ initials }}
-          </button>
-        </UDropdownMenu>
+        <ThemeToggle />
+        <LocaleToggle />
       </div>
 
-      <!-- Burger (< lg). Same wrapper-div trick. The dropdown panel is forced
-           to full viewport width via the .app-dropdown--full modifier, anchored
-           to the right edge of the trigger. Holds the exercises + sandbox + auth. -->
-      <div class="lg:hidden">
+      <!-- Burger cluster (< lg): a locale pill + the menu. The dropdown panel is
+           forced to full viewport width via the .app-dropdown--full modifier,
+           anchored to the right edge of the trigger. Holds exercises + sandbox. -->
+      <div class="lg:hidden flex items-center gap-2">
+        <ThemeToggle />
+        <LocaleToggle />
         <UDropdownMenu
           :items="mobileMenuItems"
           :content="{ side: 'bottom', align: 'end', sideOffset: 12, collisionPadding: 0 }"

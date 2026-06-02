@@ -24,7 +24,7 @@ class ExposedExerciseAttemptRepository(
     private val logger = LoggerFactory.getLogger(ExposedExerciseAttemptRepository::class.java)
 
     override fun create(
-        userId: Long,
+        token: String,
         module: ExerciseModule,
         level: Int,
         codePoint: CodePoint,
@@ -33,7 +33,7 @@ class ExposedExerciseAttemptRepository(
     ): ExerciseAttempt = transaction {
         val now = clock.now()
         val attemptId = ExerciseAttemptsTable.insert {
-            it[ExerciseAttemptsTable.userId] = userId
+            it[ExerciseAttemptsTable.token] = token
             it[moduleId] = module
             it[ExerciseAttemptsTable.level] = level.toShort()
             it[ExerciseAttemptsTable.codePoint] = codePoint.value
@@ -70,7 +70,7 @@ class ExposedExerciseAttemptRepository(
 
         ExerciseAttempt(
             id = attemptId,
-            userId = userId,
+            token = token,
             module = module,
             level = level,
             codePoint = codePoint,
@@ -83,14 +83,14 @@ class ExposedExerciseAttemptRepository(
         )
     }
 
-    override fun findLatestUnfinalizedByUserAndModule(
-        userId: Long,
+    override fun findLatestUnfinalizedByTokenAndModule(
+        token: String,
         module: ExerciseModule,
     ): ExerciseAttempt? = transaction {
         ExerciseAttemptsTable
             .selectAll()
             .where {
-                (ExerciseAttemptsTable.userId eq userId)
+                (ExerciseAttemptsTable.token eq token)
                     .and(ExerciseAttemptsTable.moduleId eq module)
                     .and(ExerciseAttemptsTable.finalized eq false)
             }

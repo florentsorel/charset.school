@@ -13,18 +13,18 @@ class ExerciseService(
     private val random: Random,
 ) {
 
-    fun generate(userId: Long, module: ExerciseModule): ExerciseAttempt {
-        // Level is driven by the user's persisted ModuleProgress (auto-
-        // advanced by streak), not by the HTTP request. First-time users
+    fun generate(token: String, module: ExerciseModule): ExerciseAttempt {
+        // Level is driven by the visitor's persisted ModuleProgress (auto-
+        // advanced by streak), not by the HTTP request. First-time visitors
         // start at level 1.
-        val level = progressService.currentLevel(userId, module)
+        val level = progressService.currentLevel(token, module)
         val encoding = pickEncoding(module)
         val exercise = when (module.direction) {
             ExerciseModule.Direction.Encode -> exerciseGenerator.generateEncode(encoding, level)
             ExerciseModule.Direction.Decode -> exerciseGenerator.generateDecode(encoding, level)
         }
         return attemptRepository.create(
-            userId = userId,
+            token = token,
             module = module,
             level = level,
             codePoint = exercise.codePoint,
@@ -33,15 +33,15 @@ class ExerciseService(
         )
     }
 
-    fun findResumable(userId: Long, module: ExerciseModule): ExerciseAttempt? = attemptRepository.findLatestUnfinalizedByUserAndModule(userId, module)
+    fun findResumable(token: String, module: ExerciseModule): ExerciseAttempt? = attemptRepository.findLatestUnfinalizedByTokenAndModule(token, module)
 
     fun validateStep(
-        userId: Long,
+        token: String,
         attemptId: Long,
         stepIndex: Int,
         answer: Answer,
     ): StepSubmissionOutcome {
-        val attempt = loadAttempt(userId, attemptId)
+        val attempt = loadAttempt(token, attemptId)
         if (attempt.finalized) throw AttemptAlreadyFinalizedException(attemptId)
         val targetStep = attempt.steps.getOrNull(stepIndex)
             ?: throw StepNotFoundException(attemptId, stepIndex)
@@ -70,11 +70,11 @@ class ExerciseService(
     }
 
     fun revealStep(
-        userId: Long,
+        token: String,
         attemptId: Long,
         stepIndex: Int,
     ): StepRevealOutcome {
-        val attempt = loadAttempt(userId, attemptId)
+        val attempt = loadAttempt(token, attemptId)
         if (attempt.finalized) throw AttemptAlreadyFinalizedException(attemptId)
         val targetStep = attempt.steps.getOrNull(stepIndex)
             ?: throw StepNotFoundException(attemptId, stepIndex)
@@ -98,9 +98,11 @@ class ExerciseService(
         )
     }
 
-    private fun loadAttempt(userId: Long, attemptId: Long): ExerciseAttempt {
+    private fun loadAttempt(token: String, attemptId: Long): ExerciseAttempt {
         val attempt = attemptRepository.findById(attemptId) ?: throw AttemptNotFoundException(attemptId)
-        if (attempt.userId != userId) throw AttemptNotFoundException(attemptId)
+        // Sole ownership guard: an attempt is scoped to the visitor token that
+        // created it. The token is an unguessable UUID from an HttpOnly cookie.
+        if (attempt.token != token) throw AttemptNotFoundException(attemptId)
         return attempt
     }
 
@@ -112,7 +114,7 @@ class ExerciseService(
 
         val attemptCorrect = attempt.steps.all { it.correct } && attempt.steps.none { it.revealed }
         val result = attemptRepository.finalize(attempt.id, correct = attemptCorrect, durationMs = null)
-        progressService.recordCompletion(attempt.userId, attempt.module, attemptCorrect)
+        progressService.recordCompletion(attempt.token, attempt.module, attemptCorrect)
         return result
     }
 

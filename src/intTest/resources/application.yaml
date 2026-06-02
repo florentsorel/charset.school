@@ -9,11 +9,3 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: false
-
-  session:
-    jdbc:
-      cleanup-cron: "-"
-
-app:
-  remember-me:
-    key: test-only-remember-me-key

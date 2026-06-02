@@ -20,19 +20,9 @@ logging:
     locations: classpath:db/migration
     baseline-on-migrate: false
 
-  session:
-    jdbc:
-      initialize-schema: never
-
 app:
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${APP_DB_URL:jdbc:postgresql://localhost:5432/charset}
     username: ${APP_DB_USERNAME:charset}
     password: ${APP_DB_PASSWORD:charset}
-
-  remember-me:
-    # Must be a stable secret across restarts (otherwise existing remember-me cookies
-    # become invalid). In production: set APP_REMEMBER_ME_KEY to a random 32+ byte
-    # value from a secret store. The dev default is fine for local + CI.
-    key: ${APP_REMEMBER_ME_KEY:charset-school-remember-me-dev-only}

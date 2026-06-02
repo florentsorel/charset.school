@@ -8,7 +8,7 @@ import school.charset.app.domain.progress.ModuleProgress
 
 object ModuleProgressTable : Table("module_progress") {
     val id = long("id").autoIncrement()
-    val userId = long("user_id")
+    val token = varchar("token", 64)
     val moduleId = varchar("module_id", 64).transform(
         wrap = { ExerciseModule.fromId(it) ?: error("Unknown module id from DB: $it") },
         unwrap = { it.id },
@@ -25,7 +25,7 @@ object ModuleProgressTable : Table("module_progress") {
 }
 
 fun ResultRow.toModuleProgress(): ModuleProgress = ModuleProgress(
-    userId = this[ModuleProgressTable.userId],
+    token = this[ModuleProgressTable.token],
     module = this[ModuleProgressTable.moduleId],
     level = this[ModuleProgressTable.level].toInt(),
     streak = this[ModuleProgressTable.streak],
