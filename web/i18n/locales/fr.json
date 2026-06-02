@@ -1,4 +1,8 @@
 {
+  "seo": {
+    "description": "Exercices interactifs pour apprendre l'encodage des caractères - fais les conversions UTF-8, UTF-16 et UTF-32 à la main, étape par étape, avec validation immédiate. Gratuit, sans compte, sans tracking.",
+    "og_image_alt": "charset.school - apprendre l'encodage des caractères à la main"
+  },
   "format-choice": {
     "byte-count": {
       "1": "1 octet · U+0000 → U+007F",

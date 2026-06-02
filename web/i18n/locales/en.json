@@ -1,4 +1,8 @@
 {
+  "seo": {
+    "description": "Interactive exercises to learn character encoding - do the UTF-8, UTF-16 and UTF-32 conversions by hand, step by step, with instant feedback. Free, no account, no tracking.",
+    "og_image_alt": "charset.school - learn character encoding by hand"
+  },
   "format-choice": {
     "byte-count": {
       "1": "1 byte · U+0000 → U+007F",

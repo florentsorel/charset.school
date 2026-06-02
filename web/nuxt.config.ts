@@ -95,12 +95,6 @@ export default defineNuxtConfig({
   },
 
   sitemap: {
-    exclude: [
-      '/profile',
-      '/profile/**',
-      '/fr/profile',
-      '/fr/profile/**'
-    ],
     zeroRuntime: true
   },
 
