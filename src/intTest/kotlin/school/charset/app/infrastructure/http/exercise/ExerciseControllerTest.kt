@@ -58,6 +58,16 @@ class ExerciseControllerTest(
     }
 
     @Test
+    fun `POST exercise generate with an oversized token_id returns 400, not 500`() {
+        // A token longer than the VARCHAR(64) column must be rejected up front
+        // instead of overflowing the DB write.
+        val oversized = Cookie("token_id", "x".repeat(65))
+        generate(oversized, moduleId = "utf8-encode")
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.errorType").value("token-id.missing"))
+    }
+
+    @Test
     fun `POST exercise generate returns the exercise without expected values`() {
         generate(aToken(), moduleId = "utf8-encode")
             .andExpect(status().isOk)
