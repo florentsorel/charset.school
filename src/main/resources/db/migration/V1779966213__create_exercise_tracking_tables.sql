@@ -1,15 +1,16 @@
 -- Exercise tracking: relational, table-per-StepType.
 --
 -- Parent `exercise_attempts` aggregates one full attempt (one exercise) by one
--- user. Parent `attempt_steps` aggregates the micro-questions inside an
--- attempt, with a `step_type` discriminator. Six child tables (one per
--- StepType) hold the type-specific data — `expected` (server-side, never
--- leaves the DB unrevealed) and `user_answer` (filled progressively as the
--- user submits step-by-step via POST /api/exercise/validate).
+-- anonymous visitor (identified by an opaque `token` from an HttpOnly cookie).
+-- Parent `attempt_steps` aggregates the micro-questions inside an attempt, with
+-- a `step_type` discriminator. Six child tables (one per StepType) hold the
+-- type-specific data — `expected` (server-side, never leaves the DB unrevealed)
+-- and `user_answer` (filled progressively as the visitor submits step-by-step
+-- via POST /api/exercise/validate).
 
 CREATE TABLE exercise_attempts (
     id           BIGSERIAL    PRIMARY KEY,
-    user_id      BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token        VARCHAR(64)  NOT NULL,
     module_id    VARCHAR(64)  NOT NULL,
     level        SMALLINT     NOT NULL,
     code_point   INT          NOT NULL,
@@ -20,7 +21,7 @@ CREATE TABLE exercise_attempts (
     created_at   TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_attempts_user_module ON exercise_attempts(user_id, module_id);
+CREATE INDEX idx_attempts_token_module ON exercise_attempts(token, module_id);
 
 -- Parent step table with `step_type` discriminator. `attempts` counts how many
 -- times the user has submitted this step (used to escalate hint level on the

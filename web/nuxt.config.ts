@@ -37,7 +37,7 @@ export default defineNuxtConfig({
   // robots.txt, OG defaults, …
   site: {
     name: 'Charset School',
-    url: 'https://charset.sorel.dev',
+    url: 'https://charset.school',
     defaultLocale: 'en'
   },
 

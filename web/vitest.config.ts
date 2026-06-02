@@ -5,6 +5,9 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     include: ['app/**/*.{test,spec}.ts'],
+    // No frontend unit tests remain after the auth removal; don't fail CI on an
+    // empty suite (page/composable logic is covered by typecheck + build).
+    passWithNoTests: true,
     globals: true
   },
   resolve: {

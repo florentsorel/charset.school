@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ auth: false, layout: 'sandbox' })
+definePageMeta({ layout: 'sandbox' })
 
 const { t, te } = useI18n()
 const { $api } = useNuxtApp()

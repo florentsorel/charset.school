@@ -14,7 +14,7 @@ import school.charset.app.domain.exercise.ExerciseModule
 
 object ExerciseAttemptsTable : Table("exercise_attempts") {
     val id = long("id").autoIncrement()
-    val userId = long("user_id")
+    val token = varchar("token", 64)
     val moduleId = varchar("module_id", 64).transform(
         wrap = { ExerciseModule.fromId(it) ?: error("Unknown module id from DB: $it") },
         unwrap = { it.id },
@@ -67,7 +67,7 @@ fun ResultRow.toExerciseAttempt(): ExerciseAttempt {
 
     return ExerciseAttempt(
         id = attemptId,
-        userId = this[ExerciseAttemptsTable.userId],
+        token = this[ExerciseAttemptsTable.token],
         module = this[ExerciseAttemptsTable.moduleId],
         level = this[ExerciseAttemptsTable.level].toInt(),
         codePoint = CodePoint(this[ExerciseAttemptsTable.codePoint]),

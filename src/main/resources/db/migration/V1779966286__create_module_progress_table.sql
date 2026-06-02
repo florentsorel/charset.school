@@ -1,9 +1,10 @@
--- Per-user per-module progression. One row per (user_id, module_id).
--- Updated whenever the user fully completes an exercise (all steps correct).
+-- Per-visitor per-module progression. One row per (token, module_id), the
+-- token being the opaque anonymous-visitor id from an HttpOnly cookie.
+-- Updated whenever the visitor fully completes an exercise (all steps correct).
 
 CREATE TABLE module_progress (
     id              BIGSERIAL    PRIMARY KEY,
-    user_id         BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token           VARCHAR(64)  NOT NULL,
     module_id       VARCHAR(64)  NOT NULL,
     level           SMALLINT     NOT NULL DEFAULT 1,
     streak          INT          NOT NULL DEFAULT 0,
@@ -12,5 +13,5 @@ CREATE TABLE module_progress (
     last_played_at  TIMESTAMP,
     created_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
-    UNIQUE (user_id, module_id)
+    UNIQUE (token, module_id)
 );

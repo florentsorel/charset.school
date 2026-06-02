@@ -2,7 +2,6 @@ export type SandboxModule = {
   id: string
   to: string
   catalogKey: string
-  available: boolean
 }
 
 export type SandboxModuleGroup = {
@@ -16,30 +15,24 @@ export function useSandboxModules() {
   const route = useRoute()
 
   const encodeModules: SandboxModule[] = [
-    { id: 'utf-8', to: '/sandbox/encode/utf-8', catalogKey: 'utf8-encode', available: true },
-    { id: 'utf-16', to: '/sandbox/encode/utf-16', catalogKey: 'utf16-encode', available: true },
-    { id: 'utf-32', to: '/sandbox/encode/utf-32', catalogKey: 'utf32-encode', available: true },
-    { id: 'latin1', to: '/sandbox/encode/latin1', catalogKey: 'latin1-encode', available: true },
-    { id: 'windows-1252', to: '/sandbox/encode/windows-1252', catalogKey: 'windows1252-encode', available: true }
+    { id: 'utf-8', to: '/sandbox/encode/utf-8', catalogKey: 'utf8-encode' },
+    { id: 'utf-16', to: '/sandbox/encode/utf-16', catalogKey: 'utf16-encode' },
+    { id: 'utf-32', to: '/sandbox/encode/utf-32', catalogKey: 'utf32-encode' },
+    { id: 'latin1', to: '/sandbox/encode/latin1', catalogKey: 'latin1-encode' },
+    { id: 'windows-1252', to: '/sandbox/encode/windows-1252', catalogKey: 'windows1252-encode' }
   ]
 
   const decodeModules: SandboxModule[] = [
-    { id: 'utf-8', to: '/sandbox/decode/utf-8', catalogKey: 'utf8-decode', available: true },
-    { id: 'utf-16', to: '/sandbox/decode/utf-16', catalogKey: 'utf16-decode', available: true },
-    { id: 'utf-32', to: '/sandbox/decode/utf-32', catalogKey: 'utf32-decode', available: true },
-    { id: 'latin1', to: '/sandbox/decode/latin1', catalogKey: 'latin1-decode', available: true },
-    { id: 'windows-1252', to: '/sandbox/decode/windows-1252', catalogKey: 'windows1252-decode', available: true }
-  ]
-
-  const otherModules: SandboxModule[] = [
-    { id: 'identify', to: '/sandbox/identify', catalogKey: 'identify', available: false },
-    { id: 'mojibake', to: '/sandbox/mojibake', catalogKey: 'mojibake', available: false }
+    { id: 'utf-8', to: '/sandbox/decode/utf-8', catalogKey: 'utf8-decode' },
+    { id: 'utf-16', to: '/sandbox/decode/utf-16', catalogKey: 'utf16-decode' },
+    { id: 'utf-32', to: '/sandbox/decode/utf-32', catalogKey: 'utf32-decode' },
+    { id: 'latin1', to: '/sandbox/decode/latin1', catalogKey: 'latin1-decode' },
+    { id: 'windows-1252', to: '/sandbox/decode/windows-1252', catalogKey: 'windows1252-decode' }
   ]
 
   const groups = computed<SandboxModuleGroup[]>(() => [
     { label: t('sandbox.landing.section_encode'), modules: encodeModules },
-    { label: t('sandbox.landing.section_decode'), modules: decodeModules },
-    { label: t('sandbox.landing.section_other'), modules: otherModules }
+    { label: t('sandbox.landing.section_decode'), modules: decodeModules }
   ])
 
   function isActive(to: string): boolean {
@@ -47,7 +40,7 @@ export function useSandboxModules() {
   }
 
   const activeModule = computed<SandboxModule | undefined>(() =>
-    [...encodeModules, ...decodeModules, ...otherModules].find(m => isActive(m.to))
+    [...encodeModules, ...decodeModules].find(m => isActive(m.to))
   )
 
   return { groups, isActive, activeModule }

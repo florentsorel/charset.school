@@ -9,7 +9,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -47,24 +46,30 @@ class ExerciseControllerTest(
     }
 
     @Test
-    fun `POST exercise generate returns 401 without auth`() {
-        val bootstrap: MvcResult = mockMvc.perform(get("/api/auth/me")).andReturn()
-        val xsrfCookie = bootstrap.response.getCookie("XSRF-TOKEN")!!
-
+    fun `POST exercise generate without token_id returns 400`() {
+        // The token_id cookie is minted at the Nuxt edge; a request without it
+        // is a contract violation.
         mockMvc.perform(
             post("/api/exercise/generate")
-                .cookie(xsrfCookie)
-                .header("X-XSRF-TOKEN", xsrfCookie.value)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"moduleId":"utf8-encode"}"""),
-        ).andExpect(status().isUnauthorized)
+        ).andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.errorType").value("token-id.missing"))
+    }
+
+    @Test
+    fun `POST exercise generate with an oversized token_id returns 400, not 500`() {
+        // A token longer than the VARCHAR(64) column must be rejected up front
+        // instead of overflowing the DB write.
+        val oversized = Cookie("token_id", "x".repeat(65))
+        generate(oversized, moduleId = "utf8-encode")
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.errorType").value("token-id.missing"))
     }
 
     @Test
     fun `POST exercise generate returns the exercise without expected values`() {
-        val (sessionCookie, xsrfCookie) = registerAndLogin()
-
-        generate(sessionCookie, xsrfCookie, moduleId = "utf8-encode")
+        generate(aToken(), moduleId = "utf8-encode")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.attemptId").isNumber)
             .andExpect(jsonPath("$.moduleId").value("utf8-encode"))
@@ -78,9 +83,7 @@ class ExerciseControllerTest(
 
     @Test
     fun `decode module exposes bytes input but hides expected code point`() {
-        val (sessionCookie, xsrfCookie) = registerAndLogin()
-
-        generate(sessionCookie, xsrfCookie, moduleId = "utf8-decode")
+        generate(aToken(), moduleId = "utf8-decode")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.direction").value("decode"))
             .andExpect(jsonPath("$.bytes").isArray)
@@ -90,20 +93,18 @@ class ExerciseControllerTest(
 
     @Test
     fun `unknown module returns 422`() {
-        val (sessionCookie, xsrfCookie) = registerAndLogin()
-
-        generate(sessionCookie, xsrfCookie, moduleId = "nope-encode")
+        generate(aToken(), moduleId = "nope-encode")
             .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.errorType").value("exercise.unknown-module"))
     }
 
     @Test
     fun `validate with wrong answer increments attempts and stays incorrect`() {
-        val (sessionCookie, xsrfCookie) = registerAndLogin()
-        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode")
+        val token = aToken()
+        val attempt = generateExerciseJson(token, "utf8-encode")
         val attemptId = (attempt["attemptId"] as Number).toLong()
 
-        validate(sessionCookie, xsrfCookie, attemptId, stepIndex = 0, body = """{"type":"binary","bits":"00000000"}""")
+        validate(token, attemptId, stepIndex = 0, body = """{"type":"binary","bits":"00000000"}""")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.attempts").value(1))
             .andExpect(jsonPath("$.canReveal").value(false))
@@ -112,14 +113,13 @@ class ExerciseControllerTest(
 
     @Test
     fun `reveal before threshold returns 422`() {
-        val (sessionCookie, xsrfCookie) = registerAndLogin()
-        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode")
+        val token = aToken()
+        val attempt = generateExerciseJson(token, "utf8-encode")
         val attemptId = (attempt["attemptId"] as Number).toLong()
 
         mockMvc.perform(
             post("/api/exercise/reveal")
-                .cookie(sessionCookie, xsrfCookie)
-                .header("X-XSRF-TOKEN", xsrfCookie.value)
+                .cookie(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"attemptId":$attemptId,"stepIndex":0}"""),
         ).andExpect(status().isUnprocessableContent)
@@ -128,35 +128,45 @@ class ExerciseControllerTest(
 
     @Test
     fun `validate with missing answer field returns 422 invalid-answer-payload`() {
-        val (sessionCookie, xsrfCookie) = registerAndLogin()
-        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode")
+        val token = aToken()
+        val attempt = generateExerciseJson(token, "utf8-encode")
         val attemptId = (attempt["attemptId"] as Number).toLong()
 
-        validate(sessionCookie, xsrfCookie, attemptId, stepIndex = 0, body = """{"type":"binary"}""")
+        validate(token, attemptId, stepIndex = 0, body = """{"type":"binary"}""")
             .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.errorType").value("exercise.invalid-answer-payload"))
     }
 
     @Test
-    fun `GET current returns null attempt when nothing in progress`() {
-        val (sessionCookie, _) = registerAndLogin()
+    fun `attempt is scoped to the token that created it`() {
+        val owner = aToken()
+        val attempt = generateExerciseJson(owner, "utf8-encode")
+        val attemptId = (attempt["attemptId"] as Number).toLong()
 
-        mockMvc.perform(get("/api/exercise/current").param("moduleId", "utf8-encode").cookie(sessionCookie))
+        // A different visitor token cannot validate someone else's attempt.
+        validate(aToken(), attemptId, stepIndex = 0, body = """{"type":"binary","bits":"00000000"}""")
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.errorType").value("exercise.attempt-not-found"))
+    }
+
+    @Test
+    fun `GET current returns null attempt when nothing in progress`() {
+        mockMvc.perform(get("/api/exercise/current").param("moduleId", "utf8-encode").cookie(aToken()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.attempt").value(null as Any?))
     }
 
     @Test
     fun `GET current returns the in-progress attempt with stepStates and userAnswer`() {
-        val (sessionCookie, xsrfCookie) = registerAndLogin()
-        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode")
+        val token = aToken()
+        val attempt = generateExerciseJson(token, "utf8-encode")
         val attemptId = (attempt["attemptId"] as Number).toLong()
 
-        validate(sessionCookie, xsrfCookie, attemptId, stepIndex = 0, body = """{"type":"format","value":"format-choice.byte-count.2"}""")
+        validate(token, attemptId, stepIndex = 0, body = """{"type":"format","value":"format-choice.byte-count.2"}""")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.ok").value(false))
 
-        mockMvc.perform(get("/api/exercise/current").param("moduleId", "utf8-encode").cookie(sessionCookie))
+        mockMvc.perform(get("/api/exercise/current").param("moduleId", "utf8-encode").cookie(token))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.attempt.attemptId").value(attemptId))
             .andExpect(jsonPath("$.attempt.stepStates[0].correct").value(false))
@@ -168,8 +178,8 @@ class ExerciseControllerTest(
 
     @Test
     fun `GET current excludes finalized attempts`() {
-        val (sessionCookie, xsrfCookie) = registerAndLogin()
-        val attempt = generateExerciseJson(sessionCookie, xsrfCookie, "utf8-encode")
+        val token = aToken()
+        val attempt = generateExerciseJson(token, "utf8-encode")
         val attemptId = (attempt["attemptId"] as Number).toLong()
 
         @Suppress("UNCHECKED_CAST")
@@ -178,84 +188,54 @@ class ExerciseControllerTest(
             val answer = when (step["type"]) {
                 "format" -> """{"type":"format","value":"format-choice.byte-count.1"}"""
                 "hex-bytes" -> {
-                    @Suppress("UNCHECKED_CAST")
                     val bytes = listOf(attempt["codePoint"] as Int)
                     """{"type":"hex-bytes","bytes":$bytes}"""
                 }
                 else -> error("Unexpected step ${step["type"]}")
             }
-            validate(sessionCookie, xsrfCookie, attemptId, stepIndex = idx, body = answer)
+            validate(token, attemptId, stepIndex = idx, body = answer)
                 .andExpect(status().isOk)
         }
 
-        mockMvc.perform(get("/api/exercise/current").param("moduleId", "utf8-encode").cookie(sessionCookie))
+        mockMvc.perform(get("/api/exercise/current").param("moduleId", "utf8-encode").cookie(token))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.attempt").value(null as Any?))
     }
 
     @Test
     fun `GET progress returns empty list before any exercise`() {
-        val (sessionCookie, _) = registerAndLogin()
-
-        mockMvc.perform(get("/api/progress").cookie(sessionCookie))
+        mockMvc.perform(get("/api/progress").cookie(aToken()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.progress").isArray)
             .andExpect(jsonPath("$.progress.length()").value(0))
     }
 
-    private fun generate(
-        sessionCookie: Cookie,
-        xsrfCookie: Cookie,
-        moduleId: String,
-    ): ResultActions = mockMvc.perform(
+    private fun generate(token: Cookie, moduleId: String): ResultActions = mockMvc.perform(
         post("/api/exercise/generate")
-            .cookie(sessionCookie, xsrfCookie)
-            .header("X-XSRF-TOKEN", xsrfCookie.value)
+            .cookie(token)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(
-                mapper.writeValueAsString(
-                    mapOf("moduleId" to moduleId),
-                ),
-            ),
+            .content(mapper.writeValueAsString(mapOf("moduleId" to moduleId))),
     )
 
-    private fun generateExerciseJson(
-        sessionCookie: Cookie,
-        xsrfCookie: Cookie,
-        moduleId: String,
-    ): Map<String, Any?> {
-        val result = generate(sessionCookie, xsrfCookie, moduleId).andReturn()
+    private fun generateExerciseJson(token: Cookie, moduleId: String): Map<String, Any?> {
+        val result = generate(token, moduleId).andReturn()
         @Suppress("UNCHECKED_CAST")
         return mapper.readValue(result.response.contentAsString, Map::class.java) as Map<String, Any?>
     }
 
     private fun validate(
-        sessionCookie: Cookie,
-        xsrfCookie: Cookie,
+        token: Cookie,
         attemptId: Long,
         stepIndex: Int,
         body: String,
     ): ResultActions = mockMvc.perform(
         post("/api/exercise/validate")
-            .cookie(sessionCookie, xsrfCookie)
-            .header("X-XSRF-TOKEN", xsrfCookie.value)
+            .cookie(token)
             .contentType(MediaType.APPLICATION_JSON)
             .content("""{"attemptId":$attemptId,"stepIndex":$stepIndex,"answer":$body}"""),
     )
 
-    private fun registerAndLogin(): Pair<Cookie, Cookie> {
-        val email = "exercise-${Uuid.random()}@example.test"
-        val body = mapper.writeValueAsString(
-            mapOf("email" to email, "password" to "password123", "name" to "Tester", "locale" to "fr"),
-        )
-        val result: MvcResult = mockMvc.perform(
-            post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(body),
-        ).andReturn()
-        return Pair(
-            result.response.getCookie("SESSION")!!,
-            result.response.getCookie("XSRF-TOKEN")!!,
-        )
-    }
+    // A fresh anonymous-visitor cookie. Each call mints a distinct token, so two
+    // calls model two different visitors.
+    private fun aToken(): Cookie = Cookie("token_id", Uuid.random().toString())
 }

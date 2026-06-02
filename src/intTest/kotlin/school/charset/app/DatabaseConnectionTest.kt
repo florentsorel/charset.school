@@ -58,13 +58,13 @@ class DatabaseConnectionTest(
     }
 
     @Test
-    fun `Flyway has run the users migration on startup`() {
-        val usersTableExists = transaction(database) {
+    fun `Flyway has run the migrations on startup`() {
+        val moduleProgressExists = transaction(database) {
             exec(
                 """
                 SELECT EXISTS (
                     SELECT 1 FROM information_schema.tables
-                    WHERE table_schema = 'public' AND table_name = 'users'
+                    WHERE table_schema = 'public' AND table_name = 'module_progress'
                 ) AS present
                 """.trimIndent(),
             ) { rs ->
@@ -72,6 +72,6 @@ class DatabaseConnectionTest(
                 rs.getBoolean("present")
             }
         }
-        usersTableExists shouldBe true
+        moduleProgressExists shouldBe true
     }
 }

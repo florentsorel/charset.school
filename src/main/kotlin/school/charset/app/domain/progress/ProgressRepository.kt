@@ -3,7 +3,7 @@ package school.charset.app.domain.progress
 import school.charset.app.domain.exercise.ExerciseModule
 
 interface ProgressRepository {
-    fun findByUserAndModule(userId: Long, module: ExerciseModule): ModuleProgress?
-    fun findAllByUser(userId: Long): List<ModuleProgress>
+    fun findByTokenAndModule(token: String, module: ExerciseModule): ModuleProgress?
+    fun findAllByToken(token: String): List<ModuleProgress>
     fun upsert(progress: ModuleProgress): ModuleProgress
 }

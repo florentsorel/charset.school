@@ -3,7 +3,6 @@ package school.charset.app.infrastructure.http.exercise
 import jakarta.validation.Valid
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -13,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController
 import school.charset.app.domain.encoding.Codec
 import school.charset.app.domain.exercise.ExerciseModule
 import school.charset.app.domain.exercise.ExerciseService
-import school.charset.app.infrastructure.security.requireUserDetailsAdapter
+import school.charset.app.infrastructure.http.TokenId
 
 @RestController
 @RequestMapping(
@@ -27,13 +26,12 @@ class ExerciseController(
 
     @GetMapping("/current")
     fun current(
-        authentication: Authentication,
+        @TokenId token: String,
         @RequestParam moduleId: String,
     ): ResponseEntity<CurrentExerciseResponse> {
-        val userId = authentication.requireUserDetailsAdapter().userId
         val module = ExerciseModule.fromId(moduleId) ?: throw UnknownModuleException(moduleId)
 
-        val attempt = exerciseService.findResumable(userId, module)
+        val attempt = exerciseService.findResumable(token, module)
             ?: return ResponseEntity.ok(CurrentExerciseResponse(attempt = null))
 
         val decodeBytes = if (module.direction == ExerciseModule.Direction.Decode) {
@@ -46,14 +44,13 @@ class ExerciseController(
 
     @PostMapping("/generate", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun generate(
-        authentication: Authentication,
+        @TokenId token: String,
         @Valid @RequestBody request: GenerateExerciseRequest,
     ): ResponseEntity<GenerateExerciseResponse> {
-        val userId = authentication.requireUserDetailsAdapter().userId
         val module = ExerciseModule.fromId(request.moduleId)
             ?: throw UnknownModuleException(request.moduleId)
 
-        val attempt = exerciseService.generate(userId, module)
+        val attempt = exerciseService.generate(token, module)
         val decodeBytes = if (module.direction == ExerciseModule.Direction.Decode) {
             codec.encode(attempt.codePoint, attempt.encoding).map { it.toInt() and 0xFF }
         } else {
@@ -64,12 +61,11 @@ class ExerciseController(
 
     @PostMapping("/validate", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun validate(
-        authentication: Authentication,
+        @TokenId token: String,
         @Valid @RequestBody request: ValidateStepRequest,
     ): ResponseEntity<ValidateStepResponse> {
-        val userId = authentication.requireUserDetailsAdapter().userId
         val outcome = exerciseService.validateStep(
-            userId = userId,
+            token = token,
             attemptId = request.attemptId,
             stepIndex = request.stepIndex,
             answer = request.answer.toDomain(),
@@ -79,12 +75,11 @@ class ExerciseController(
 
     @PostMapping("/reveal", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun reveal(
-        authentication: Authentication,
+        @TokenId token: String,
         @Valid @RequestBody request: RevealStepRequest,
     ): ResponseEntity<RevealStepResponse> {
-        val userId = authentication.requireUserDetailsAdapter().userId
         val outcome = exerciseService.revealStep(
-            userId = userId,
+            token = token,
             attemptId = request.attemptId,
             stepIndex = request.stepIndex,
         )

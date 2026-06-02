@@ -15,21 +15,17 @@ import school.charset.app.config.ApplicationConfigTest
 import school.charset.app.config.DatabaseConfig
 import school.charset.app.config.ExerciseConfig
 import school.charset.app.config.ProgressConfig
-import school.charset.app.config.UserConfig
 import school.charset.app.domain.encoding.CodePoint
 import school.charset.app.domain.encoding.Encoding
 import school.charset.app.domain.exercise.Answer
 import school.charset.app.domain.exercise.ExerciseAttemptRepository
 import school.charset.app.domain.exercise.ExerciseModule
 import school.charset.app.domain.exercise.Step
-import school.charset.app.domain.user.PasswordHash
-import school.charset.app.domain.user.UserRepository
 import kotlin.uuid.Uuid
 
 @SpringBootTest(
     classes = [
         DatabaseConfig::class,
-        UserConfig::class,
         ExerciseConfig::class,
         ProgressConfig::class,
         ApplicationConfigTest::class,
@@ -39,7 +35,6 @@ import kotlin.uuid.Uuid
 @Testcontainers
 class ExposedExerciseAttemptRepositoryTest(
     private val repository: ExerciseAttemptRepository,
-    private val userRepository: UserRepository,
 ) {
     companion object {
         @Container
@@ -59,7 +54,7 @@ class ExposedExerciseAttemptRepositoryTest(
 
     @Test
     fun `create persists attempt steps and child rows and findById returns them`() {
-        val userId = createUser()
+        val token = aToken()
         val steps = listOf(
             Step.Format(choices = listOf("byte-count.1", "byte-count.2"), expected = "byte-count.2"),
             Step.Binary(expected = "11001000", length = 8),
@@ -67,7 +62,7 @@ class ExposedExerciseAttemptRepositoryTest(
         )
 
         val created = repository.create(
-            userId = userId,
+            token = token,
             module = ExerciseModule.Utf8Encode,
             level = 2,
             codePoint = CodePoint(0xE9),
@@ -76,7 +71,7 @@ class ExposedExerciseAttemptRepositoryTest(
         )
 
         val loaded = repository.findById(created.id)!!
-        loaded.userId shouldBe userId
+        loaded.token shouldBe token
         loaded.module shouldBe ExerciseModule.Utf8Encode
         loaded.level shouldBe 2
         loaded.codePoint.value shouldBe 0xE9
@@ -93,9 +88,9 @@ class ExposedExerciseAttemptRepositoryTest(
 
     @Test
     fun `recordStepSubmission persists user answer, increments attempts and updates correctness`() {
-        val userId = createUser()
+        val token = aToken()
         val attempt = repository.create(
-            userId = userId,
+            token = token,
             module = ExerciseModule.Utf8Encode,
             level = 1,
             codePoint = CodePoint(0x41),
@@ -127,9 +122,9 @@ class ExposedExerciseAttemptRepositoryTest(
 
     @Test
     fun `UsefulBitCount step persists and round-trips`() {
-        val userId = createUser()
+        val token = aToken()
         val attempt = repository.create(
-            userId = userId,
+            token = token,
             module = ExerciseModule.Utf8Encode,
             level = 2,
             codePoint = CodePoint(0xE9),
@@ -154,9 +149,9 @@ class ExposedExerciseAttemptRepositoryTest(
 
     @Test
     fun `Offset step persists and round-trips`() {
-        val userId = createUser()
+        val token = aToken()
         val attempt = repository.create(
-            userId = userId,
+            token = token,
             module = ExerciseModule.Utf16Encode,
             level = 2,
             codePoint = CodePoint(0x1F389),
@@ -180,16 +175,15 @@ class ExposedExerciseAttemptRepositoryTest(
     }
 
     @Test
-    fun `findLatestUnfinalizedByUserAndModule returns null when no attempt exists`() {
-        val userId = createUser()
-        repository.findLatestUnfinalizedByUserAndModule(userId, ExerciseModule.Utf8Encode) shouldBe null
+    fun `findLatestUnfinalizedByTokenAndModule returns null when no attempt exists`() {
+        repository.findLatestUnfinalizedByTokenAndModule(aToken(), ExerciseModule.Utf8Encode) shouldBe null
     }
 
     @Test
-    fun `findLatestUnfinalizedByUserAndModule returns the in-progress attempt`() {
-        val userId = createUser()
+    fun `findLatestUnfinalizedByTokenAndModule returns the in-progress attempt`() {
+        val token = aToken()
         val attempt = repository.create(
-            userId = userId,
+            token = token,
             module = ExerciseModule.Utf8Encode,
             level = 1,
             codePoint = CodePoint(0x41),
@@ -197,15 +191,15 @@ class ExposedExerciseAttemptRepositoryTest(
             steps = listOf(Step.Binary(expected = "01000001", length = 8)),
         )
 
-        val found = repository.findLatestUnfinalizedByUserAndModule(userId, ExerciseModule.Utf8Encode)!!
+        val found = repository.findLatestUnfinalizedByTokenAndModule(token, ExerciseModule.Utf8Encode)!!
         found.id shouldBe attempt.id
     }
 
     @Test
-    fun `findLatestUnfinalizedByUserAndModule excludes finalized attempts`() {
-        val userId = createUser()
+    fun `findLatestUnfinalizedByTokenAndModule excludes finalized attempts`() {
+        val token = aToken()
         val attempt = repository.create(
-            userId = userId,
+            token = token,
             module = ExerciseModule.Utf8Encode,
             level = 1,
             codePoint = CodePoint(0x41),
@@ -214,15 +208,15 @@ class ExposedExerciseAttemptRepositoryTest(
         )
         repository.finalize(attempt.id, correct = true, durationMs = 0)
 
-        repository.findLatestUnfinalizedByUserAndModule(userId, ExerciseModule.Utf8Encode) shouldBe null
+        repository.findLatestUnfinalizedByTokenAndModule(token, ExerciseModule.Utf8Encode) shouldBe null
     }
 
     @Test
-    fun `findLatestUnfinalizedByUserAndModule scopes by user and module`() {
-        val ownerId = createUser()
-        val otherId = createUser()
+    fun `findLatestUnfinalizedByTokenAndModule scopes by token and module`() {
+        val ownerToken = aToken()
+        val otherToken = aToken()
         repository.create(
-            userId = ownerId,
+            token = ownerToken,
             module = ExerciseModule.Utf8Encode,
             level = 1,
             codePoint = CodePoint(0x41),
@@ -230,15 +224,15 @@ class ExposedExerciseAttemptRepositoryTest(
             steps = listOf(Step.Binary(expected = "01000001", length = 8)),
         )
 
-        repository.findLatestUnfinalizedByUserAndModule(otherId, ExerciseModule.Utf8Encode) shouldBe null
-        repository.findLatestUnfinalizedByUserAndModule(ownerId, ExerciseModule.Utf8Decode) shouldBe null
+        repository.findLatestUnfinalizedByTokenAndModule(otherToken, ExerciseModule.Utf8Encode) shouldBe null
+        repository.findLatestUnfinalizedByTokenAndModule(ownerToken, ExerciseModule.Utf8Decode) shouldBe null
     }
 
     @Test
     fun `finalize sets correct, finalized and durationMs`() {
-        val userId = createUser()
+        val token = aToken()
         val attempt = repository.create(
-            userId = userId,
+            token = token,
             module = ExerciseModule.Utf8Encode,
             level = 1,
             codePoint = CodePoint(0x41),
@@ -254,10 +248,5 @@ class ExposedExerciseAttemptRepositoryTest(
         finalized.durationMs shouldBe 1234
     }
 
-    private fun createUser(): Long = userRepository.create(
-        email = "repo-${Uuid.random()}@example.test",
-        name = "Tester",
-        passwordHash = PasswordHash("hash"),
-        locale = "fr",
-    ).id
+    private fun aToken(): String = Uuid.random().toString()
 }

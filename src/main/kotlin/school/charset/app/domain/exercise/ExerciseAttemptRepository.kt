@@ -2,7 +2,7 @@ package school.charset.app.domain.exercise
 
 interface ExerciseAttemptRepository {
     fun create(
-        userId: Long,
+        token: String,
         module: ExerciseModule,
         level: Int,
         codePoint: school.charset.app.domain.encoding.CodePoint,
@@ -12,7 +12,7 @@ interface ExerciseAttemptRepository {
 
     fun findById(attemptId: Long): ExerciseAttempt?
 
-    fun findLatestUnfinalizedByUserAndModule(userId: Long, module: ExerciseModule): ExerciseAttempt?
+    fun findLatestUnfinalizedByTokenAndModule(token: String, module: ExerciseModule): ExerciseAttempt?
 
     fun recordStepSubmission(
         stepId: Long,

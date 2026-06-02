@@ -1,20 +1,16 @@
 package school.charset.app.infrastructure.http
 
-import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
-import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
-import school.charset.app.domain.auth.AuthErrorType
-import school.charset.app.domain.auth.OrphanedSessionException
 import school.charset.app.domain.encoding.DecoderException
 import school.charset.app.domain.encoding.EncoderException
 import school.charset.app.domain.exercise.AttemptAlreadyFinalizedException
@@ -23,13 +19,9 @@ import school.charset.app.domain.exercise.ExerciseGenerationException
 import school.charset.app.domain.exercise.RevealNotAllowedException
 import school.charset.app.domain.exercise.StepAlreadyResolvedException
 import school.charset.app.domain.exercise.StepNotFoundException
-import school.charset.app.domain.profile.CurrentPasswordMismatchException
-import school.charset.app.domain.profile.PasswordConfirmationMismatchException
-import school.charset.app.domain.profile.ProfileValidationKey
 import school.charset.app.domain.sandbox.SandboxBytesParseException
 import school.charset.app.domain.sandbox.SandboxEndianParseException
 import school.charset.app.domain.sandbox.SandboxParseException
-import school.charset.app.domain.user.EmailAlreadyTakenException
 import school.charset.app.infrastructure.http.exercise.InvalidAnswerPayloadException
 import school.charset.app.infrastructure.http.exercise.UnknownModuleException
 
@@ -43,58 +35,16 @@ import school.charset.app.infrastructure.http.exercise.UnknownModuleException
 class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
-    @ExceptionHandler(EmailAlreadyTakenException::class)
-    fun handleEmailAlreadyTaken(ex: EmailAlreadyTakenException): ResponseEntity<ErrorResponse> {
-        log.warn("Registration rejected: email already taken (email={})", ex.email)
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(
-            ErrorResponse(
-                errorType = AuthErrorType.EMAIL_ALREADY_TAKEN,
-                params = mapOf("email" to ex.email),
-            ),
+    @ExceptionHandler(MissingTokenIdException::class)
+    fun handleMissingTokenId(): ResponseEntity<ErrorResponse> {
+        // No token_id cookie reached the API. The cookie is minted at the Nuxt
+        // edge, so this only happens on a direct (non-browser) call - a clear
+        // contract violation, not a silently-created identity.
+        log.warn("Request without token_id cookie")
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            ErrorResponse(errorType = "token-id.missing"),
         )
     }
-
-    @ExceptionHandler(BadCredentialsException::class)
-    fun handleBadCredentials(): ResponseEntity<ErrorResponse> {
-        log.warn("Login rejected: bad credentials")
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-            ErrorResponse(errorType = AuthErrorType.BAD_CREDENTIALS),
-        )
-    }
-
-    @ExceptionHandler(OrphanedSessionException::class)
-    fun handleOrphanedSession(
-        ex: OrphanedSessionException,
-        request: HttpServletRequest,
-    ): ResponseEntity<ErrorResponse> {
-        // Authenticated session pointing at a user that no longer exists in DB
-        // - indicates a data inconsistency, worth surfacing.
-        log.warn("Orphaned session invalidated (userId={})", ex.userId)
-        request.getSession(false)?.invalidate()
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-            ErrorResponse(errorType = AuthErrorType.SESSION_ORPHANED),
-        )
-    }
-
-    @ExceptionHandler(CurrentPasswordMismatchException::class)
-    fun handleCurrentPasswordMismatch(ex: CurrentPasswordMismatchException): ResponseEntity<ErrorResponse> = ResponseEntity
-        .status(HttpStatus.UNPROCESSABLE_CONTENT)
-        .body(
-            ErrorResponse(
-                errorType = "validation.failed",
-                fieldErrors = mapOf(ex.field to listOf(ProfileValidationKey.CURRENT_PASSWORD_MISMATCH)),
-            ),
-        )
-
-    @ExceptionHandler(PasswordConfirmationMismatchException::class)
-    fun handlePasswordConfirmationMismatch(): ResponseEntity<ErrorResponse> = ResponseEntity
-        .status(HttpStatus.UNPROCESSABLE_CONTENT)
-        .body(
-            ErrorResponse(
-                errorType = "validation.failed",
-                fieldErrors = mapOf("confirmPassword" to listOf(ProfileValidationKey.PASSWORD_CONFIRM_MISMATCH)),
-            ),
-        )
 
     @ExceptionHandler(SandboxParseException::class)
     fun handleSandboxParse(ex: SandboxParseException): ResponseEntity<ErrorResponse> = ResponseEntity
