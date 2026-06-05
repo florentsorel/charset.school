@@ -26,8 +26,8 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:319
-#: lib/app_web/components/layouts.ex:331
+#: lib/app_web/components/layouts.ex:433
+#: lib/app_web/components/layouts.ex:445
 #, elixir-autogen, elixir-format
 msgid "Attempting to reconnect"
 msgstr ""
@@ -37,22 +37,25 @@ msgstr ""
 msgid "Code points drawn at random - no end"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:264
+#: lib/app_web/components/layouts.ex:294
+#: lib/app_web/components/layouts.ex:378
 #, elixir-autogen, elixir-format
 msgid "Decode UTF-16"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:276
+#: lib/app_web/components/layouts.ex:295
+#: lib/app_web/components/layouts.ex:390
 #, elixir-autogen, elixir-format
 msgid "Decode UTF-32"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:252
+#: lib/app_web/components/layouts.ex:293
+#: lib/app_web/components/layouts.ex:366
 #, elixir-autogen, elixir-format
 msgid "Decode UTF-8"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:181
+#: lib/app_web/components/layouts.ex:188
 #, elixir-autogen, elixir-format
 msgid "Developed by"
 msgstr ""
@@ -62,17 +65,20 @@ msgstr ""
 msgid "Each exercise is broken into steps. You encode or decode by hand, and the app tells you exactly where you got it wrong - in plain words."
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:258
+#: lib/app_web/components/layouts.ex:284
+#: lib/app_web/components/layouts.ex:372
 #, elixir-autogen, elixir-format
 msgid "Encode UTF-16"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:270
+#: lib/app_web/components/layouts.ex:285
+#: lib/app_web/components/layouts.ex:384
 #, elixir-autogen, elixir-format
 msgid "Encode UTF-32"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:246
+#: lib/app_web/components/layouts.ex:283
+#: lib/app_web/components/layouts.ex:360
 #, elixir-autogen, elixir-format
 msgid "Encode UTF-8"
 msgstr ""
@@ -82,14 +88,14 @@ msgstr ""
 msgid "Errors explained in plain English, not error codes"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:73
-#: lib/app_web/components/layouts.ex:115
-#: lib/app_web/components/layouts.ex:144
+#: lib/app_web/components/layouts.ex:74
+#: lib/app_web/components/layouts.ex:123
+#: lib/app_web/components/layouts.ex:152
 #, elixir-autogen, elixir-format
 msgid "Exercises"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:286
+#: lib/app_web/components/layouts.ex:400
 #, elixir-autogen, elixir-format
 msgid "Interactive exercises to learn character encoding - do the UTF-8, UTF-16 and UTF-32 conversions by hand, step by step, with instant feedback. Free, no account, no tracking."
 msgstr ""
@@ -99,8 +105,8 @@ msgstr ""
 msgid "Interactive exercises to take apart UTF-8, UTF-16 and UTF-32 - by hand, no calculator, step-by-step validation. For developers who actually want to understand the bit-level mechanics."
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:229
-#: lib/app_web/components/layouts.ex:230
+#: lib/app_web/components/layouts.ex:343
+#: lib/app_web/components/layouts.ex:344
 #, elixir-autogen, elixir-format
 msgid "Language"
 msgstr ""
@@ -115,7 +121,7 @@ msgstr ""
 msgid "Learn character encoding,"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:98
+#: lib/app_web/components/layouts.ex:99
 #, elixir-autogen, elixir-format
 msgid "Menu"
 msgstr ""
@@ -125,13 +131,15 @@ msgstr ""
 msgid "Not just a sandbox."
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:82
-#: lib/app_web/components/layouts.ex:159
+#: lib/app_web/components/layouts.ex:83
+#: lib/app_web/components/layouts.ex:167
+#: lib/app_web/components/layouts.ex:254
+#: lib/app_web/components/layouts.ex:306
 #, elixir-autogen, elixir-format
 msgid "Sandbox"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:326
+#: lib/app_web/components/layouts.ex:440
 #, elixir-autogen, elixir-format
 msgid "Something went wrong!"
 msgstr ""
@@ -146,7 +154,7 @@ msgstr ""
 msgid "Step-by-step validation, not just at the end"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:177
+#: lib/app_web/components/layouts.ex:184
 #, elixir-autogen, elixir-format
 msgid "Teaching tool. No tracking, no ads."
 msgstr ""
@@ -156,8 +164,8 @@ msgstr ""
 msgid "The markers (110, 10) are fixed - you only fill the payload. Right size, wrong bits: recheck how you split the code point."
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:207
-#: lib/app_web/components/layouts.ex:208
+#: lib/app_web/components/layouts.ex:321
+#: lib/app_web/components/layouts.ex:322
 #, elixir-autogen, elixir-format
 msgid "Theme"
 msgstr ""
@@ -172,17 +180,17 @@ msgstr ""
 msgid "UTF-8, UTF-16, UTF-32 - encode and decode, with graded levels"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:314
+#: lib/app_web/components/layouts.ex:428
 #, elixir-autogen, elixir-format
 msgid "We can't find the internet"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:253
+#: lib/app_web/components/layouts.ex:367
 #, elixir-autogen, elixir-format
 msgid "bytes → code point"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:292
+#: lib/app_web/components/layouts.ex:406
 #, elixir-autogen, elixir-format
 msgid "charset.school - learn character encoding by hand"
 msgstr ""
@@ -192,7 +200,7 @@ msgstr ""
 msgid "close"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:247
+#: lib/app_web/components/layouts.ex:361
 #, elixir-autogen, elixir-format
 msgid "code point → bytes"
 msgstr ""
@@ -202,7 +210,7 @@ msgstr ""
 msgid "encode UTF-8 · split the useful bits"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:259
+#: lib/app_web/components/layouts.ex:373
 #, elixir-autogen, elixir-format
 msgid "endianness + BOM"
 msgstr ""
@@ -212,12 +220,12 @@ msgstr ""
 msgid "example · encode UTF-8"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:277
+#: lib/app_web/components/layouts.ex:391
 #, elixir-autogen, elixir-format
 msgid "explicit endianness, 4 bytes → code point"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:271
+#: lib/app_web/components/layouts.ex:385
 #, elixir-autogen, elixir-format
 msgid "fixed 4 bytes, padding"
 msgstr ""
@@ -232,7 +240,7 @@ msgstr ""
 msgid "preview"
 msgstr ""
 
-#: lib/app_web/components/layouts.ex:265
+#: lib/app_web/components/layouts.ex:379
 #, elixir-autogen, elixir-format
 msgid "surrogate pairs included"
 msgstr ""
@@ -240,4 +248,337 @@ msgstr ""
 #: lib/app_web/controllers/page_html/home.html.heex:8
 #, elixir-autogen, elixir-format
 msgid "teaching tool"
+msgstr ""
+
+#: lib/app_web/components/sandbox_components.ex:216
+#, elixir-autogen, elixir-format
+msgid "%{n} byte"
+msgid_plural "%{n} bytes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: lib/app_web/components/sandbox_components.ex:221
+#, elixir-autogen, elixir-format
+msgid "1 byte · U+0000 → U+007F"
+msgstr ""
+
+#: lib/app_web/components/sandbox_components.ex:228
+#, elixir-autogen, elixir-format
+msgid "1 code unit · BMP"
+msgstr ""
+
+#: lib/app_web/components/sandbox_components.ex:222
+#, elixir-autogen, elixir-format
+msgid "2 bytes · U+0080 → U+07FF"
+msgstr ""
+
+#: lib/app_web/components/sandbox_components.ex:229
+#, elixir-autogen, elixir-format
+msgid "2 code units · surrogate pair"
+msgstr ""
+
+#: lib/app_web/components/sandbox_components.ex:223
+#, elixir-autogen, elixir-format
+msgid "3 bytes · U+0800 → U+FFFF"
+msgstr ""
+
+#: lib/app_web/components/sandbox_components.ex:226
+#, elixir-autogen, elixir-format
+msgid "4 bytes · U+10000 → U+10FFFF"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:141
+#, elixir-autogen, elixir-format
+msgid "Accepts U+XXXX, 0xXX, decimal, or a single character."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:137
+#: lib/app_web/live/sandbox/utf8_encode.ex:159
+#, elixir-autogen, elixir-format
+msgid "Binary"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:110
+#: lib/app_web/live/sandbox/utf8_decode.ex:134
+#, elixir-autogen, elixir-format
+msgid "Bytes"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:112
+#, elixir-autogen, elixir-format
+msgid "C3 A9, 0xC3 0xA9, or C3A9"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:136
+#, elixir-autogen, elixir-format
+msgid "Code point"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:185
+#, elixir-autogen, elixir-format
+msgid "Code point %{cp} fits in %{bits} significant bits (padded to the form's payload length)."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:181
+#, elixir-autogen, elixir-format
+msgid "Concatenate the groups to rebuild the code point's binary (%{bits} significant bits)."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:131
+#, elixir-autogen, elixir-format
+msgid "Convert a Unicode code point to UTF-8."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:105
+#, elixir-autogen, elixir-format
+msgid "Convert a sequence of UTF-8 bytes into a Unicode code point."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:195
+#, elixir-autogen, elixir-format
+msgid "Convert to a code point"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:182
+#, elixir-autogen, elixir-format
+msgid "Convert to binary"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:222
+#, elixir-autogen, elixir-format
+msgid "Convert to hexadecimal"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:131
+#: lib/app_web/live/sandbox/utf8_encode.ex:153
+#, elixir-autogen, elixir-format
+msgid "Decimal"
+msgstr ""
+
+#: lib/app_web/components/layouts.ex:296
+#, elixir-autogen, elixir-format
+msgid "Decode Latin-1"
+msgstr ""
+
+#: lib/app_web/components/layouts.ex:297
+#, elixir-autogen, elixir-format
+msgid "Decode Windows-1252"
+msgstr ""
+
+#: lib/app_web/components/layouts.ex:291
+#, elixir-autogen, elixir-format
+msgid "Decoding"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:117
+#, elixir-autogen, elixir-format
+msgid "Each binary byte becomes its hex value on `%{count}` digits."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:114
+#, elixir-autogen, elixir-format
+msgid "Each binary byte becomes its hex value on `1` digit."
+msgstr ""
+
+#: lib/app_web/components/layouts.ex:286
+#, elixir-autogen, elixir-format
+msgid "Encode in Latin-1"
+msgstr ""
+
+#: lib/app_web/components/layouts.ex:287
+#, elixir-autogen, elixir-format
+msgid "Encode in Windows-1252"
+msgstr ""
+
+#: lib/app_web/components/layouts.ex:281
+#, elixir-autogen, elixir-format
+msgid "Encoding"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:69
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Enter a code point."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:70
+#, elixir-autogen, elixir-format
+msgid "Enter a hex byte sequence."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:161
+#, elixir-autogen, elixir-format
+msgid "Extract the data bits"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:82
+#, elixir-autogen, elixir-format
+msgid "First byte `0xxxxxxx` (high bit `0`) - plain ASCII, 1 byte only."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:85
+#, elixir-autogen, elixir-format
+msgid "First byte `110xxxxx` (two `1`s then `0`) - 2-byte form."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:88
+#, elixir-autogen, elixir-format
+msgid "First byte `1110xxxx` (three `1`s then `0`) - 3-byte form."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:91
+#, elixir-autogen, elixir-format
+msgid "First byte `11110xxx` (four `1`s then `0`) - 4-byte form."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:164
+#, elixir-autogen, elixir-format
+msgid "For each byte, strip the format marker (`110`/`1110`/`11110` on the leader, `10` on continuations) - what remains are the data bits."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:117
+#, elixir-autogen, elixir-format
+msgid "Hex (with or without `0x`), separated by spaces / commas / no separator."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:156
+#, elixir-autogen, elixir-format
+msgid "Hexadecimal"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:152
+#, elixir-autogen, elixir-format
+msgid "Identify the byte count"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:212
+#, elixir-autogen, elixir-format
+msgid "Insert the markers"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:74
+#, elixir-autogen, elixir-format
+msgid "Last byte is incomplete (odd number of hex digits)."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:71
+#, elixir-autogen, elixir-format
+msgid "Non-hex characters detected."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:71
+#, elixir-autogen, elixir-format
+msgid "Outside the Unicode range (0 → U+10FFFF)."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:173
+#, elixir-autogen, elixir-format
+msgid "Pick the UTF-8 form"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:76
+#, elixir-autogen, elixir-format
+msgid "Range `U+0000` -> `U+007F` - 7 useful bits, plain ASCII form."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:79
+#, elixir-autogen, elixir-format
+msgid "Range `U+0080` -> `U+07FF` - 11 useful bits, beyond ASCII."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:82
+#, elixir-autogen, elixir-format
+msgid "Range `U+0800` -> `U+FFFF` - 16 useful bits, BMP beyond Latin extended."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:86
+#, elixir-autogen, elixir-format
+msgid "Range `U+10000` -> `U+10FFFF` - 21 useful bits, supplementary planes (emojis, etc.)."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:177
+#, elixir-autogen, elixir-format
+msgid "Reassemble the binary"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:200
+#, elixir-autogen, elixir-format
+msgid "Split by the form's payload-slot widths (%{slots} bits)."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:197
+#, elixir-autogen, elixir-format
+msgid "Split into chunks"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:148
+#: lib/app_web/live/sandbox/utf8_encode.ex:169
+#, elixir-autogen, elixir-format
+msgid "Step-by-step breakdown"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:74
+#, elixir-autogen, elixir-format
+msgid "Surrogates (U+D800 → U+DFFF) are not valid UTF-8."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:200
+#, elixir-autogen, elixir-format
+msgid "The binary equals `%{decimal}` in decimal, i.e. `%{cp}` in Unicode notation."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:92
+#, elixir-autogen, elixir-format
+msgid "The byte carries the marker `0` (1 bit). ASCII-compatible code point, no continuation bytes."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:98
+#, elixir-autogen, elixir-format
+msgid "The first byte carries the marker `110` (3 bits); the next carries `10` (continuation)."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:104
+#, elixir-autogen, elixir-format
+msgid "The first byte carries the marker `1110` (4 bits); the 2 following carry `10` (continuation)."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:110
+#, elixir-autogen, elixir-format
+msgid "The first byte carries the marker `11110` (5 bits); the 3 following carry `10` (continuation)."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:79
+#, elixir-autogen, elixir-format
+msgid "This byte sequence is not valid UTF-8."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:77
+#, elixir-autogen, elixir-format
+msgid "Too many bytes: UTF-8 encodes a single code point in at most 4 bytes."
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:138
+#, elixir-autogen, elixir-format
+msgid "U+00E9, 0xE9, 233 or the character itself"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_decode.ex:23
+#: lib/app_web/live/sandbox/utf8_decode.ex:104
+#, elixir-autogen, elixir-format
+msgid "UTF-8 sandbox (decode)"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:22
+#: lib/app_web/live/sandbox/utf8_encode.ex:130
+#, elixir-autogen, elixir-format
+msgid "UTF-8 sandbox (encode)"
+msgstr ""
+
+#: lib/app_web/live/sandbox/utf8_encode.ex:70
+#, elixir-autogen, elixir-format
+msgid "Unrecognised format."
+msgstr ""
+
+#: lib/app_web/components/sandbox_components.ex:238
+#, elixir-autogen, elixir-format
+msgid "non-printable"
 msgstr ""

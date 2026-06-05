@@ -1,0 +1,290 @@
+## Long-form expansions of the CodePointLabels mnemonics, shown next to
+## the short label in the sandbox result card. Closed list maintained by
+## hand (msgids are NOT extracted from code - the lookup is dynamic).
+msgid ""
+msgstr ""
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n>1);\n"
+
+msgid "ACK"
+msgstr "Acknowledge"
+
+msgid "APC"
+msgstr "Application Program Command"
+
+msgid "BEL"
+msgstr "Bell"
+
+msgid "BOM"
+msgstr "Byte Order Mark"
+
+msgid "BPH"
+msgstr "Break Permitted Here"
+
+msgid "BS"
+msgstr "Backspace"
+
+msgid "CAN"
+msgstr "Cancel"
+
+msgid "CCH"
+msgstr "Cancel Character"
+
+msgid "CGJ"
+msgstr "Combining Grapheme Joiner"
+
+msgid "COMBINING"
+msgstr "Combining mark"
+
+msgid "CR"
+msgstr "Carriage Return"
+
+msgid "CSI"
+msgstr "Control Sequence Introducer"
+
+msgid "DC1"
+msgstr "Device Control 1"
+
+msgid "DC2"
+msgstr "Device Control 2"
+
+msgid "DC3"
+msgstr "Device Control 3"
+
+msgid "DC4"
+msgstr "Device Control 4"
+
+msgid "DCS"
+msgstr "Device Control String"
+
+msgid "DEL"
+msgstr "Delete"
+
+msgid "DLE"
+msgstr "Data Link Escape"
+
+msgid "EM"
+msgstr "End of Medium"
+
+msgid "ENQ"
+msgstr "Enquiry"
+
+msgid "EOT"
+msgstr "End of Transmission"
+
+msgid "EPA"
+msgstr "End of Protected Area"
+
+msgid "ESA"
+msgstr "End of Selected Area"
+
+msgid "ESC"
+msgstr "Escape"
+
+msgid "ETB"
+msgstr "End of Transmission Block"
+
+msgid "ETX"
+msgstr "End of Text"
+
+msgid "FF"
+msgstr "Form Feed"
+
+msgid "FORMAT"
+msgstr "Format character"
+
+msgid "FS"
+msgstr "File Separator"
+
+msgid "FSI"
+msgstr "First Strong Isolate"
+
+msgid "GS"
+msgstr "Group Separator"
+
+msgid "HOP"
+msgstr "High Octet Preset"
+
+msgid "HT"
+msgstr "Horizontal Tab"
+
+msgid "HTJ"
+msgstr "Horizontal Tab with Justification"
+
+msgid "HTS"
+msgstr "Horizontal Tab Set"
+
+msgid "IND"
+msgstr "Index"
+
+msgid "LF"
+msgstr "Line Feed"
+
+msgid "LRE"
+msgstr "Left-to-Right Embedding"
+
+msgid "LRI"
+msgstr "Left-to-Right Isolate"
+
+msgid "LRM"
+msgstr "Left-to-Right Mark"
+
+msgid "LRO"
+msgstr "Left-to-Right Override"
+
+msgid "LSEP"
+msgstr "Line Separator"
+
+msgid "MVS"
+msgstr "Mongolian Vowel Separator"
+
+msgid "MW"
+msgstr "Message Waiting"
+
+msgid "NAK"
+msgstr "Negative Acknowledge"
+
+msgid "NBH"
+msgstr "No Break Here"
+
+msgid "NBSP"
+msgstr "No-Break Space"
+
+msgid "NEL"
+msgstr "Next Line"
+
+msgid "NONCHAR"
+msgstr "Non-character"
+
+msgid "NUL"
+msgstr "Null"
+
+msgid "OSC"
+msgstr "Operating System Command"
+
+msgid "PAD"
+msgstr "Padding Character"
+
+msgid "PDF"
+msgstr "Pop Directional Formatting"
+
+msgid "PDI"
+msgstr "Pop Directional Isolate"
+
+msgid "PLD"
+msgstr "Partial Line Down"
+
+msgid "PLU"
+msgstr "Partial Line Up"
+
+msgid "PM"
+msgstr "Privacy Message"
+
+msgid "PSEP"
+msgstr "Paragraph Separator"
+
+msgid "PU1"
+msgstr "Private Use 1"
+
+msgid "PU2"
+msgstr "Private Use 2"
+
+msgid "PUA"
+msgstr "Private Use Area"
+
+msgid "RI"
+msgstr "Reverse Line Feed"
+
+msgid "RLE"
+msgstr "Right-to-Left Embedding"
+
+msgid "RLI"
+msgstr "Right-to-Left Isolate"
+
+msgid "RLM"
+msgstr "Right-to-Left Mark"
+
+msgid "RLO"
+msgstr "Right-to-Left Override"
+
+msgid "RS"
+msgstr "Record Separator"
+
+msgid "SCI"
+msgstr "Single Character Introducer"
+
+msgid "SGC"
+msgstr "Single Graphic Character Introducer"
+
+msgid "SHY"
+msgstr "Soft Hyphen"
+
+msgid "SI"
+msgstr "Shift In"
+
+msgid "SO"
+msgstr "Shift Out"
+
+msgid "SOH"
+msgstr "Start of Heading"
+
+msgid "SOS"
+msgstr "Start of String"
+
+msgid "SPA"
+msgstr "Start of Protected Area"
+
+msgid "SPACE"
+msgstr "Space"
+
+msgid "SS2"
+msgstr "Single-Shift 2"
+
+msgid "SS3"
+msgstr "Single-Shift 3"
+
+msgid "SSA"
+msgstr "Start of Selected Area"
+
+msgid "ST"
+msgstr "String Terminator"
+
+msgid "STS"
+msgstr "Set Transmit State"
+
+msgid "STX"
+msgstr "Start of Text"
+
+msgid "SUB"
+msgstr "Substitute"
+
+msgid "SYN"
+msgstr "Synchronous Idle"
+
+msgid "UNASSIGNED"
+msgstr "Unassigned"
+
+msgid "US"
+msgstr "Unit Separator"
+
+msgid "VT"
+msgstr "Vertical Tab"
+
+msgid "VTS"
+msgstr "Vertical Tab Set"
+
+msgid "WHITESPACE"
+msgstr "Whitespace"
+
+msgid "WJ"
+msgstr "Word Joiner"
+
+msgid "ZWJ"
+msgstr "Zero Width Joiner"
+
+msgid "ZWNJ"
+msgstr "Zero Width Non-Joiner"
+
+msgid "ZWSP"
+msgstr "Zero Width Space"
+

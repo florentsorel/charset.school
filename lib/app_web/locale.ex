@@ -25,4 +25,19 @@ defmodule AppWeb.Locale do
   def localized_path("en", path), do: path
   def localized_path("fr", "/"), do: "/fr"
   def localized_path("fr", path), do: "/fr" <> path
+
+  @doc """
+  The same path in the other locale: EN pages gain the /fr prefix, FR pages
+  lose it. Used by the header locale toggle.
+
+      iex> AppWeb.Locale.alternate_path("/sandbox", "en")
+      "/fr/sandbox"
+
+      iex> AppWeb.Locale.alternate_path("/fr/sandbox", "fr")
+      "/sandbox"
+  """
+  def alternate_path(path, "en"), do: localized_path("fr", path)
+  def alternate_path("/fr", "fr"), do: "/"
+  def alternate_path("/fr/" <> rest, "fr"), do: "/" <> rest
+  def alternate_path(path, "fr"), do: path
 end
