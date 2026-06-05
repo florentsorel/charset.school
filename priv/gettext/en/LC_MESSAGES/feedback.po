@@ -1,0 +1,90 @@
+## Hint messages of the exercise feedback panel, keyed by the stable
+## `error_type` identifiers produced by Charset.Exercise.AnswerValidator.
+## Closed list maintained by hand (the lookup is dynamic - msgids are NOT
+## extracted from code). Interpolation bindings use the ParamKey names.
+msgid ""
+msgstr ""
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "answer.type-mismatch"
+msgstr "Unexpected answer type for this step."
+
+msgid "binary.empty"
+msgstr "Enter a sequence of bits."
+
+msgid "binary.invalid-character"
+msgstr "You typed `%{got}` - only `0` and `1` are allowed."
+
+msgid "binary.too-few-bits"
+msgstr "Bits are missing: you have `%{got-length}` out of `%{expected-length}`. Remember to pad with leading zeros when the value is narrower than the width."
+
+msgid "binary.too-many-bits"
+msgstr "You have `%{got-length}` bits but exactly `%{expected-length}` are expected. Drop the extra leading zeros."
+
+msgid "binary.wrong-value"
+msgstr "Bit count is right but the value doesn't match. Convert the hex digit by digit - each hex digit is 4 bits (a nibble)."
+
+msgid "bit-groups.empty"
+msgstr "Enter the bit groups."
+
+msgid "bit-groups.invalid-character"
+msgstr "The group at position `%{position}` contains characters other than `0` and `1`."
+
+msgid "bit-groups.wrong-group-count"
+msgstr "You have `%{got-count}` group(s), `%{expected-count}` expected."
+
+msgid "bit-groups.wrong-group-length"
+msgstr "The group at position `%{position}` has `%{got-length}` bits, `%{expected-length}` expected."
+
+msgid "bit-groups.wrong-value"
+msgstr "Groups have the right size but content doesn't match. Check how you split the code point bits into the format."
+
+msgid "code-point.out-of-range"
+msgstr "`%{got}` is outside the Unicode range (`U+0000` → `U+10FFFF`)."
+
+msgid "code-point.surrogate"
+msgstr "`%{got}` is in the surrogate range (`U+D800` → `U+DFFF`), which is forbidden in Unicode."
+
+msgid "code-point.wrong-value"
+msgstr "Wrong code point. Convert the bits straight to hex - 4 bits per hex digit, no decimal step."
+
+msgid "endianness.wrong-choice"
+msgstr "Wrong endianness. Compare the expected byte order with the format's native order."
+
+msgid "format.empty"
+msgstr "Pick a format."
+
+msgid "format.unknown-choice"
+msgstr "The choice `%{got}` is not in the offered options."
+
+msgid "format.wrong-choice"
+msgstr "Wrong format. Check which value range the code point falls into."
+
+msgid "hex-bytes.byte-out-of-range"
+msgstr "Byte at position `%{position}` (`%{got}`) is out of range (0..255)."
+
+msgid "hex-bytes.empty"
+msgstr "Enter the hex bytes."
+
+msgid "hex-bytes.too-few-bytes"
+msgstr "Bytes are missing: you have `%{got-count}` of `%{expected-count}`."
+
+msgid "hex-bytes.too-many-bytes"
+msgstr "Too many bytes: you have `%{got-count}`, exactly `%{expected-count}` expected."
+
+msgid "hex-bytes.wrong-value"
+msgstr "Byte count is right but the value doesn't match. Re-assemble the format bits into hex (4 bits per hex digit)."
+
+msgid "offset.out-of-range"
+msgstr "`%{got}` is outside `0..0xFFFFF` (the 20-bit range)."
+
+msgid "offset.wrong-value"
+msgstr "Wrong value. It's the 20-bit value written in hex."
+
+msgid "useful-bit-count.non-positive"
+msgstr "`%{got}` isn't a positive number. Count the bits that actually carry information."
+
+msgid "useful-bit-count.wrong-value"
+msgstr "`%{got}` isn't the right useful bit count. UTF-8 reminder (payload bits, excluding markers): `1-byte = 7 useful bits`, `2-byte = 11`, `3-byte = 16`, `4-byte = 21`."
+

@@ -45,6 +45,13 @@ defmodule AppWeb.Router do
       live "/sandbox/decode/latin1", SandboxLive.Latin1Decode
       live "/sandbox/encode/windows-1252", SandboxLive.Windows1252Encode
       live "/sandbox/decode/windows-1252", SandboxLive.Windows1252Decode
+
+      live "/exercise/encode/utf-8", ExerciseLive, :utf8_encode
+      live "/exercise/decode/utf-8", ExerciseLive, :utf8_decode
+      live "/exercise/encode/utf-16", ExerciseLive, :utf16_encode
+      live "/exercise/decode/utf-16", ExerciseLive, :utf16_decode
+      live "/exercise/encode/utf-32", ExerciseLive, :utf32_encode
+      live "/exercise/decode/utf-32", ExerciseLive, :utf32_decode
     end
   end
 
@@ -67,6 +74,13 @@ defmodule AppWeb.Router do
       live "/sandbox/decode/latin1", SandboxLive.Latin1Decode
       live "/sandbox/encode/windows-1252", SandboxLive.Windows1252Encode
       live "/sandbox/decode/windows-1252", SandboxLive.Windows1252Decode
+
+      live "/exercise/encode/utf-8", ExerciseLive, :utf8_encode
+      live "/exercise/decode/utf-8", ExerciseLive, :utf8_decode
+      live "/exercise/encode/utf-16", ExerciseLive, :utf16_encode
+      live "/exercise/decode/utf-16", ExerciseLive, :utf16_decode
+      live "/exercise/encode/utf-32", ExerciseLive, :utf32_encode
+      live "/exercise/decode/utf-32", ExerciseLive, :utf32_decode
     end
   end
 
