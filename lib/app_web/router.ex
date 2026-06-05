@@ -23,16 +23,34 @@ defmodule AppWeb.Router do
   end
 
   # EN (default locale) at the root, FR under /fr - keep both scopes in sync.
+  # The locale plug covers the HTTP request; live_session re-establishes the
+  # locale on the websocket mount via AppWeb.LocaleHook.
   scope "/", AppWeb do
     pipe_through [:browser, :locale_en]
 
     get "/", PageController, :home
+    get "/sandbox", SandboxController, :index
+
+    live_session :sandbox_en,
+      session: %{"locale" => "en"},
+      on_mount: AppWeb.LocaleHook do
+      live "/sandbox/encode/utf-8", SandboxLive.Utf8Encode
+      live "/sandbox/decode/utf-8", SandboxLive.Utf8Decode
+    end
   end
 
   scope "/fr", AppWeb do
     pipe_through [:browser, :locale_fr]
 
     get "/", PageController, :home
+    get "/sandbox", SandboxController, :index
+
+    live_session :sandbox_fr,
+      session: %{"locale" => "fr"},
+      on_mount: AppWeb.LocaleHook do
+      live "/sandbox/encode/utf-8", SandboxLive.Utf8Encode
+      live "/sandbox/decode/utf-8", SandboxLive.Utf8Decode
+    end
   end
 
   # Other scopes may use custom stacks.

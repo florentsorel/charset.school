@@ -202,6 +202,113 @@ defmodule AppWeb.Layouts do
   end
 
   @doc """
+  Sandbox section layout: the app chrome plus a sticky module sidebar
+  (collapsible on mobile). `active` is the unlocalized path of the current
+  page, used to highlight the nav entry and title the mobile trigger.
+
+      <Layouts.sandbox flash={@flash} locale={@locale} alternate_path={@alternate_path}
+        active="/sandbox/encode/utf-8">
+        ...
+      </Layouts.sandbox>
+  """
+  attr :flash, :map, required: true
+  attr :locale, :string, required: true
+  attr :alternate_path, :string, required: true
+  attr :active, :string, required: true
+
+  slot :inner_block, required: true
+
+  def sandbox(assigns) do
+    ~H"""
+    <.app flash={@flash} locale={@locale} alternate_path={@alternate_path}>
+      <div class="mx-auto w-full max-w-6xl px-4 sm:px-6 py-10 md:py-14 flex flex-col lg:flex-row gap-6 lg:gap-12">
+        <%!-- Mobile / tablet collapsible --%>
+        <details class="sandbox-nav-collapsible lg:hidden">
+          <summary>
+            <span class="text-sm font-medium">{active_sandbox_title(@active)}</span>
+            <.icon name="hero-chevron-down" class="sandbox-nav-collapsible-chevron" />
+          </summary>
+          <div class="pt-4">
+            <.sandbox_nav locale={@locale} active={@active} />
+          </div>
+        </details>
+
+        <%!-- Desktop sticky sidebar --%>
+        <aside class="hidden lg:block lg:w-56 lg:shrink-0 lg:sticky lg:self-start sandbox-sidebar-sticky">
+          <.sandbox_nav locale={@locale} active={@active} />
+        </aside>
+
+        <div class="flex-1 min-w-0">
+          {render_slot(@inner_block)}
+        </div>
+      </div>
+    </.app>
+    """
+  end
+
+  attr :locale, :string, required: true
+  attr :active, :string, required: true
+
+  defp sandbox_nav(assigns) do
+    ~H"""
+    <nav class="sandbox-nav" aria-label={gettext("Sandbox")}>
+      <div :for={group <- sandbox_groups()} class="mb-5 last:mb-0">
+        <p class="font-mono text-[10px] uppercase tracking-widest text-mute mb-2">
+          {group.label}
+        </p>
+        <ul class="flex flex-col gap-px">
+          <li :for={module <- group.modules}>
+            <a
+              href={localized_path(@locale, module.path)}
+              class={["sandbox-nav-link", module.path == @active && "sandbox-nav-link-active"]}
+            >
+              {module.title}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    """
+  end
+
+  @doc """
+  The sandbox modules, grouped by direction. Paths are unlocalized; titles
+  are translated at render time (same strings as the exercise catalog).
+  """
+  def sandbox_groups do
+    [
+      %{
+        label: gettext("Encoding"),
+        modules: [
+          %{path: "/sandbox/encode/utf-8", title: gettext("Encode UTF-8")},
+          %{path: "/sandbox/encode/utf-16", title: gettext("Encode UTF-16")},
+          %{path: "/sandbox/encode/utf-32", title: gettext("Encode UTF-32")},
+          %{path: "/sandbox/encode/latin1", title: gettext("Encode in Latin-1")},
+          %{path: "/sandbox/encode/windows-1252", title: gettext("Encode in Windows-1252")}
+        ]
+      },
+      %{
+        label: gettext("Decoding"),
+        modules: [
+          %{path: "/sandbox/decode/utf-8", title: gettext("Decode UTF-8")},
+          %{path: "/sandbox/decode/utf-16", title: gettext("Decode UTF-16")},
+          %{path: "/sandbox/decode/utf-32", title: gettext("Decode UTF-32")},
+          %{path: "/sandbox/decode/latin1", title: gettext("Decode Latin-1")},
+          %{path: "/sandbox/decode/windows-1252", title: gettext("Decode Windows-1252")}
+        ]
+      }
+    ]
+  end
+
+  defp active_sandbox_title(active) do
+    sandbox_groups()
+    |> Enum.flat_map(& &1.modules)
+    |> Enum.find_value(gettext("Sandbox"), fn module ->
+      if module.path == active, do: module.title
+    end)
+  end
+
+  @doc """
   Theme toggle pill: flips between light and dark. The first click pins the
   opposite of whatever is currently shown (`system` preference drops out once
   the user chooses) - the inline script in root.html.heex owns the logic.

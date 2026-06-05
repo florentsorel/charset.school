@@ -48,6 +48,9 @@ defmodule AppWeb do
 
       import Plug.Conn
 
+      # Locale-prefixed paths (EN at root, FR under /fr)
+      import AppWeb.Locale, only: [localized_path: 2]
+
       unquote(verified_routes())
     end
   end

@@ -25,14 +25,6 @@ defmodule AppWeb.Plugs.Locale do
 
     conn
     |> assign(:locale, locale)
-    |> assign(:alternate_path, alternate_path(conn.request_path, locale))
+    |> assign(:alternate_path, Locale.alternate_path(conn.request_path, locale))
   end
-
-  # The alternate path swaps the locale of the current URL: EN pages gain the
-  # /fr prefix, FR pages lose it.
-  defp alternate_path(path, "en"), do: Locale.localized_path("fr", path)
-
-  defp alternate_path("/fr", "fr"), do: "/"
-  defp alternate_path("/fr/" <> rest, "fr"), do: "/" <> rest
-  defp alternate_path(path, "fr"), do: path
 end
