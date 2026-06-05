@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Language: en\n"
-"Plural-Forms: nplurals=2; plural=(n>1);\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "ACK"
 msgstr "Acknowledge"
