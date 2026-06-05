@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: phoenix
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: mix
+    directory: /
+    target-branch: phoenix
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /
+    target-branch: phoenix
+    schedule:
+      interval: weekly
