@@ -5,15 +5,21 @@ updates:
     target-branch: phoenix
     schedule:
       interval: weekly
+      day: monday
+      timezone: Europe/Paris
 
   - package-ecosystem: mix
     directory: /
     target-branch: phoenix
     schedule:
       interval: weekly
+      day: monday
+      timezone: Europe/Paris
 
   - package-ecosystem: npm
     directory: /
     target-branch: phoenix
     schedule:
       interval: weekly
+      day: monday
+      timezone: Europe/Paris
