@@ -1,5 +1,5 @@
-defmodule CharsetWeb.PageControllerTest do
-  use CharsetWeb.ConnCase
+defmodule AppWeb.PageControllerTest do
+  use AppWeb.ConnCase
 
   test "GET / renders the landing in English", %{conn: conn} do
     response = conn |> get(~p"/") |> html_response(200)

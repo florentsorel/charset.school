@@ -1,12 +1,12 @@
-defmodule CharsetWeb do
+defmodule AppWeb do
   @moduledoc """
   The entrypoint for defining your web interface, such
   as controllers, components, channels, and so on.
 
   This can be used in your application as:
 
-      use CharsetWeb, :controller
-      use CharsetWeb, :html
+      use AppWeb, :controller
+      use AppWeb, :html
 
   The definitions below will be executed for every controller,
   component, etc, so keep them short and clean, focused
@@ -44,7 +44,7 @@ defmodule CharsetWeb do
     quote do
       use Phoenix.Controller, formats: [:html, :json]
 
-      use Gettext, backend: CharsetWeb.Gettext
+      use Gettext, backend: AppWeb.Gettext
 
       import Plug.Conn
 
@@ -84,19 +84,19 @@ defmodule CharsetWeb do
   defp html_helpers do
     quote do
       # Translation
-      use Gettext, backend: CharsetWeb.Gettext
+      use Gettext, backend: AppWeb.Gettext
 
       # HTML escaping functionality
       import Phoenix.HTML
       # Core UI components
-      import CharsetWeb.CoreComponents
+      import AppWeb.CoreComponents
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS
-      alias CharsetWeb.Layouts
+      alias AppWeb.Layouts
 
       # Locale-prefixed paths (EN at root, FR under /fr)
-      import CharsetWeb.Locale, only: [localized_path: 2]
+      import AppWeb.Locale, only: [localized_path: 2]
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())
@@ -106,9 +106,9 @@ defmodule CharsetWeb do
   def verified_routes do
     quote do
       use Phoenix.VerifiedRoutes,
-        endpoint: CharsetWeb.Endpoint,
-        router: CharsetWeb.Router,
-        statics: CharsetWeb.static_paths()
+        endpoint: AppWeb.Endpoint,
+        router: AppWeb.Router,
+        statics: AppWeb.static_paths()
     end
   end
 

@@ -7,19 +7,19 @@
 # General application configuration
 import Config
 
-config :charset,
-  ecto_repos: [Charset.Repo],
+config :app,
+  ecto_repos: [App.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 # Configure the endpoint
-config :charset, CharsetWeb.Endpoint,
+config :app, AppWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
-    formats: [html: CharsetWeb.ErrorHTML, json: CharsetWeb.ErrorJSON],
+    formats: [html: AppWeb.ErrorHTML, json: AppWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: Charset.PubSub,
+  pubsub_server: App.PubSub,
   live_view: [signing_salt: "UTAr/Q+d"]
 
 # Configure the mailer
@@ -29,7 +29,7 @@ config :charset, CharsetWeb.Endpoint,
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-config :charset, Charset.Mailer, adapter: Swoosh.Adapters.Local
+config :app, App.Mailer, adapter: Swoosh.Adapters.Local
 
 # Configure Elixir's Logger
 config :logger, :default_formatter,

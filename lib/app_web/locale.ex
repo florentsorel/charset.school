@@ -1,4 +1,4 @@
-defmodule CharsetWeb.Locale do
+defmodule AppWeb.Locale do
   @moduledoc """
   URL helpers for the locale-prefixed routes.
 
@@ -13,13 +13,13 @@ defmodule CharsetWeb.Locale do
   @doc """
   Prefixes `path` for the given locale.
 
-      iex> CharsetWeb.Locale.localized_path("en", "/sandbox")
+      iex> AppWeb.Locale.localized_path("en", "/sandbox")
       "/sandbox"
 
-      iex> CharsetWeb.Locale.localized_path("fr", "/sandbox")
+      iex> AppWeb.Locale.localized_path("fr", "/sandbox")
       "/fr/sandbox"
 
-      iex> CharsetWeb.Locale.localized_path("fr", "/")
+      iex> AppWeb.Locale.localized_path("fr", "/")
       "/fr"
   """
   def localized_path("en", path), do: path

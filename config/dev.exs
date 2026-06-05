@@ -1,8 +1,8 @@
 import Config
 
 # Configure your database
-config :charset, Charset.Repo,
-  database: Path.expand("../charset_dev.db", __DIR__),
+config :app, App.Repo,
+  database: Path.expand("../app_dev.db", __DIR__),
   pool_size: 5,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
@@ -13,7 +13,7 @@ config :charset, Charset.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
-config :charset, CharsetWeb.Endpoint,
+config :app, AppWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {127, 0, 0, 1}],
@@ -50,7 +50,7 @@ config :charset, CharsetWeb.Endpoint,
 # different ports.
 
 # Reload browser tabs when matching files change.
-config :charset, CharsetWeb.Endpoint,
+config :app, AppWeb.Endpoint,
   live_reload: [
     web_console_logger: true,
     patterns: [
@@ -59,13 +59,13 @@ config :charset, CharsetWeb.Endpoint,
       # Gettext translations
       ~r"priv/gettext/.*\.po$"E,
       # Router, Controllers, LiveViews and LiveComponents
-      ~r"lib/charset_web/router\.ex$"E,
-      ~r"lib/charset_web/(controllers|live|components)/.*\.(ex|heex)$"E
+      ~r"lib/app_web/router\.ex$"E,
+      ~r"lib/app_web/(controllers|live|components)/.*\.(ex|heex)$"E
     ]
   ]
 
 # Enable dev routes for dashboard and mailbox
-config :charset, dev_routes: true
+config :app, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"

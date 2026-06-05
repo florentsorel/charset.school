@@ -1,4 +1,4 @@
-defmodule CharsetWeb.Plugs.Locale do
+defmodule AppWeb.Plugs.Locale do
   @moduledoc """
   Sets the Gettext locale for the request.
 
@@ -16,12 +16,12 @@ defmodule CharsetWeb.Plugs.Locale do
 
   import Plug.Conn
 
-  alias CharsetWeb.Locale
+  alias AppWeb.Locale
 
   def init(locale) when locale in ["en", "fr"], do: locale
 
   def call(conn, locale) do
-    Gettext.put_locale(CharsetWeb.Gettext, locale)
+    Gettext.put_locale(AppWeb.Gettext, locale)
 
     conn
     |> assign(:locale, locale)

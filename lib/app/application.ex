@@ -1,4 +1,4 @@
-defmodule Charset.Application do
+defmodule App.Application do
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   @moduledoc false
@@ -8,21 +8,20 @@ defmodule Charset.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      CharsetWeb.Telemetry,
-      Charset.Repo,
-      {Ecto.Migrator,
-       repos: Application.fetch_env!(:charset, :ecto_repos), skip: skip_migrations?()},
-      {DNSCluster, query: Application.get_env(:charset, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: Charset.PubSub},
-      # Start a worker by calling: Charset.Worker.start_link(arg)
-      # {Charset.Worker, arg},
+      AppWeb.Telemetry,
+      App.Repo,
+      {Ecto.Migrator, repos: Application.fetch_env!(:app, :ecto_repos), skip: skip_migrations?()},
+      {DNSCluster, query: Application.get_env(:app, :dns_cluster_query) || :ignore},
+      {Phoenix.PubSub, name: App.PubSub},
+      # Start a worker by calling: App.Worker.start_link(arg)
+      # {App.Worker, arg},
       # Start to serve requests, typically the last entry
-      CharsetWeb.Endpoint
+      AppWeb.Endpoint
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: Charset.Supervisor]
+    opts = [strategy: :one_for_one, name: App.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
@@ -30,7 +29,7 @@ defmodule Charset.Application do
   # whenever the application is updated.
   @impl true
   def config_change(changed, _new, removed) do
-    CharsetWeb.Endpoint.config_change(changed, removed)
+    AppWeb.Endpoint.config_change(changed, removed)
     :ok
   end
 
