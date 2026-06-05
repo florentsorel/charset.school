@@ -9,14 +9,15 @@ defmodule AppWeb.Plugs.VisitorToken do
   copied into the session so LiveViews can read it on the websocket mount,
   where request cookies are not directly available.
 
-  Oversized or blank cookies (max 64 chars, the column width) are treated as
-  absent and replaced - a malicious cookie must never overflow into a 500.
+  Only tokens we could have minted are accepted: anything that is not a
+  canonical UUID (oversized, blank, attacker-crafted) is treated as absent
+  and replaced - a malicious cookie can neither overflow the 64-char column
+  nor smuggle an arbitrary identifier into the keyspace.
   """
 
   import Plug.Conn
 
   @cookie "token_id"
-  @max_length 64
   # ~1 year
   @max_age 60 * 60 * 24 * 365
 
@@ -51,8 +52,11 @@ defmodule AppWeb.Plugs.VisitorToken do
     |> put_session(:visitor_token, token)
   end
 
-  defp valid_token(token) when is_binary(token) and token != "" do
-    if String.length(token) <= @max_length, do: token
+  defp valid_token(token) when is_binary(token) do
+    case Ecto.UUID.cast(token) do
+      {:ok, uuid} -> uuid
+      :error -> nil
+    end
   end
 
   defp valid_token(_other), do: nil

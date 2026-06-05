@@ -270,11 +270,15 @@ defmodule Charset.ExerciseAttempts do
 
   defp load_step_data("endianness", step_id) do
     row = Repo.get!(Schema.StepEndianness, step_id)
-    expected = String.to_existing_atom(row.expected)
 
-    {Step.Endianness.new!(expected),
-     row.user_answer && {:endianness, String.to_existing_atom(row.user_answer)}}
+    {Step.Endianness.new!(parse_endian(row.expected)),
+     row.user_answer && {:endianness, parse_endian(row.user_answer)}}
   end
+
+  # The app is the sole writer, so anything else is corruption - crash
+  # loudly (FunctionClauseError) rather than mis-decode an anti-cheat row.
+  defp parse_endian("big"), do: :big
+  defp parse_endian("little"), do: :little
 
   # A mismatched answer kind (caught as answer.type-mismatch by the
   # validator) has no row in its child table - the submission is counted on

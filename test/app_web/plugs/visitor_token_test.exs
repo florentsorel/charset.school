@@ -12,25 +12,27 @@ defmodule AppWeb.Plugs.VisitorTokenTest do
     assert get_session(conn, :visitor_token) == token
   end
 
-  test "keeps an existing valid token without re-minting", %{conn: conn} do
+  test "keeps an existing UUID token without re-minting", %{conn: conn} do
+    existing = Ecto.UUID.generate()
+
     conn =
       conn
-      |> put_req_cookie(VisitorToken.cookie_name(), "existing-token")
+      |> put_req_cookie(VisitorToken.cookie_name(), existing)
       |> get(~p"/")
 
-    assert conn.assigns.visitor_token == "existing-token"
+    assert conn.assigns.visitor_token == existing
     refute Map.has_key?(conn.resp_cookies, "token_id")
   end
 
-  test "replaces a blank or oversized cookie with a fresh token", %{conn: conn} do
-    oversized = String.duplicate("a", 65)
+  test "replaces any non-UUID cookie with a fresh token", %{conn: conn} do
+    for crafted <- ["existing-token", "", String.duplicate("a", 65), "1234"] do
+      conn =
+        conn
+        |> put_req_cookie(VisitorToken.cookie_name(), crafted)
+        |> get(~p"/")
 
-    conn =
-      conn
-      |> put_req_cookie(VisitorToken.cookie_name(), oversized)
-      |> get(~p"/")
-
-    assert conn.assigns.visitor_token != oversized
-    assert {:ok, _uuid} = Ecto.UUID.cast(conn.assigns.visitor_token)
+      assert conn.assigns.visitor_token != crafted
+      assert {:ok, _uuid} = Ecto.UUID.cast(conn.assigns.visitor_token)
+    end
   end
 end
