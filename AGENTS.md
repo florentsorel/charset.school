@@ -76,7 +76,7 @@ ASCII, Latin-1, Windows-1252, UTF-8, UTF-16, UTF-32, endianness, BOM.
 | Backups | Litestream (réplication continue du WAL vers un stockage objet) | — |
 | ORM / migrations | Ecto + ecto_sql + ecto_sqlite3 | dernière compatible |
 | CSS | Tailwind CSS v4 **via Vite** | tailwind 4.x + vite |
-| i18n | Gettext (FR par défaut, EN) | `{:gettext, "~> 1.0"}` |
+| i18n | Gettext (EN par défaut, FR sous `/fr`) | `{:gettext, "~> 1.0"}` |
 | Assets pipeline | **Vite** (pas esbuild, pas tailwind CLI) — il y a donc un `package.json` | — |
 | Conteneurisation | Docker multi-stage (voir section Docker) | — |
 
@@ -244,9 +244,14 @@ Conventions DB conservées :
 
 ## i18n
 
-- **Gettext**, FR locale par défaut, EN en second. Routes EN préfixées `/en/...`
-  (équivalent de la stratégie `prefix_except_default` de l'ancien front).
-- Porter les locales depuis `main:web/i18n/locales/{fr,en}/*.json` (~1 100 lignes).
+- **Gettext**, **EN locale par défaut** (msgids = texte anglais), FR en second sous le
+  préfixe `/fr/...` (équivalent de la stratégie `prefix_except_default` de l'ancien
+  front, qui avait `defaultLocale: 'en'` malgré ce que disait son CLAUDE.md).
+- Mécanique en place : plug `CharsetWeb.Plugs.Locale` (assigns `:locale` +
+  `:alternate_path`), scopes router dupliqués `/` et `/fr`, helper
+  `localized_path/2`, traductions dans `priv/gettext/fr/LC_MESSAGES/`.
+- Porter les locales depuis `main:web/i18n/locales/{fr,en}.json` (~1 100 lignes) au
+  fil des pages.
 - Les `error_type` produits par le domaine (`binary.wrong-value`, etc.) sont des
   **identifiants stables** déclarés comme constantes dans `error_type.ex` — jamais de
   string literal au call site (ni en prod ni en test). L'UI les mappe vers des clés

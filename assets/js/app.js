@@ -20,6 +20,9 @@
 // Bundled by Vite: the stylesheet is emitted as a separate css/app.css asset.
 import "../css/app.css"
 
+// Header menus (mega-menu, burger) - plain DOM, works on dead views.
+import "./menu.js"
+
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.

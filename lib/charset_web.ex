@@ -17,7 +17,11 @@ defmodule CharsetWeb do
   those modules here.
   """
 
-  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
+  def static_paths do
+    ~w(assets fonts favicon.ico favicon.svg robots.txt logo.svg og.png
+       site.webmanifest apple-touch-icon.png android-chrome-192x192.png
+       android-chrome-512x512.png)
+  end
 
   def router do
     quote do
@@ -90,6 +94,9 @@ defmodule CharsetWeb do
       # Common modules used in templates
       alias Phoenix.LiveView.JS
       alias CharsetWeb.Layouts
+
+      # Locale-prefixed paths (EN at root, FR under /fr)
+      import CharsetWeb.Locale, only: [localized_path: 2]
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())

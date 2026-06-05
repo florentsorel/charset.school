@@ -1,30 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang={assigns[:locale] || "en"}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <.live_title default="Charset" suffix=" · Phoenix Framework" phx-no-format>{assigns[:page_title]}</.live_title>
+    <meta name="theme-color" content="#0F3D6B" />
+    <meta name="description" content={seo_description()} />
+    <meta property="og:type" content="website" />
+    <meta property="og:description" content={seo_description()} />
+    <meta property="og:image" content="https://charset.school/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={seo_og_image_alt()} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content={seo_description()} />
+    <meta name="twitter:image" content="https://charset.school/og.png" />
+    <.live_title default="charset.school" suffix=" · charset.school" phx-no-format>{assigns[:page_title]}</.live_title>
+    <link rel="icon" type="image/svg+xml" href={~p"/favicon.svg"} />
+    <link rel="icon" type="image/x-icon" href={~p"/favicon.ico"} sizes="any" />
+    <link rel="apple-touch-icon" sizes="180x180" href={~p"/apple-touch-icon.png"} />
+    <link rel="manifest" href={~p"/site.webmanifest"} />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
     <script>
+      // Theme bootstrap: must run before first paint to avoid a light/dark
+      // flash, hence inline. Preference is persisted in localStorage; absent
+      // preference follows the OS (and tracks its changes live).
       (() => {
-        const setTheme = (theme) => {
-          if (theme === "system") {
-            localStorage.removeItem("phx:theme");
-            document.documentElement.removeAttribute("data-theme");
-          } else {
-            localStorage.setItem("phx:theme", theme);
-            document.documentElement.setAttribute("data-theme", theme);
-          }
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
+        const apply = () => {
+          const pref = localStorage.getItem("charset:theme");
+          const dark = pref ? pref === "dark" : media.matches;
+          document.documentElement.classList.toggle("dark", dark);
         };
-        if (!document.documentElement.hasAttribute("data-theme")) {
-          setTheme(localStorage.getItem("phx:theme") || "system");
-        }
-        window.addEventListener("storage", (e) => e.key === "phx:theme" && setTheme(e.newValue || "system"));
-        
-        window.addEventListener("phx:set-theme", (e) => setTheme(e.target.dataset.phxTheme));
+        apply();
+        media.addEventListener("change", apply);
+        window.addEventListener("storage", (e) => e.key === "charset:theme" && apply());
+        // First toggle pins the opposite of what is currently shown; `system`
+        // naturally drops out once the user chooses.
+        window.addEventListener("charset:toggle-theme", () => {
+          const dark = document.documentElement.classList.contains("dark");
+          localStorage.setItem("charset:theme", dark ? "light" : "dark");
+          apply();
+        });
       })();
     </script>
   </head>

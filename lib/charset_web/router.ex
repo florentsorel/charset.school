@@ -14,8 +14,23 @@ defmodule CharsetWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :locale_en do
+    plug CharsetWeb.Plugs.Locale, "en"
+  end
+
+  pipeline :locale_fr do
+    plug CharsetWeb.Plugs.Locale, "fr"
+  end
+
+  # EN (default locale) at the root, FR under /fr - keep both scopes in sync.
   scope "/", CharsetWeb do
-    pipe_through :browser
+    pipe_through [:browser, :locale_en]
+
+    get "/", PageController, :home
+  end
+
+  scope "/fr", CharsetWeb do
+    pipe_through [:browser, :locale_fr]
 
     get "/", PageController, :home
   end
