@@ -1,5 +1,5 @@
-defmodule Charset.Repo do
+defmodule App.Repo do
   use Ecto.Repo,
-    otp_app: :charset,
+    otp_app: :app,
     adapter: Ecto.Adapters.SQLite3
 end

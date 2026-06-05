@@ -139,10 +139,16 @@ l'inférence peut exploiter :
 Phoenix Contexts classiques. Le domaine reste pur (pas d'Ecto, pas de Phoenix dans les
 modules de calcul), même esprit que l'archi ports & adapters de l'ancien projet.
 
+**Namespaces (choix tranché le 2026-06-05)** : l'OTP app s'appelle **`:app`** (style
+tracker-tv). `App`/`AppWeb` portent l'infrastructure (Application, Repo, Mailer,
+endpoint, LiveViews) ; les **domaines** sont des namespaces top-level à côté -
+`Charset.*` aujourd'hui (encoding, exercise, ...), d'autres demain (ex. `Binary.*`)
+sans toucher à la couche web.
+
 ```
 lib/
-  charset/                          # Domaine + persistance (contexts)
-    encoding/                       # Pur : codec, specs d'encodage
+  charset/                          # Domaine charset (pur, pas d'Ecto ni Phoenix)
+    encoding/                       # Codec, specs d'encodage
       codec.ex                      # encode/decode pour les 8 encodings (bitstrings !)
       code_point.ex
       windows1252.ex                # table de mapping 0x80..0x9F
@@ -158,8 +164,11 @@ lib/
     progress/                       # Context Ecto : module_progress (token, module_id)
     exercise_attempts.ex            # Context Ecto : attempts + steps (table-per-type)
     schema/                         # Schemas Ecto (un fichier par table)
-    repo.ex
-  charset_web/
+  app/                              # Infrastructure app-wide (App.*)
+    application.ex                  # OTP supervision tree
+    repo.ex                         # App.Repo (SQLite)
+    mailer.ex
+  app_web/                          # Couche web partagée par tous les domaines (AppWeb.*)
     router.ex
     plugs/visitor_token.ex          # pose/lit le cookie token anonyme HttpOnly
     live/
@@ -167,7 +176,7 @@ lib/
       exercise_live.ex              # flow d'exercice step-by-step
     controllers/page_controller.ex  # landing (statique, SEO)
     components/                     # core_components + composants portés depuis Vue
-assets/                             # Vite + Tailwind v4 (package.json à la racine du repo ou dans assets/)
+assets/                             # Vite + Tailwind v4 (package.json à la racine du repo)
 priv/repo/migrations/
 priv/gettext/{fr,en}/LC_MESSAGES/
 test/                               # Miroir de lib/ — le port des tests Kotest/JUnit de main
@@ -247,7 +256,7 @@ Conventions DB conservées :
 - **Gettext**, **EN locale par défaut** (msgids = texte anglais), FR en second sous le
   préfixe `/fr/...` (équivalent de la stratégie `prefix_except_default` de l'ancien
   front, qui avait `defaultLocale: 'en'` malgré ce que disait son CLAUDE.md).
-- Mécanique en place : plug `CharsetWeb.Plugs.Locale` (assigns `:locale` +
+- Mécanique en place : plug `AppWeb.Plugs.Locale` (assigns `:locale` +
   `:alternate_path`), scopes router dupliqués `/` et `/fr`, helper
   `localized_path/2`, traductions dans `priv/gettext/fr/LC_MESSAGES/`.
 - Porter les locales depuis `main:web/i18n/locales/{fr,en}.json` (~1 100 lignes) au
@@ -271,7 +280,7 @@ Conventions DB conservées :
   templates Vue quasi verbatim dans les HEEx. Comparer visuellement avec le site
   existant (lancer les deux côte à côte) avant de considérer une page terminée.
 - Les composants Nuxt UI (boutons, tooltips, toggles, menus) n'ont pas d'équivalent :
-  les recréer en HEEx + Tailwind dans `charset_web/components/`.
+  les recréer en HEEx + Tailwind dans `app_web/components/`.
 - Composants d'exercice à porter (depuis `main:web/app/components/exercise/`) :
   BitInput, BitGroupsInput, HexInput, CodePointInput, FormatSelector, OffsetInput,
   UsefulBitCountInput, StepProgress, FeedbackPanel, BitDisplay, ExerciseSubHeader.
@@ -303,7 +312,7 @@ même auteur), en adaptant le stage assets à Vite :
 2. **Stage builder** : `elixir:1.20-otp-29-alpine` → `mix deps.get --only prod` →
    compile → `mix phx.digest` → `mix release`
 3. **Stage runtime** : `alpine` nu + `libstdc++ openssl ncurses-libs ca-certificates`,
-   user non-root, `ENV LANG=C.UTF-8`, `EXPOSE 4000`, `CMD ["bin/charset", "start"]`
+   user non-root, `ENV LANG=C.UTF-8`, `EXPOSE 4000`, `CMD ["bin/app", "start"]`
 
 Runtime config via env vars dans `config/runtime.exs` : `DATABASE_PATH` (fichier SQLite
 sur un volume), `SECRET_KEY_BASE`, `PHX_HOST`, `PORT`. Caddy reste le reverse proxy
@@ -312,7 +321,7 @@ devant (un seul backend désormais, plus de split :3000/:8080).
 Pas de service DB dans le compose : SQLite est embarqué, le fichier vit sur un volume.
 **Backups via Litestream** : réplication continue du WAL vers un stockage objet
 (R2/B2/S3), soit en sidecar dans le compose, soit en superviseur du release
-(`litestream replicate -exec "bin/charset start"`). Restauration point-in-time via
+(`litestream replicate -exec "bin/app start"`). Restauration point-in-time via
 `litestream restore`.
 
 ## Tests

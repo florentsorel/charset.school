@@ -1,11 +1,11 @@
-defmodule CharsetWeb.Router do
-  use CharsetWeb, :router
+defmodule AppWeb.Router do
+  use AppWeb, :router
 
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_live_flash
-    plug :put_root_layout, html: {CharsetWeb.Layouts, :root}
+    plug :put_root_layout, html: {AppWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
   end
@@ -15,33 +15,33 @@ defmodule CharsetWeb.Router do
   end
 
   pipeline :locale_en do
-    plug CharsetWeb.Plugs.Locale, "en"
+    plug AppWeb.Plugs.Locale, "en"
   end
 
   pipeline :locale_fr do
-    plug CharsetWeb.Plugs.Locale, "fr"
+    plug AppWeb.Plugs.Locale, "fr"
   end
 
   # EN (default locale) at the root, FR under /fr - keep both scopes in sync.
-  scope "/", CharsetWeb do
+  scope "/", AppWeb do
     pipe_through [:browser, :locale_en]
 
     get "/", PageController, :home
   end
 
-  scope "/fr", CharsetWeb do
+  scope "/fr", AppWeb do
     pipe_through [:browser, :locale_fr]
 
     get "/", PageController, :home
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", CharsetWeb do
+  # scope "/api", AppWeb do
   #   pipe_through :api
   # end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
-  if Application.compile_env(:charset, :dev_routes) do
+  if Application.compile_env(:app, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put
     # it behind authentication and allow only admins to access it.
     # If your application does not have an admins-only section yet,
@@ -52,7 +52,7 @@ defmodule CharsetWeb.Router do
     scope "/dev" do
       pipe_through :browser
 
-      live_dashboard "/dashboard", metrics: CharsetWeb.Telemetry
+      live_dashboard "/dashboard", metrics: AppWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end
