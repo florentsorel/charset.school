@@ -1,0 +1,243 @@
+## "msgid"s in this file come from POT (.pot) files.
+###
+### Do not add, change, or remove "msgid"s manually here as
+### they're tied to the ones in the corresponding POT file
+### (with the same domain).
+###
+### Use "mix gettext.extract --merge" or "mix gettext.merge"
+### to merge POT files into PO files.
+msgid ""
+msgstr ""
+"Language: fr\n"
+"Plural-Forms: nplurals=2; plural=(n>1);\n"
+
+#: lib/charset_web/controllers/page_html/home.html.heex:90
+#, elixir-autogen, elixir-format
+msgid "6 modules to practise with"
+msgstr "6 modules pour t'entraîner"
+
+#: lib/charset_web/controllers/page_html/home.html.heex:51
+#, elixir-autogen, elixir-format
+msgid "A coach that corrects you bit by bit."
+msgstr "Un coach qui te corrige bit à bit."
+
+#: lib/charset_web/components/core_components.ex:375
+#, elixir-autogen, elixir-format
+msgid "Actions"
+msgstr "Actions"
+
+#: lib/charset_web/components/layouts.ex:317
+#: lib/charset_web/components/layouts.ex:329
+#, elixir-autogen, elixir-format
+msgid "Attempting to reconnect"
+msgstr "Tentative de reconnexion"
+
+#: lib/charset_web/controllers/page_html.ex:16
+#, elixir-autogen, elixir-format
+msgid "Code points drawn at random - no end"
+msgstr "Code points tirés au hasard - pas de fin"
+
+#: lib/charset_web/components/layouts.ex:262
+#, elixir-autogen, elixir-format
+msgid "Decode UTF-16"
+msgstr "Décoder UTF-16"
+
+#: lib/charset_web/components/layouts.ex:274
+#, elixir-autogen, elixir-format
+msgid "Decode UTF-32"
+msgstr "Décoder UTF-32"
+
+#: lib/charset_web/components/layouts.ex:250
+#, elixir-autogen, elixir-format
+msgid "Decode UTF-8"
+msgstr "Décoder UTF-8"
+
+#: lib/charset_web/components/layouts.ex:181
+#, elixir-autogen, elixir-format
+msgid "Developed by"
+msgstr "Développé par"
+
+#: lib/charset_web/controllers/page_html/home.html.heex:54
+#, elixir-autogen, elixir-format
+msgid "Each exercise is broken into steps. You encode or decode by hand, and the app tells you exactly where you got it wrong - in plain words."
+msgstr "Chaque exercice est découpé en étapes. Tu encodes ou décodes à la main, et l'app te dit exactement où tu t'es planté - en langage humain."
+
+#: lib/charset_web/components/layouts.ex:256
+#, elixir-autogen, elixir-format
+msgid "Encode UTF-16"
+msgstr "Encoder en UTF-16"
+
+#: lib/charset_web/components/layouts.ex:268
+#, elixir-autogen, elixir-format
+msgid "Encode UTF-32"
+msgstr "Encoder en UTF-32"
+
+#: lib/charset_web/components/layouts.ex:244
+#, elixir-autogen, elixir-format
+msgid "Encode UTF-8"
+msgstr "Encoder en UTF-8"
+
+#: lib/charset_web/controllers/page_html.ex:15
+#, elixir-autogen, elixir-format
+msgid "Errors explained in plain English, not error codes"
+msgstr "Erreurs expliquées en français, pas en codes"
+
+#: lib/charset_web/components/layouts.ex:73
+#: lib/charset_web/components/layouts.ex:115
+#: lib/charset_web/components/layouts.ex:144
+#, elixir-autogen, elixir-format
+msgid "Exercises"
+msgstr "Exercices"
+
+#: lib/charset_web/components/layouts.ex:284
+#, elixir-autogen, elixir-format
+msgid "Interactive exercises to learn character encoding - do the UTF-8, UTF-16 and UTF-32 conversions by hand, step by step, with instant feedback. Free, no account, no tracking."
+msgstr "Exercices interactifs pour apprendre l'encodage des caractères - fais les conversions UTF-8, UTF-16 et UTF-32 à la main, étape par étape, avec validation immédiate. Gratuit, sans compte, sans tracking."
+
+#: lib/charset_web/controllers/page_html/home.html.heex:19
+#, elixir-autogen, elixir-format
+msgid "Interactive exercises to take apart UTF-8, UTF-16 and UTF-32 - by hand, no calculator, step-by-step validation. For developers who actually want to understand the bit-level mechanics."
+msgstr "Exercices interactifs pour décortiquer UTF-8, UTF-16 et UTF-32 - à la main, sans calculatrice, avec validation pas à pas. Pour les développeurs qui veulent vraiment comprendre la mécanique des bits."
+
+#: lib/charset_web/components/layouts.ex:227
+#: lib/charset_web/components/layouts.ex:228
+#, elixir-autogen, elixir-format
+msgid "Language"
+msgstr "Langue"
+
+#: lib/charset_web/controllers/page_controller.ex:5
+#, elixir-autogen, elixir-format
+msgid "Learn character encoding"
+msgstr "Apprends l'encodage des caractères"
+
+#: lib/charset_web/controllers/page_html/home.html.heex:14
+#, elixir-autogen, elixir-format
+msgid "Learn character encoding,"
+msgstr "Apprends l'encodage des caractères,"
+
+#: lib/charset_web/components/layouts.ex:98
+#, elixir-autogen, elixir-format
+msgid "Menu"
+msgstr "Menu"
+
+#: lib/charset_web/controllers/page_html/home.html.heex:49
+#, elixir-autogen, elixir-format
+msgid "Not just a sandbox."
+msgstr "Pas juste un sandbox."
+
+#: lib/charset_web/components/layouts.ex:82
+#: lib/charset_web/components/layouts.ex:159
+#, elixir-autogen, elixir-format
+msgid "Sandbox"
+msgstr "Sandbox"
+
+#: lib/charset_web/components/layouts.ex:324
+#, elixir-autogen, elixir-format
+msgid "Something went wrong!"
+msgstr "Quelque chose s'est mal passé !"
+
+#: lib/charset_web/controllers/page_html/home.html.heex:25
+#, elixir-autogen, elixir-format
+msgid "Start an exercise"
+msgstr "Commence un exercice"
+
+#: lib/charset_web/controllers/page_html.ex:14
+#, elixir-autogen, elixir-format
+msgid "Step-by-step validation, not just at the end"
+msgstr "Validation étape par étape, pas seulement à la fin"
+
+#: lib/charset_web/components/layouts.ex:177
+#, elixir-autogen, elixir-format
+msgid "Teaching tool. No tracking, no ads."
+msgstr "Outil pédagogique. Pas de tracking, pas de pub."
+
+#: lib/charset_web/controllers/page_html.ex:131
+#, elixir-autogen, elixir-format
+msgid "The markers (110, 10) are fixed - you only fill the payload. Right size, wrong bits: recheck how you split the code point."
+msgstr "Les marqueurs (110, 10) sont fixes - tu ne remplis que le payload. Bonne taille, mauvais bits : revois ton découpage du code point."
+
+#: lib/charset_web/components/layouts.ex:205
+#: lib/charset_web/components/layouts.ex:206
+#, elixir-autogen, elixir-format
+msgid "Theme"
+msgstr "Thème"
+
+#: lib/charset_web/controllers/page_html/home.html.heex:28
+#, elixir-autogen, elixir-format
+msgid "Try the sandbox"
+msgstr "Essayer le sandbox"
+
+#: lib/charset_web/controllers/page_html.ex:17
+#, elixir-autogen, elixir-format
+msgid "UTF-8, UTF-16, UTF-32 - encode and decode, with graded levels"
+msgstr "UTF-8, UTF-16, UTF-32 - encodage et décodage, avec niveaux gradués"
+
+#: lib/charset_web/components/layouts.ex:312
+#, elixir-autogen, elixir-format
+msgid "We can't find the internet"
+msgstr "On ne trouve plus internet"
+
+#: lib/charset_web/components/layouts.ex:251
+#, elixir-autogen, elixir-format
+msgid "bytes → code point"
+msgstr "octets → code point"
+
+#: lib/charset_web/components/layouts.ex:290
+#, elixir-autogen, elixir-format
+msgid "charset.school - learn character encoding by hand"
+msgstr "charset.school - apprendre l'encodage des caractères à la main"
+
+#: lib/charset_web/components/core_components.ex:81
+#, elixir-autogen, elixir-format
+msgid "close"
+msgstr "fermer"
+
+#: lib/charset_web/components/layouts.ex:245
+#, elixir-autogen, elixir-format
+msgid "code point → bytes"
+msgstr "code point → octets"
+
+#: lib/charset_web/controllers/page_html.ex:108
+#, elixir-autogen, elixir-format
+msgid "encode UTF-8 · split the useful bits"
+msgstr "encoder UTF-8 · découper les bits utiles"
+
+#: lib/charset_web/components/layouts.ex:257
+#, elixir-autogen, elixir-format
+msgid "endianness + BOM"
+msgstr "endianness + BOM"
+
+#: lib/charset_web/controllers/page_html.ex:36
+#, elixir-autogen, elixir-format
+msgid "example · encode UTF-8"
+msgstr "exemple · encoder UTF-8"
+
+#: lib/charset_web/components/layouts.ex:275
+#, elixir-autogen, elixir-format
+msgid "explicit endianness, 4 bytes → code point"
+msgstr "endianness explicite, 4 octets → code point"
+
+#: lib/charset_web/components/layouts.ex:269
+#, elixir-autogen, elixir-format
+msgid "fixed 4 bytes, padding"
+msgstr "4 octets fixes, padding"
+
+#: lib/charset_web/controllers/page_html/home.html.heex:16
+#, elixir-autogen, elixir-format
+msgid "one bit at a time."
+msgstr "un bit à la fois."
+
+#: lib/charset_web/controllers/page_html/home.html.heex:44
+#, elixir-autogen, elixir-format
+msgid "preview"
+msgstr "aperçu"
+
+#: lib/charset_web/components/layouts.ex:263
+#, elixir-autogen, elixir-format
+msgid "surrogate pairs included"
+msgstr "surrogate pairs inclus"
+
+#: lib/charset_web/controllers/page_html/home.html.heex:8
+#, elixir-autogen, elixir-format
+msgid "teaching tool"
+msgstr "outil pédagogique"
