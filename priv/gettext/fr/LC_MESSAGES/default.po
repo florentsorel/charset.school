@@ -250,54 +250,70 @@ msgstr "surrogate pairs inclus"
 msgid "teaching tool"
 msgstr "outil pédagogique"
 
-#: lib/app_web/components/sandbox_components.ex:216
+#: lib/app_web/components/sandbox_components.ex:264
 #, elixir-autogen, elixir-format
 msgid "%{n} byte"
 msgid_plural "%{n} bytes"
 msgstr[0] "%{n} octet"
 msgstr[1] "%{n} octets"
 
-#: lib/app_web/components/sandbox_components.ex:221
+#: lib/app_web/components/sandbox_components.ex:269
 #, elixir-autogen, elixir-format
 msgid "1 byte · U+0000 → U+007F"
 msgstr "1 octet · U+0000 → U+007F"
 
-#: lib/app_web/components/sandbox_components.ex:228
+#: lib/app_web/components/sandbox_components.ex:276
 #, elixir-autogen, elixir-format
 msgid "1 code unit · BMP"
 msgstr "1 code unit · BMP"
 
-#: lib/app_web/components/sandbox_components.ex:222
+#: lib/app_web/components/sandbox_components.ex:270
 #, elixir-autogen, elixir-format
 msgid "2 bytes · U+0080 → U+07FF"
 msgstr "2 octets · U+0080 → U+07FF"
 
-#: lib/app_web/components/sandbox_components.ex:229
+#: lib/app_web/components/sandbox_components.ex:279
 #, elixir-autogen, elixir-format
 msgid "2 code units · surrogate pair"
 msgstr "2 code units · paire de surrogates"
 
-#: lib/app_web/components/sandbox_components.ex:223
+#: lib/app_web/components/sandbox_components.ex:271
 #, elixir-autogen, elixir-format
 msgid "3 bytes · U+0800 → U+FFFF"
 msgstr "3 octets · U+0800 → U+FFFF"
 
-#: lib/app_web/components/sandbox_components.ex:226
+#: lib/app_web/components/sandbox_components.ex:274
 #, elixir-autogen, elixir-format
 msgid "4 bytes · U+10000 → U+10FFFF"
 msgstr "4 octets · U+10000 → U+10FFFF"
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:141
+#: lib/app_web/live/sandbox/latin1_encode.ex:105
+#: lib/app_web/live/sandbox/utf16_encode.ex:133
+#: lib/app_web/live/sandbox/utf32_encode.ex:106
+#: lib/app_web/live/sandbox/utf8_encode.ex:142
+#: lib/app_web/live/sandbox/windows1252_encode.ex:147
 #, elixir-autogen, elixir-format
 msgid "Accepts U+XXXX, 0xXX, decimal, or a single character."
 msgstr "Accepte U+XXXX, 0xXX, décimal, ou un caractère unique."
 
+#: lib/app_web/live/sandbox/latin1_decode.ex:127
+#: lib/app_web/live/sandbox/latin1_encode.ex:123
+#: lib/app_web/live/sandbox/utf16_decode.ex:162
+#: lib/app_web/live/sandbox/utf16_encode.ex:152
+#: lib/app_web/live/sandbox/utf32_decode.ex:143
+#: lib/app_web/live/sandbox/utf32_encode.ex:125
 #: lib/app_web/live/sandbox/utf8_decode.ex:137
-#: lib/app_web/live/sandbox/utf8_encode.ex:159
+#: lib/app_web/live/sandbox/utf8_encode.ex:160
+#: lib/app_web/live/sandbox/windows1252_decode.ex:170
+#: lib/app_web/live/sandbox/windows1252_encode.ex:165
 #, elixir-autogen, elixir-format
 msgid "Binary"
 msgstr "Binaire"
 
+#: lib/app_web/live/sandbox/utf16_decode.ex:134
+#: lib/app_web/live/sandbox/utf16_decode.ex:159
+#: lib/app_web/live/sandbox/utf32_decode.ex:115
+#: lib/app_web/live/sandbox/utf32_decode.ex:140
 #: lib/app_web/live/sandbox/utf8_decode.ex:110
 #: lib/app_web/live/sandbox/utf8_decode.ex:134
 #, elixir-autogen, elixir-format
@@ -309,12 +325,16 @@ msgstr "Octets"
 msgid "C3 A9, 0xC3 0xA9, or C3A9"
 msgstr "C3 A9, 0xC3 0xA9, ou C3A9"
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:136
+#: lib/app_web/live/sandbox/latin1_encode.ex:100
+#: lib/app_web/live/sandbox/utf16_encode.ex:128
+#: lib/app_web/live/sandbox/utf32_encode.ex:101
+#: lib/app_web/live/sandbox/utf8_encode.ex:137
+#: lib/app_web/live/sandbox/windows1252_encode.ex:142
 #, elixir-autogen, elixir-format
 msgid "Code point"
 msgstr "Code point"
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:185
+#: lib/app_web/live/sandbox/utf8_encode.ex:186
 #, elixir-autogen, elixir-format
 msgid "Code point %{cp} fits in %{bits} significant bits (padded to the form's payload length)."
 msgstr "Le code point %{cp} tient sur %{bits} bits significatifs (paddés à la longueur du format)."
@@ -324,7 +344,7 @@ msgstr "Le code point %{cp} tient sur %{bits} bits significatifs (paddés à la 
 msgid "Concatenate the groups to rebuild the code point's binary (%{bits} significant bits)."
 msgstr "On concatène les groupes pour reformer le binaire complet du code point (%{bits} bits significatifs)."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:131
+#: lib/app_web/live/sandbox/utf8_encode.ex:132
 #, elixir-autogen, elixir-format
 msgid "Convert a Unicode code point to UTF-8."
 msgstr "Convertis un code point Unicode en UTF-8."
@@ -334,23 +354,41 @@ msgstr "Convertis un code point Unicode en UTF-8."
 msgid "Convert a sequence of UTF-8 bytes into a Unicode code point."
 msgstr "Convertis une suite d'octets UTF-8 en code point Unicode."
 
+#: lib/app_web/live/sandbox/latin1_decode.ex:153
+#: lib/app_web/live/sandbox/utf16_decode.ex:227
+#: lib/app_web/live/sandbox/utf32_decode.ex:180
 #: lib/app_web/live/sandbox/utf8_decode.ex:195
+#: lib/app_web/live/sandbox/windows1252_decode.ex:202
 #, elixir-autogen, elixir-format
 msgid "Convert to a code point"
 msgstr "Convertir en code point"
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:182
+#: lib/app_web/live/sandbox/latin1_encode.ex:137
+#: lib/app_web/live/sandbox/utf16_encode.ex:182
+#: lib/app_web/live/sandbox/utf8_encode.ex:183
 #, elixir-autogen, elixir-format
 msgid "Convert to binary"
 msgstr "Convertir en binaire"
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:222
+#: lib/app_web/live/sandbox/latin1_encode.ex:151
+#: lib/app_web/live/sandbox/utf16_encode.ex:208
+#: lib/app_web/live/sandbox/utf32_encode.ex:160
+#: lib/app_web/live/sandbox/utf8_encode.ex:223
+#: lib/app_web/live/sandbox/windows1252_encode.ex:200
 #, elixir-autogen, elixir-format
 msgid "Convert to hexadecimal"
 msgstr "Convertir en hexadécimal"
 
+#: lib/app_web/live/sandbox/latin1_decode.ex:121
+#: lib/app_web/live/sandbox/latin1_encode.ex:117
+#: lib/app_web/live/sandbox/utf16_decode.ex:156
+#: lib/app_web/live/sandbox/utf16_encode.ex:146
+#: lib/app_web/live/sandbox/utf32_decode.ex:137
+#: lib/app_web/live/sandbox/utf32_encode.ex:119
 #: lib/app_web/live/sandbox/utf8_decode.ex:131
-#: lib/app_web/live/sandbox/utf8_encode.ex:153
+#: lib/app_web/live/sandbox/utf8_encode.ex:154
+#: lib/app_web/live/sandbox/windows1252_decode.ex:164
+#: lib/app_web/live/sandbox/windows1252_encode.ex:159
 #, elixir-autogen, elixir-format
 msgid "Decimal"
 msgstr "Décimal"
@@ -370,12 +408,12 @@ msgstr "Décoder Windows-1252"
 msgid "Decoding"
 msgstr "Décodage"
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:117
+#: lib/app_web/live/sandbox/utf8_encode.ex:118
 #, elixir-autogen, elixir-format
 msgid "Each binary byte becomes its hex value on `%{count}` digits."
 msgstr "Chaque octet binaire devient sa valeur hex sur `%{count}` chiffres."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:114
+#: lib/app_web/live/sandbox/utf8_encode.ex:115
 #, elixir-autogen, elixir-format
 msgid "Each binary byte becomes its hex value on `1` digit."
 msgstr "Chaque octet binaire devient sa valeur hex sur `1` chiffre."
@@ -395,11 +433,17 @@ msgstr "Encoder en Windows-1252"
 msgid "Encoding"
 msgstr "Encodage"
 
+#: lib/app_web/live/sandbox/latin1_encode.ex:69
+#: lib/app_web/live/sandbox/utf16_encode.ex:70
+#: lib/app_web/live/sandbox/utf32_encode.ex:63
 #: lib/app_web/live/sandbox/utf8_encode.ex:69
+#: lib/app_web/live/sandbox/windows1252_encode.ex:76
 #, elixir-autogen, elixir-format
 msgid "Enter a code point."
 msgstr "Saisis un code point."
 
+#: lib/app_web/live/sandbox/utf16_decode.ex:75
+#: lib/app_web/live/sandbox/utf32_decode.ex:72
 #: lib/app_web/live/sandbox/utf8_decode.ex:70
 #, elixir-autogen, elixir-format
 msgid "Enter a hex byte sequence."
@@ -440,7 +484,11 @@ msgstr "Pour chaque octet, on enlève le marqueur du format (`110`/`1110`/`11110
 msgid "Hex (with or without `0x`), separated by spaces / commas / no separator."
 msgstr "Hex (avec ou sans `0x`), séparé par espaces / virgules / sans séparateur."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:156
+#: lib/app_web/live/sandbox/latin1_encode.ex:120
+#: lib/app_web/live/sandbox/utf16_encode.ex:149
+#: lib/app_web/live/sandbox/utf32_encode.ex:122
+#: lib/app_web/live/sandbox/utf8_encode.ex:157
+#: lib/app_web/live/sandbox/windows1252_encode.ex:162
 #, elixir-autogen, elixir-format
 msgid "Hexadecimal"
 msgstr "Hexadécimal"
@@ -450,98 +498,124 @@ msgstr "Hexadécimal"
 msgid "Identify the byte count"
 msgstr "Identifier le nombre d'octets"
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:212
+#: lib/app_web/live/sandbox/utf8_encode.ex:213
 #, elixir-autogen, elixir-format
 msgid "Insert the markers"
 msgstr "Insérer les marqueurs"
 
+#: lib/app_web/live/sandbox/utf16_decode.ex:79
+#: lib/app_web/live/sandbox/utf32_decode.ex:76
 #: lib/app_web/live/sandbox/utf8_decode.ex:74
 #, elixir-autogen, elixir-format
 msgid "Last byte is incomplete (odd number of hex digits)."
 msgstr "Le dernier octet est incomplet (nombre impair de chiffres hex)."
 
+#: lib/app_web/live/sandbox/latin1_decode.ex:67
+#: lib/app_web/live/sandbox/utf16_decode.ex:76
+#: lib/app_web/live/sandbox/utf32_decode.ex:73
 #: lib/app_web/live/sandbox/utf8_decode.ex:71
+#: lib/app_web/live/sandbox/windows1252_decode.ex:76
 #, elixir-autogen, elixir-format
 msgid "Non-hex characters detected."
 msgstr "Caractères non-hex détectés."
 
+#: lib/app_web/live/sandbox/latin1_encode.ex:71
+#: lib/app_web/live/sandbox/utf16_encode.ex:72
+#: lib/app_web/live/sandbox/utf32_encode.ex:65
 #: lib/app_web/live/sandbox/utf8_encode.ex:71
+#: lib/app_web/live/sandbox/windows1252_encode.ex:78
 #, elixir-autogen, elixir-format
 msgid "Outside the Unicode range (0 → U+10FFFF)."
 msgstr "Hors plage Unicode (0 → U+10FFFF)."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:173
+#: lib/app_web/live/sandbox/utf8_encode.ex:174
 #, elixir-autogen, elixir-format
 msgid "Pick the UTF-8 form"
 msgstr "Choisir le format UTF-8"
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:76
+#: lib/app_web/live/sandbox/utf8_encode.ex:77
 #, elixir-autogen, elixir-format
 msgid "Range `U+0000` -> `U+007F` - 7 useful bits, plain ASCII form."
 msgstr "Plage `U+0000` → `U+007F` - 7 bits utiles, format ASCII pur."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:79
+#: lib/app_web/live/sandbox/utf8_encode.ex:80
 #, elixir-autogen, elixir-format
 msgid "Range `U+0080` -> `U+07FF` - 11 useful bits, beyond ASCII."
 msgstr "Plage `U+0080` → `U+07FF` - 11 bits utiles, au-delà de l'ASCII."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:82
+#: lib/app_web/live/sandbox/utf8_encode.ex:83
 #, elixir-autogen, elixir-format
 msgid "Range `U+0800` -> `U+FFFF` - 16 useful bits, BMP beyond Latin extended."
 msgstr "Plage `U+0800` → `U+FFFF` - 16 bits utiles, BMP au-delà du Latin étendu."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:86
+#: lib/app_web/live/sandbox/utf8_encode.ex:87
 #, elixir-autogen, elixir-format
 msgid "Range `U+10000` -> `U+10FFFF` - 21 useful bits, supplementary planes (emojis, etc.)."
 msgstr "Plage `U+10000` → `U+10FFFF` - 21 bits utiles, plans supplémentaires (emojis, etc.)."
 
+#: lib/app_web/live/sandbox/utf16_decode.ex:216
+#: lib/app_web/live/sandbox/utf32_decode.ex:164
 #: lib/app_web/live/sandbox/utf8_decode.ex:177
 #, elixir-autogen, elixir-format
 msgid "Reassemble the binary"
 msgstr "Reconstituer le binaire"
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:200
+#: lib/app_web/live/sandbox/utf8_encode.ex:201
 #, elixir-autogen, elixir-format
 msgid "Split by the form's payload-slot widths (%{slots} bits)."
 msgstr "Découpage selon les emplacements payload du format (%{slots} bits)."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:197
+#: lib/app_web/live/sandbox/utf8_encode.ex:198
 #, elixir-autogen, elixir-format
 msgid "Split into chunks"
 msgstr "Découper en chunks"
 
+#: lib/app_web/live/sandbox/latin1_decode.ex:135
+#: lib/app_web/live/sandbox/latin1_encode.ex:133
+#: lib/app_web/live/sandbox/utf16_decode.ex:170
+#: lib/app_web/live/sandbox/utf16_encode.ex:160
+#: lib/app_web/live/sandbox/utf32_decode.ex:151
+#: lib/app_web/live/sandbox/utf32_encode.ex:133
 #: lib/app_web/live/sandbox/utf8_decode.ex:148
-#: lib/app_web/live/sandbox/utf8_encode.ex:169
+#: lib/app_web/live/sandbox/utf8_encode.ex:170
+#: lib/app_web/live/sandbox/windows1252_decode.ex:186
+#: lib/app_web/live/sandbox/windows1252_encode.ex:183
 #, elixir-autogen, elixir-format
 msgid "Step-by-step breakdown"
 msgstr "Étapes détaillées"
 
+#: lib/app_web/live/sandbox/latin1_encode.ex:74
+#: lib/app_web/live/sandbox/utf16_encode.ex:75
+#: lib/app_web/live/sandbox/utf32_encode.ex:68
 #: lib/app_web/live/sandbox/utf8_encode.ex:74
+#: lib/app_web/live/sandbox/windows1252_encode.ex:81
 #, elixir-autogen, elixir-format
 msgid "Surrogates (U+D800 → U+DFFF) are not valid UTF-8."
 msgstr "Les surrogates (U+D800 → U+DFFF) ne sont pas valides en UTF-8."
 
+#: lib/app_web/live/sandbox/utf16_decode.ex:232
+#: lib/app_web/live/sandbox/utf32_decode.ex:185
 #: lib/app_web/live/sandbox/utf8_decode.ex:200
 #, elixir-autogen, elixir-format
 msgid "The binary equals `%{decimal}` in decimal, i.e. `%{cp}` in Unicode notation."
 msgstr "Le binaire vaut `%{decimal}` en décimal, soit `%{cp}` en notation Unicode."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:92
+#: lib/app_web/live/sandbox/utf8_encode.ex:93
 #, elixir-autogen, elixir-format
 msgid "The byte carries the marker `0` (1 bit). ASCII-compatible code point, no continuation bytes."
 msgstr "L'octet porte le marqueur `0` (1 bit). Code point compatible ASCII, pas d'octet de continuation."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:98
+#: lib/app_web/live/sandbox/utf8_encode.ex:99
 #, elixir-autogen, elixir-format
 msgid "The first byte carries the marker `110` (3 bits); the next carries `10` (continuation)."
 msgstr "Le premier octet porte le marqueur `110` (3 bits) ; le suivant porte `10` (continuation)."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:104
+#: lib/app_web/live/sandbox/utf8_encode.ex:105
 #, elixir-autogen, elixir-format
 msgid "The first byte carries the marker `1110` (4 bits); the 2 following carry `10` (continuation)."
 msgstr "Le premier octet porte le marqueur `1110` (4 bits) ; les 2 suivants portent `10` (continuation)."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:110
+#: lib/app_web/live/sandbox/utf8_encode.ex:111
 #, elixir-autogen, elixir-format
 msgid "The first byte carries the marker `11110` (5 bits); the 3 following carry `10` (continuation)."
 msgstr "Le premier octet porte le marqueur `11110` (5 bits) ; les 3 suivants portent `10` (continuation)."
@@ -556,7 +630,11 @@ msgstr "Cette séquence d'octets ne forme pas un UTF-8 valide."
 msgid "Too many bytes: UTF-8 encodes a single code point in at most 4 bytes."
 msgstr "Trop d'octets : UTF-8 encode un seul code point sur 4 octets maximum."
 
-#: lib/app_web/live/sandbox/utf8_encode.ex:138
+#: lib/app_web/live/sandbox/latin1_encode.ex:102
+#: lib/app_web/live/sandbox/utf16_encode.ex:130
+#: lib/app_web/live/sandbox/utf32_encode.ex:103
+#: lib/app_web/live/sandbox/utf8_encode.ex:139
+#: lib/app_web/live/sandbox/windows1252_encode.ex:144
 #, elixir-autogen, elixir-format
 msgid "U+00E9, 0xE9, 233 or the character itself"
 msgstr "U+00E9, 0xE9, 233 ou directement le caractère"
@@ -568,17 +646,497 @@ msgid "UTF-8 sandbox (decode)"
 msgstr "Sandbox UTF-8 (décodage)"
 
 #: lib/app_web/live/sandbox/utf8_encode.ex:22
-#: lib/app_web/live/sandbox/utf8_encode.ex:130
+#: lib/app_web/live/sandbox/utf8_encode.ex:131
 #, elixir-autogen, elixir-format
 msgid "UTF-8 sandbox (encode)"
 msgstr "Sandbox UTF-8 (encodage)"
 
+#: lib/app_web/live/sandbox/latin1_encode.ex:70
+#: lib/app_web/live/sandbox/utf16_encode.ex:71
+#: lib/app_web/live/sandbox/utf32_encode.ex:64
 #: lib/app_web/live/sandbox/utf8_encode.ex:70
+#: lib/app_web/live/sandbox/windows1252_encode.ex:77
 #, elixir-autogen, elixir-format
 msgid "Unrecognised format."
 msgstr "Format non reconnu."
 
-#: lib/app_web/components/sandbox_components.ex:238
+#: lib/app_web/components/sandbox_components.ex:288
 #, elixir-autogen, elixir-format
 msgid "non-printable"
 msgstr "non imprimable"
+
+#: lib/app_web/live/sandbox/utf32_decode.ex:117
+#, elixir-autogen, elixir-format
+msgid "00 00 00 E9, 89 F3 01 00, or 000000E9"
+msgstr "00 00 00 E9, 89 F3 01 00, ou 000000E9"
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:136
+#, elixir-autogen, elixir-format
+msgid "00 E9, D8 3C DF 89, or C3A9"
+msgstr "00 E9, D8 3C DF 89, ou C3A9"
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:98
+#, elixir-autogen, elixir-format
+msgid "2 bytes = 1 code unit in the [BMP^Basic Multilingual Plane] (range `U+0000` → `U+FFFF`)."
+msgstr "2 octets = 1 code unit dans le [BMP^Basic Multilingual Plane] (plage `U+0000` → `U+FFFF`)."
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:104
+#, elixir-autogen, elixir-format
+msgid "4 bytes = surrogate pair for a code point beyond the [BMP^Basic Multilingual Plane]. The high code unit is in `0xD800` → `0xDBFF`, the low one in `0xDC00` → `0xDFFF`."
+msgstr "4 octets = paire de surrogates pour un code point au-delà du [BMP^Basic Multilingual Plane]. Le code unit haut est dans `0xD800` → `0xDBFF`, le code unit bas dans `0xDC00` → `0xDFFF`."
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:145
+#, elixir-autogen, elixir-format
+msgid "80, 0x80, or E9"
+msgstr "80, 0x80, ou E9"
+
+#: lib/app_web/live/sandbox/latin1_decode.ex:105
+#, elixir-autogen, elixir-format
+msgid "A single hex byte (with or without `0x`). Latin-1 is strictly 1 byte = 1 code point."
+msgstr "Un seul octet hex (avec ou sans `0x`). Latin-1 est strictement 1 octet = 1 code point."
+
+#: lib/app_web/components/sandbox_components.ex:99
+#, elixir-autogen, elixir-format
+msgid "Big Endian (BE)"
+msgstr "Big Endian (BE)"
+
+#: lib/app_web/live/sandbox/latin1_decode.ex:98
+#: lib/app_web/live/sandbox/latin1_decode.ex:124
+#: lib/app_web/live/sandbox/windows1252_decode.ex:143
+#: lib/app_web/live/sandbox/windows1252_decode.ex:167
+#, elixir-autogen, elixir-format
+msgid "Byte"
+msgstr "Octet"
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:96
+#, elixir-autogen, elixir-format
+msgid "Code point `%{cp}` fits in 16 significant bits."
+msgstr "Le code point `%{cp}` tient sur 16 bits significatifs."
+
+#: lib/app_web/live/sandbox/latin1_encode.ex:140
+#, elixir-autogen, elixir-format
+msgid "Code point `%{cp}` fits in exactly 8 bits. Latin-1 makes the code point value coincide with the byte value: no marker, no splitting."
+msgstr "Le code point `%{cp}` tient sur 8 bits exactement. Latin-1 fait coïncider la valeur du code point avec celle de l'octet : pas de marqueur, pas de découpe."
+
+#: lib/app_web/live/sandbox/windows1252_encode.ex:104
+#, elixir-autogen, elixir-format
+msgid "Code point `%{cp}` is in the ASCII range: its byte `0x00` → `0x7F` reads straight into binary (8 bits, high bit `0`)."
+msgstr "Le code point `%{cp}` est dans la plage ASCII : son octet `0x00` → `0x7F` se lit directement en binaire (8 bits, bit haut à `0`)."
+
+#: lib/app_web/live/sandbox/windows1252_encode.ex:118
+#, elixir-autogen, elixir-format
+msgid "Code point `%{cp}` is in the Latin-1 Supplement range (`U+00A0` → `U+00FF`): its byte matches the code point value, written as 8 bits."
+msgstr "Le code point `%{cp}` est dans la plage Latin-1 supplément (`U+00A0` → `U+00FF`) : son octet est identique à la valeur du code point, à convertir en binaire sur 8 bits."
+
+#: lib/app_web/live/sandbox/windows1252_encode.ex:111
+#, elixir-autogen, elixir-format
+msgid "Code point `%{cp}` isn't in an identity range. Look up the [CP1252^Code Page 1252] table to find its byte between `0x80` and `0x9F`, then convert to binary."
+msgstr "Le code point `%{cp}` n'est pas dans une plage d'identité. Il faut consulter la table [CP1252^Code Page 1252] pour trouver son octet entre `0x80` et `0x9F`, puis convertir en binaire."
+
+#: lib/app_web/live/sandbox/latin1_encode.ex:77
+#, elixir-autogen, elixir-format
+msgid "Code point outside the Latin-1 range (beyond `U+00FF`)."
+msgstr "Code point hors plage Latin-1 (au-delà de `U+00FF`)."
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:111
+#, elixir-autogen, elixir-format
+msgid "Concatenate the 10 + 10 bits then add `0x10000` to recover the code point."
+msgstr "On concatène les 10 + 10 bits puis on ajoute `0x10000` pour retrouver le code point."
+
+#: lib/app_web/live/sandbox/utf32_decode.ex:167
+#, elixir-autogen, elixir-format
+msgid "Concatenate the 4 bytes (reordered as Big Endian) to reform the full 32-bit binary.\nIn UTF-32 this binary IS the code point - no marker to strip, no surrogate to recombine."
+msgstr "On concatène les 4 octets (réordonnés en Big Endian) pour reformer le binaire complet sur 32 bits.\nEn UTF-32 ce binaire EST le code point - pas de marqueur à retirer, pas de surrogate à recombiner."
+
+#: lib/app_web/live/sandbox/utf32_decode.ex:109
+#, elixir-autogen, elixir-format
+msgid "Convert 4 UTF-32 bytes into a Unicode code point, given the endianness."
+msgstr "Convertis 4 octets UTF-32 en code point Unicode, en précisant l'endianness."
+
+#: lib/app_web/live/sandbox/latin1_decode.ex:90
+#, elixir-autogen, elixir-format
+msgid "Convert a Latin-1 (ISO 8859-1) byte into a Unicode code point. 1:1 mapping, perfect identity over `0x00` → `0xFF`."
+msgstr "Convertis un octet Latin-1 (ISO 8859-1) en code point Unicode. Mapping 1:1, identité parfaite sur `0x00` → `0xFF`."
+
+#: lib/app_web/live/sandbox/utf32_encode.ex:95
+#, elixir-autogen, elixir-format
+msgid "Convert a Unicode code point into 4 UTF-32 bytes, with a chosen endianness."
+msgstr "Convertis un code point Unicode en 4 octets UTF-32, avec choix de l'endianness."
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:122
+#, elixir-autogen, elixir-format
+msgid "Convert a Unicode code point into UTF-16 bytes, with a chosen endianness."
+msgstr "Convertis un code point Unicode en octets UTF-16, avec choix de l'endianness."
+
+#: lib/app_web/live/sandbox/windows1252_encode.ex:136
+#, elixir-autogen, elixir-format
+msgid "Convert a Unicode code point into a single Windows-1252 (CP1252) byte."
+msgstr "Convertis un code point Unicode en un seul octet Windows-1252 (CP1252)."
+
+#: lib/app_web/live/sandbox/latin1_encode.ex:92
+#, elixir-autogen, elixir-format
+msgid "Convert a Unicode code point to a Latin-1 (ISO 8859-1) byte. 1:1 mapping over the `U+0000` → `U+00FF` range."
+msgstr "Convertis un code point Unicode en octet Latin-1 (ISO 8859-1). Mapping 1:1 sur la plage `U+0000` → `U+00FF`."
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:138
+#, elixir-autogen, elixir-format
+msgid "Convert a Windows-1252 (CP1252) byte into a Unicode code point."
+msgstr "Convertis un octet Windows-1252 (CP1252) en code point Unicode."
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:126
+#, elixir-autogen, elixir-format
+msgid "Convert a sequence of UTF-16 bytes into a Unicode code point, given the endianness."
+msgstr "Convertis une suite d'octets UTF-16 en code point Unicode, en précisant l'endianness."
+
+#: lib/app_web/live/sandbox/utf32_encode.ex:146
+#, elixir-autogen, elixir-format
+msgid "Convert to 32-bit binary"
+msgstr "Convertir en binaire sur 32 bits"
+
+#: lib/app_web/live/sandbox/latin1_decode.ex:100
+#, elixir-autogen, elixir-format
+msgid "E9, 0xE9, or 41"
+msgstr "E9, 0xE9, ou 41"
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:91
+#, elixir-autogen, elixir-format
+msgid "Each code unit is read high-order byte first (`Big Endian`)."
+msgstr "On lit chaque code unit avec l'octet de poids fort en premier (`Big Endian`)."
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:94
+#, elixir-autogen, elixir-format
+msgid "Each code unit is read low-order byte first (`Little Endian`)."
+msgstr "On lit chaque code unit avec l'octet de poids faible en premier (`Little Endian`)."
+
+#: lib/app_web/components/sandbox_components.ex:83
+#, elixir-autogen, elixir-format
+msgid "Endianness"
+msgstr "Endianness"
+
+#: lib/app_web/live/sandbox/latin1_decode.ex:66
+#: lib/app_web/live/sandbox/windows1252_decode.ex:75
+#, elixir-autogen, elixir-format
+msgid "Enter a hex byte."
+msgstr "Entre un octet hex."
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:199
+#, elixir-autogen, elixir-format
+msgid "Extract the useful bits from each surrogate"
+msgstr "Extraire les bits utiles des surrogates"
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:174
+#: lib/app_web/live/sandbox/utf32_decode.ex:155
+#, elixir-autogen, elixir-format
+msgid "Given endianness"
+msgstr "Endianness précisée"
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:141
+#, elixir-autogen, elixir-format
+msgid "Hex (with or without `0x`). UTF-16 takes 2 or 4 bytes per code point."
+msgstr "Hex (avec ou sans `0x`). UTF-16 prend 2 ou 4 octets par code point."
+
+#: lib/app_web/live/sandbox/utf32_decode.ex:122
+#, elixir-autogen, elixir-format
+msgid "Hex (with or without `0x`). UTF-32 takes exactly 4 bytes per code point."
+msgstr "Hex (avec ou sans `0x`). UTF-32 prend exactement 4 octets par code point."
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:150
+#, elixir-autogen, elixir-format
+msgid "Hex (with or without `0x`). Windows-1252 encodes one character per byte."
+msgstr "Hex (avec ou sans `0x`). Windows-1252 encode un caractère sur un seul octet."
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:186
+#, elixir-autogen, elixir-format
+msgid "Identify the code unit count"
+msgstr "Identifier le nombre de code units"
+
+#: lib/app_web/live/sandbox/latin1_decode.ex:21
+#: lib/app_web/live/sandbox/latin1_decode.ex:88
+#, elixir-autogen, elixir-format
+msgid "Latin-1 sandbox (decode)"
+msgstr "Sandbox Latin-1 (décodage)"
+
+#: lib/app_web/live/sandbox/latin1_encode.ex:22
+#: lib/app_web/live/sandbox/latin1_encode.ex:90
+#, elixir-autogen, elixir-format
+msgid "Latin-1 sandbox (encode)"
+msgstr "Sandbox Latin-1 (encodage)"
+
+#: lib/app_web/components/sandbox_components.ex:100
+#, elixir-autogen, elixir-format
+msgid "Little Endian (LE)"
+msgstr "Little Endian (LE)"
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:173
+#, elixir-autogen, elixir-format
+msgid "Pick the UTF-16 form"
+msgstr "Choisir le format UTF-16"
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:164
+#: lib/app_web/live/sandbox/utf32_encode.ex:137
+#, elixir-autogen, elixir-format
+msgid "Pick the endianness"
+msgstr "Choisir l'endianness"
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:91
+#, elixir-autogen, elixir-format
+msgid "Range `0x00` → `0x7F` - ASCII identity: the byte is its own code point."
+msgstr "Plage `0x00` → `0x7F` - identité ASCII : l'octet est son propre code point."
+
+#: lib/app_web/live/sandbox/windows1252_encode.ex:90
+#, elixir-autogen, elixir-format
+msgid "Range `0x00` → `0x7F` - identical to ASCII (and to Latin-1)."
+msgstr "Plage `0x00` → `0x7F` - identique à l'ASCII (et à Latin-1)."
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:95
+#, elixir-autogen, elixir-format
+msgid "Range `0x80` → `0x9F` - the Microsoft extension. This is where Windows-1252 diverges from Latin-1: 27 printable characters (`€` at `0x80`, `™` at `0x99`, em-dash `—` at `0x97`, smart quotes, ...) instead of C1 controls."
+msgstr "Plage `0x80` → `0x9F` - l'extension Microsoft. C'est ici que Windows-1252 diverge de Latin-1 : on a 27 caractères imprimables (`€` à `0x80`, `™` à `0x99`, l'em-dash `—` à `0x97`, les guillemets typographiques...) au lieu des contrôles C1."
+
+#: lib/app_web/live/sandbox/windows1252_encode.ex:94
+#, elixir-autogen, elixir-format
+msgid "Range `0x80` → `0x9F` - the Microsoft extension: 27 printable characters like `€`, `™`, `—`, smart quotes, ... This is where [CP1252^Code Page 1252] differs from Latin-1 (which has C1 controls in that slot). 5 bytes remain unassigned: `0x81`, `0x8D`, `0x8F`, `0x90`, `0x9D`."
+msgstr "Plage `0x80` → `0x9F` - l'extension Microsoft : 27 caractères imprimables comme `€`, `™`, `—`, les guillemets typographiques... C'est là que [CP1252^Code Page 1252] diffère de Latin-1 (qui contient des contrôles C1 à cet endroit). 5 octets restent non assignés : `0x81`, `0x8D`, `0x8F`, `0x90`, `0x9D`."
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:100
+#, elixir-autogen, elixir-format
+msgid "Range `0xA0` → `0xFF` - Latin-1 identity: the byte is its own code point."
+msgstr "Plage `0xA0` → `0xFF` - identité Latin-1 : l'octet est son propre code point."
+
+#: lib/app_web/live/sandbox/windows1252_encode.ex:100
+#, elixir-autogen, elixir-format
+msgid "Range `0xA0` → `0xFF` - identical to Latin-1 (accented characters, symbols)."
+msgstr "Plage `0xA0` → `0xFF` - identique à Latin-1 (caractères accentués, symboles)."
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:85
+#, elixir-autogen, elixir-format
+msgid "Range `U+0000` → `U+FFFF` - the [BMP^Basic Multilingual Plane], which covers most of the world's scripts. Fits in a single 16-bit code unit, 2 bytes."
+msgstr "Plage `U+0000` → `U+FFFF` - le [BMP^Basic Multilingual Plane], qui couvre l'essentiel des écritures du monde. 1 code unit de 16 bits suffit, soit 2 octets."
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:91
+#, elixir-autogen, elixir-format
+msgid "Range `U+10000` → `U+10FFFF` - beyond the [BMP^Basic Multilingual Plane], in the supplementary planes (emojis, historic scripts, rare [CJK^Chinese, Japanese, Korean]...). Encoded as a surrogate pair: 2 code units = 4 bytes."
+msgstr "Plage `U+10000` → `U+10FFFF` - au-delà du [BMP^Basic Multilingual Plane], dans les plans supplémentaires (emojis, scripts historiques, [CJK^Chinois, Japonais, Coréen] rare...). Encodé en paire de surrogates : 2 code units = 4 octets."
+
+#: lib/app_web/live/sandbox/windows1252_encode.ex:190
+#, elixir-autogen, elixir-format
+msgid "Read the byte value in binary"
+msgstr "Lire la valeur de l'octet en binaire"
+
+#: lib/app_web/live/sandbox/latin1_decode.ex:139
+#, elixir-autogen, elixir-format
+msgid "Read the byte's bits"
+msgstr "Lire les bits de l'octet"
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:190
+#, elixir-autogen, elixir-format
+msgid "Read the value in binary"
+msgstr "Lire la valeur en binaire"
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:192
+#, elixir-autogen, elixir-format
+msgid "Split for the surrogates"
+msgstr "Découper pour les surrogates"
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:196
+#, elixir-autogen, elixir-format
+msgid "Split the 20 bits into 2 packets of 10 bits.\nThe left 10 bits (high-order) form the high surrogate, the right 10 bits (low-order) form the low surrogate.\nEach 10-bit packet represents an integer between 0 and 1,023 (10 bits = 2¹⁰ = 1,024 values). Add it to the surrogate base: `0xD800` for the high, `0xDC00` for the low."
+msgstr "On découpe les 20 bits en 2 paquets de 10 bits.\nLes 10 bits de gauche (poids forts) forment le high surrogate, les 10 bits de droite (poids faibles) forment le low surrogate.\nChaque paquet de 10 bits représente un entier entre 0 et 1 023 (10 bits = 2¹⁰ = 1 024 valeurs). On l'ajoute à la base du surrogate : `0xD800` pour le high, `0xDC00` pour le low."
+
+#: lib/app_web/live/sandbox/utf32_encode.ex:163
+#, elixir-autogen, elixir-format
+msgid "Split the binary into 4 packets of 8 bits, then write each packet in hex.\nThe order of the 4 bytes depends on the chosen endianness."
+msgstr "On découpe le binaire en 4 paquets de 8 bits, puis on écrit chaque paquet en hex.\nL'ordre des 4 octets dépend de l'endianness choisie."
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:99
+#, elixir-autogen, elixir-format
+msgid "Subtract `0x10000` and keep the remaining 20 bits."
+msgstr "On retire `0x10000` puis on garde les 20 bits restants."
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:203
+#, elixir-autogen, elixir-format
+msgid "Subtract `0xD800` from the high surrogate (10 high bits) and `0xDC00` from the low surrogate (10 low bits)."
+msgstr "Du high surrogate on retire `0xD800` (10 bits hauts), du low surrogate on retire `0xDC00` (10 bits bas)."
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:108
+#, elixir-autogen, elixir-format
+msgid "The 16 bits of the code unit are the code point."
+msgstr "Les 16 bits du code unit constituent directement le code point."
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:105
+#, elixir-autogen, elixir-format
+msgid "The 2 code units (high + low surrogate) yield 4 bytes, each code unit ordered by endianness."
+msgstr "Les 2 code units (high + low surrogate) donnent 4 octets, chaque code unit ordonné selon l'endianness."
+
+#: lib/app_web/live/sandbox/utf32_decode.ex:88
+#, elixir-autogen, elixir-format
+msgid "The 4 bytes are read high-order byte first (`Big Endian`)."
+msgstr "On lit les 4 octets avec l'octet de poids fort en premier (`Big Endian`)."
+
+#: lib/app_web/live/sandbox/utf32_decode.ex:92
+#, elixir-autogen, elixir-format
+msgid "The 4 bytes are read low-order byte first (`Little Endian`). Mentally reverse the byte order before assembling the number."
+msgstr "On lit les 4 octets avec l'octet de poids faible en premier (`Little Endian`). On inverse mentalement l'ordre des octets avant d'assembler le nombre."
+
+#: lib/app_web/live/sandbox/latin1_encode.ex:153
+#, elixir-autogen, elixir-format
+msgid "The 8 bits form a single byte, i.e. `2` hex digits."
+msgstr "Les 8 bits forment un seul octet, soit `2` chiffres hexadécimaux."
+
+#: lib/app_web/live/sandbox/windows1252_encode.ex:202
+#, elixir-autogen, elixir-format
+msgid "The binary byte becomes its 2-digit hex value."
+msgstr "L'octet binaire devient sa valeur hex sur 2 chiffres."
+
+#: lib/app_web/live/sandbox/latin1_decode.ex:158
+#, elixir-autogen, elixir-format
+msgid "The byte equals `%{decimal}` in decimal, i.e. `%{cp}` in Unicode notation. Latin-1 makes the byte value and the code point coincide over the whole range."
+msgstr "L'octet vaut `%{decimal}` en décimal, soit `%{cp}` en notation Unicode. Latin-1 fait coïncider valeur d'octet et code point sur toute la plage."
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:104
+#, elixir-autogen, elixir-format
+msgid "The byte is `%{decimal}` in decimal, identical to its code point (ASCII range: pure identity). That's `%{cp}` in Unicode notation."
+msgstr "L'octet vaut `%{decimal}` en décimal, identique à son code point (plage ASCII : pure identité). Soit `%{cp}` en notation Unicode."
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:120
+#, elixir-autogen, elixir-format
+msgid "The byte is `%{decimal}` in decimal, identical to its code point (Latin-1 range: pure identity). That's `%{cp}` in Unicode notation."
+msgstr "L'octet vaut `%{decimal}` en décimal, identique à son code point (plage Latin-1 : pure identité). Soit `%{cp}` en notation Unicode."
+
+#: lib/app_web/live/sandbox/latin1_decode.ex:142
+#, elixir-autogen, elixir-format
+msgid "The byte is directly the 8 bits of the code point (no marker to strip)."
+msgstr "L'octet vaut directement les 8 bits du code point (pas de marqueur à retirer)."
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:112
+#, elixir-autogen, elixir-format
+msgid "The byte is in the Microsoft extension. The [CP1252^Code Page 1252] table maps it to `%{cp}` (decimal `%{decimal}`). Classic trap: if you read this same byte as Latin-1, you get an invisible C1 control instead of a printable character."
+msgstr "L'octet est dans l'extension Microsoft. La table [CP1252^Code Page 1252] le fait correspondre à `%{cp}` (décimal `%{decimal}`). C'est le piège classique : si on lit ce même octet comme Latin-1, on obtient un contrôle C1 invisible au lieu d'un caractère imprimable."
+
+#: lib/app_web/live/sandbox/latin1_decode.ex:70
+#: lib/app_web/live/sandbox/windows1252_decode.ex:79
+#, elixir-autogen, elixir-format
+msgid "The byte is incomplete (odd number of hex digits)."
+msgstr "L'octet est incomplet (nombre impair de chiffres hex)."
+
+#: lib/app_web/live/sandbox/utf32_encode.ex:72
+#, elixir-autogen, elixir-format
+msgid "The high-order byte comes first (`Big Endian`). The 4 bytes are written in the natural order of the number."
+msgstr "L'octet de poids fort vient en premier (`Big Endian`). Les 4 octets s'écrivent dans l'ordre naturel du nombre."
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:78
+#, elixir-autogen, elixir-format
+msgid "The high-order byte of each code unit comes first (`Big Endian`)."
+msgstr "L'octet de poids fort vient en premier dans chaque code unit (`Big Endian`)."
+
+#: lib/app_web/live/sandbox/utf32_encode.ex:78
+#, elixir-autogen, elixir-format
+msgid "The low-order byte comes first (`Little Endian`). The 4 bytes are written in reverse order from the number."
+msgstr "L'octet de poids faible vient en premier (`Little Endian`). Les 4 octets s'écrivent dans l'ordre inverse du nombre."
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:81
+#, elixir-autogen, elixir-format
+msgid "The low-order byte of each code unit comes first (`Little Endian`)."
+msgstr "L'octet de poids faible vient en premier dans chaque code unit (`Little Endian`)."
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:101
+#, elixir-autogen, elixir-format
+msgid "The single code unit yields 2 bytes, ordered by endianness."
+msgstr "L'unique code unit donne 2 octets, ordre déterminé par l'endianness."
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:86
+#, elixir-autogen, elixir-format
+msgid "This byte doesn't map to any character in Windows-1252. Either it's an unassigned byte (`0x81`, `0x8D`, `0x8F`, `0x90`, `0x9D`), or you entered more than one byte (CP1252 = 1 byte per character)."
+msgstr "Cet octet ne donne aucun caractère en Windows-1252. Soit c'est un octet non assigné (`0x81`, `0x8D`, `0x8F`, `0x90`, `0x9D`), soit tu as saisi plusieurs octets (CP1252 = 1 octet par caractère)."
+
+#: lib/app_web/live/sandbox/latin1_decode.ex:75
+#, elixir-autogen, elixir-format
+msgid "This byte is not a valid Latin-1 byte."
+msgstr "Cet octet ne forme pas un Latin-1 valide."
+
+#: lib/app_web/live/sandbox/windows1252_encode.ex:85
+#, elixir-autogen, elixir-format
+msgid "This code point isn't in the Windows-1252 table. Outside the ASCII and Latin-1 ranges, only 27 specific characters can be encoded."
+msgstr "Ce code point n'existe pas dans la table Windows-1252. Au-delà des plages ASCII et Latin-1, seuls 27 caractères spécifiques sont encodables."
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:86
+#, elixir-autogen, elixir-format
+msgid "This sequence doesn't form a single UTF-16 code point. The same byte stream can be one valid code point in BE and multiple in LE (or vice versa)."
+msgstr "Cette séquence ne forme pas un code point UTF-16 unique. Un même flux d'octets peut donner un code point valide en BE et plusieurs en LE (ou inversement)."
+
+#: lib/app_web/live/sandbox/utf32_decode.ex:83
+#, elixir-autogen, elixir-format
+msgid "This sequence doesn't form a valid UTF-32 code point. It needs exactly 4 bytes, and the value must be in `U+0000` → `U+10FFFF` excluding surrogates."
+msgstr "Cette séquence ne forme pas un code point UTF-32 valide. Il faut exactement 4 octets, et la valeur doit être dans `U+0000` → `U+10FFFF` hors surrogates."
+
+#: lib/app_web/live/sandbox/latin1_decode.ex:73
+#, elixir-autogen, elixir-format
+msgid "Too many bytes: Latin-1 encodes a code point in exactly 1 byte."
+msgstr "Trop d'octets : Latin-1 encode un code point sur exactement 1 octet."
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:82
+#, elixir-autogen, elixir-format
+msgid "Too many bytes: UTF-16 encodes a single code point in 2 or 4 bytes."
+msgstr "Trop d'octets : UTF-16 encode un seul code point sur 2 ou 4 octets."
+
+#: lib/app_web/live/sandbox/utf32_decode.ex:79
+#, elixir-autogen, elixir-format
+msgid "Too many bytes: UTF-32 encodes a single code point in exactly 4 bytes."
+msgstr "Trop d'octets : UTF-32 encode un seul code point sur exactement 4 octets."
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:82
+#, elixir-autogen, elixir-format
+msgid "Too many bytes: Windows-1252 encodes a single character in one byte."
+msgstr "Trop d'octets : Windows-1252 encode un seul caractère sur un seul octet."
+
+#: lib/app_web/live/sandbox/utf16_decode.ex:24
+#: lib/app_web/live/sandbox/utf16_decode.ex:124
+#, elixir-autogen, elixir-format
+msgid "UTF-16 sandbox (decode)"
+msgstr "Sandbox UTF-16 (décodage)"
+
+#: lib/app_web/live/sandbox/utf16_encode.ex:22
+#: lib/app_web/live/sandbox/utf16_encode.ex:120
+#, elixir-autogen, elixir-format
+msgid "UTF-16 sandbox (encode)"
+msgstr "Sandbox UTF-16 (encodage)"
+
+#: lib/app_web/live/sandbox/utf32_encode.ex:149
+#, elixir-autogen, elixir-format
+msgid "UTF-32 always uses 32 bits, regardless of the code point.\nCode point `%{cp}` fits in at most 21 significant bits (Unicode caps at `U+10FFFF`), so the 11 high bits are always zero.\nThis padding is what makes UTF-32 simple: no format to guess, no marker, just the code point in its 32 bits."
+msgstr "UTF-32 utilise toujours 32 bits, peu importe le code point.\nLe code point `%{cp}` tient sur 21 bits utiles au maximum (plafond Unicode `U+10FFFF`), donc les 11 bits hauts sont toujours à zéro.\nC'est ce padding qui rend UTF-32 simple : pas de format à deviner, pas de marqueur, juste le code point dans ses 32 bits."
+
+#: lib/app_web/live/sandbox/utf32_decode.ex:23
+#: lib/app_web/live/sandbox/utf32_decode.ex:107
+#, elixir-autogen, elixir-format
+msgid "UTF-32 sandbox (decode)"
+msgstr "Sandbox UTF-32 (décodage)"
+
+#: lib/app_web/live/sandbox/utf32_encode.ex:21
+#: lib/app_web/live/sandbox/utf32_encode.ex:93
+#, elixir-autogen, elixir-format
+msgid "UTF-32 sandbox (encode)"
+msgstr "Sandbox UTF-32 (encodage)"
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:24
+#: lib/app_web/live/sandbox/windows1252_decode.ex:137
+#, elixir-autogen, elixir-format
+msgid "Windows-1252 sandbox (decode)"
+msgstr "Sandbox Windows-1252 (décodage)"
+
+#: lib/app_web/live/sandbox/windows1252_encode.ex:25
+#: lib/app_web/live/sandbox/windows1252_encode.ex:134
+#, elixir-autogen, elixir-format
+msgid "Windows-1252 sandbox (encode)"
+msgstr "Sandbox Windows-1252 (encodage)"
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:192
+#, elixir-autogen, elixir-format
+msgid "Write the byte value as 8 bits."
+msgstr "On écrit la valeur de l'octet sur 8 bits."
+
+#: lib/app_web/live/sandbox/windows1252_decode.ex:175
+#: lib/app_web/live/sandbox/windows1252_encode.ex:170
+#, elixir-autogen, elixir-format
+msgid "[CP1252^Code Page 1252] range"
+msgstr "Plage [CP1252^Code Page 1252]"

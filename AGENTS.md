@@ -356,7 +356,7 @@ Cocher au fil de l'eau. Chaque phase doit laisser la branche verte (`mix test` p
       restent côté Phase 5 : le compteur `attempts` vit dans la persistance.)
 - [ ] **Phase 3 — Persistance** : migrations Ecto (schéma de main, arrays adaptés en
       JSON), schemas, contexts attempts + progress, tests d'intégration DB.
-- [ ] **Phase 4 — Sandbox LiveView** : les 10 pages, parsers portés, feedback à la
+- [x] **Phase 4 — Sandbox LiveView** : les 10 pages, parsers portés, feedback à la
       frappe, design comparé visuellement à main.
 - [ ] **Phase 5 — Exercice LiveView** : flow step-by-step complet (génération,
       validation, hints, reveal, finalisation, progression).

@@ -42,28 +42,76 @@ defmodule AppWeb.SandboxComponents do
   attr :error, :string, default: nil
 
   slot :help, required: true
+  slot :extra, doc: "extra form controls (e.g. the endianness radios)"
 
   def sandbox_input(assigns) do
     ~H"""
     <section class="surface-subtle p-5 sm:p-6 mb-8">
-      <form class="field" phx-change="input-changed" onsubmit="return false">
-        <label class="field-label" for={@id}>
-          {@label}
-        </label>
-        <input
-          id={@id}
-          name="input"
-          value={@value}
-          class={["field-input field-input-mono", @error && "is-error"]}
-          autocomplete="off"
-          spellcheck="false"
-          placeholder={@placeholder}
-          phx-debounce="250"
-        />
-        <p :if={@error} class="field-error">{@error}</p>
-        <p :if={!@error} class="field-help">{render_slot(@help)}</p>
+      <form phx-change="input-changed" onsubmit="return false">
+        <div class="field">
+          <label class="field-label" for={@id}>
+            {@label}
+          </label>
+          <input
+            id={@id}
+            name="input"
+            value={@value}
+            class={["field-input field-input-mono", @error && "is-error"]}
+            autocomplete="off"
+            spellcheck="false"
+            placeholder={@placeholder}
+            phx-debounce="250"
+          />
+          <p :if={@error} class="field-error">{@error}</p>
+          <p :if={!@error} class="field-help">{render_slot(@help)}</p>
+        </div>
+        {render_slot(@extra)}
       </form>
     </section>
+    """
+  end
+
+  @doc """
+  The Big/Little endian radio selector of the UTF-16/32 pages. Lives inside
+  the `sandbox_input` form (`:extra` slot), posts as the `endian` param.
+  """
+  attr :endian, :atom, required: true, values: [:big, :little]
+
+  def endian_radios(assigns) do
+    ~H"""
+    <div class="field mt-4">
+      <span class="field-label">{gettext("Endianness")}</span>
+      <div class="flex gap-2 flex-wrap">
+        <label class="endian-radio">
+          <input type="radio" name="endian" value="big" checked={@endian == :big} />
+          <span>{endian_label(:big)}</span>
+        </label>
+        <label class="endian-radio">
+          <input type="radio" name="endian" value="little" checked={@endian == :little} />
+          <span>{endian_label(:little)}</span>
+        </label>
+      </div>
+    </div>
+    """
+  end
+
+  @doc "Display label of an endianness."
+  def endian_label(:big), do: gettext("Big Endian (BE)")
+  def endian_label(:little), do: gettext("Little Endian (LE)")
+
+  @doc """
+  Binary rows without role colouring (UTF-16/32, Latin-1, Windows-1252
+  pages): every bit is plain payload.
+  """
+  attr :bytes, :list, required: true, doc: "list of byte integers"
+
+  def plain_bit_rows(assigns) do
+    ~H"""
+    <div class="flex flex-col gap-1.5">
+      <div :for={byte <- @bytes} class="bit-row bit-row-tight">
+        <span :for={bit <- bits(byte)} class="bit bit-sm bit-payload">{bit}</span>
+      </div>
+    </div>
     """
   end
 
