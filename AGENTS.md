@@ -68,7 +68,7 @@ ASCII, Latin-1, Windows-1252, UTF-8, UTF-16, UTF-32, endianness, BOM.
 
 | Brique | Choix | Version |
 |---|---|---|
-| Langage | Elixir | **1.20** (OTP 28) |
+| Langage | Elixir | **1.20** (OTP 29) |
 | Framework | Phoenix | **1.8.7** |
 | UI temps réel | Phoenix LiveView | **1.1.30** |
 | HTTP server | Bandit | dernière compatible |
@@ -300,7 +300,7 @@ même auteur), en adaptant le stage assets à Vite :
 
 1. **Stage assets** : `node:24-alpine` → `npm ci` → `npm run build` (Vite) →
    `priv/static/assets/`
-2. **Stage builder** : `elixir:1.20-otp-28-alpine` → `mix deps.get --only prod` →
+2. **Stage builder** : `elixir:1.20-otp-29-alpine` → `mix deps.get --only prod` →
    compile → `mix phx.digest` → `mix release`
 3. **Stage runtime** : `alpine` nu + `libstdc++ openssl ncurses-libs ca-certificates`,
    user non-root, `ENV LANG=C.UTF-8`, `EXPOSE 4000`, `CMD ["bin/charset", "start"]`
