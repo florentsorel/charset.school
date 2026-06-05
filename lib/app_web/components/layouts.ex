@@ -39,10 +39,6 @@ defmodule AppWeb.Layouts do
       </div>
       <.app_footer />
     </div>
-    <%!-- The menu panels live OUTSIDE the header: its backdrop-blur makes it a
-         containing block for fixed descendants (the "inset-0" backdrop would be
-         sized to the header and paint over its own buttons). Same reason the
-         old Vue header teleported them to <body>. --%>
     <.header_menus locale={@locale} />
     <.flash_group flash={@flash} />
     """
@@ -113,10 +109,6 @@ defmodule AppWeb.Layouts do
     """
   end
 
-  # The header menu panels: the desktop "Exercises" mega-menu and the mobile
-  # burger. Rendered as siblings of the header (not children) so their fixed
-  # backdrop/panel are positioned against the viewport, below the z-40 header -
-  # the header buttons stay clickable while a menu is open.
   attr :locale, :string, required: true
 
   defp header_menus(assigns) do

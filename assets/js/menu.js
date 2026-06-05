@@ -5,6 +5,11 @@
 // close on backdrop click (`[data-menu-close]`), Escape, outside click, and
 // link navigation - same behavior as the old Vue header.
 
+function syncScrollLock() {
+  const anyOpen = document.querySelector("[data-menu]:not([hidden])") !== null
+  document.documentElement.style.overflow = anyOpen ? "hidden" : ""
+}
+
 function closeAll() {
   document.querySelectorAll("[data-menu]:not([hidden])").forEach((el) => {
     el.hidden = true
@@ -12,6 +17,7 @@ function closeAll() {
   document.querySelectorAll("[data-menu-toggle]").forEach((btn) => {
     btn.setAttribute("aria-expanded", "false")
   })
+  syncScrollLock()
 }
 
 document.addEventListener("click", (event) => {
@@ -20,16 +26,13 @@ document.addEventListener("click", (event) => {
     const target = document.getElementById(toggle.dataset.menuToggle)
     if (!target) return
     const willOpen = target.hidden
-    // A top-level toggle closes any other open menu first; a toggle nested
-    // inside a panel (burger sub-list) must not close its own parent.
     if (!toggle.closest("[data-menu]")) closeAll()
     target.hidden = !willOpen
     toggle.setAttribute("aria-expanded", String(willOpen))
+    syncScrollLock()
     return
   }
 
-  // The backdrop lives inside [data-menu], so handle it before the
-  // outside-click rule below.
   if (event.target.closest("[data-menu-close]")) {
     closeAll()
     return
