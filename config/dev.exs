@@ -22,8 +22,8 @@ config :charset, CharsetWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "KiM45QXINK248y52BtN/ZcuMReb9Buun4Q0YED9gCTrcPLLupvVyXgCdSYsVGBWn",
   watchers: [
-    esbuild: {Esbuild, :install_and_run, [:charset, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:charset, ~w(--watch)]}
+    # Vite rebuilds js/css into priv/static/assets on change; live_reload picks them up
+    npm: ["run", "dev"]
   ]
 
 # ## SSL Support

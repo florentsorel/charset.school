@@ -39,3 +39,6 @@ npm-debug.log
 *.db
 *.db-*
 
+
+# npm dependencies (package.json at the repo root)
+/node_modules/
