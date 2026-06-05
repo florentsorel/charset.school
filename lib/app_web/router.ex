@@ -36,6 +36,14 @@ defmodule AppWeb.Router do
       on_mount: AppWeb.LocaleHook do
       live "/sandbox/encode/utf-8", SandboxLive.Utf8Encode
       live "/sandbox/decode/utf-8", SandboxLive.Utf8Decode
+      live "/sandbox/encode/utf-16", SandboxLive.Utf16Encode
+      live "/sandbox/decode/utf-16", SandboxLive.Utf16Decode
+      live "/sandbox/encode/utf-32", SandboxLive.Utf32Encode
+      live "/sandbox/decode/utf-32", SandboxLive.Utf32Decode
+      live "/sandbox/encode/latin1", SandboxLive.Latin1Encode
+      live "/sandbox/decode/latin1", SandboxLive.Latin1Decode
+      live "/sandbox/encode/windows-1252", SandboxLive.Windows1252Encode
+      live "/sandbox/decode/windows-1252", SandboxLive.Windows1252Decode
     end
   end
 
@@ -50,6 +58,14 @@ defmodule AppWeb.Router do
       on_mount: AppWeb.LocaleHook do
       live "/sandbox/encode/utf-8", SandboxLive.Utf8Encode
       live "/sandbox/decode/utf-8", SandboxLive.Utf8Decode
+      live "/sandbox/encode/utf-16", SandboxLive.Utf16Encode
+      live "/sandbox/decode/utf-16", SandboxLive.Utf16Decode
+      live "/sandbox/encode/utf-32", SandboxLive.Utf32Encode
+      live "/sandbox/decode/utf-32", SandboxLive.Utf32Decode
+      live "/sandbox/encode/latin1", SandboxLive.Latin1Encode
+      live "/sandbox/decode/latin1", SandboxLive.Latin1Decode
+      live "/sandbox/encode/windows-1252", SandboxLive.Windows1252Encode
+      live "/sandbox/decode/windows-1252", SandboxLive.Windows1252Decode
     end
   end
 
