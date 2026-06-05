@@ -354,8 +354,9 @@ Cocher au fil de l'eau. Chaque phase doit laisser la branche verte (`mix test` p
 - [x] **Phase 2 — Domaine exercise** : steps, answers, `AnswerValidator` (chaque
       `error_type` testé), generators par encoding × niveau. (Les hints gradués
       restent côté Phase 5 : le compteur `attempts` vit dans la persistance.)
-- [ ] **Phase 3 — Persistance** : migrations Ecto (schéma de main, arrays adaptés en
-      JSON), schemas, contexts attempts + progress, tests d'intégration DB.
+- [x] **Phase 3 — Persistance** : migrations Ecto (schéma de main, arrays adaptés en
+      JSON), schemas, contexts attempts + progress, ExerciseService, plug visitor
+      token, tests d'intégration DB.
 - [x] **Phase 4 — Sandbox LiveView** : les 10 pages, parsers portés, feedback à la
       frappe, design comparé visuellement à main.
 - [ ] **Phase 5 — Exercice LiveView** : flow step-by-step complet (génération,
