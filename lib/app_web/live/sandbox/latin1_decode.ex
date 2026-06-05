@@ -56,6 +56,10 @@ defmodule AppWeb.SandboxLive.Latin1Decode do
     end
   end
 
+  # BytesParser accepts up to 4 bytes (shared cap); for Latin-1 anything
+  # but a single byte is a length problem, not an invalid byte.
+  defp decode(bytes) when byte_size(bytes) != 1, do: {:error, :too_long}
+
   defp decode(bytes) do
     case Codec.decode(bytes, :latin1) do
       {:ok, code_point} -> {:ok, code_point}

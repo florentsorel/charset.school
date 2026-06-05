@@ -117,9 +117,9 @@ defmodule AppWeb.SandboxLive.RemainingPagesTest do
       assert html =~ "é"
     end
 
-    test "more than one byte shows the decoder error", %{conn: conn} do
+    test "more than one byte shows the length error", %{conn: conn} do
       {:ok, _view, html} = live(conn, "/sandbox/decode/latin1?bytes=C3%20A9")
-      assert html =~ "not a valid Latin-1 byte"
+      assert html =~ "exactly 1 byte"
     end
   end
 

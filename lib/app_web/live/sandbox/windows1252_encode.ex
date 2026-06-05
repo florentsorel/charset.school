@@ -78,7 +78,7 @@ defmodule AppWeb.SandboxLive.Windows1252Encode do
   defp error_message(:out_of_range), do: gettext("Outside the Unicode range (0 → U+10FFFF).")
 
   defp error_message(:surrogate),
-    do: gettext("Surrogates (U+D800 → U+DFFF) are not valid UTF-8.")
+    do: gettext("Surrogates (U+D800 → U+DFFF) are not valid Unicode scalar values.")
 
   defp error_message(:not_encodable),
     do:

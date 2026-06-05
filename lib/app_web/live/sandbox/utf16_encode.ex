@@ -72,7 +72,7 @@ defmodule AppWeb.SandboxLive.Utf16Encode do
   defp error_message(:out_of_range), do: gettext("Outside the Unicode range (0 → U+10FFFF).")
 
   defp error_message(:surrogate),
-    do: gettext("Surrogates (U+D800 → U+DFFF) are not valid UTF-8.")
+    do: gettext("Surrogates (U+D800 → U+DFFF) are not valid Unicode scalar values.")
 
   defp endianness_desc(:big),
     do: gettext("The high-order byte of each code unit comes first (`Big Endian`).")
