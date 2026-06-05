@@ -18,11 +18,20 @@ document.addEventListener("click", (event) => {
   const toggle = event.target.closest("[data-menu-toggle]")
   if (toggle) {
     const target = document.getElementById(toggle.dataset.menuToggle)
-    if (target) {
-      const open = target.hidden
-      target.hidden = !open
-      toggle.setAttribute("aria-expanded", String(open))
-    }
+    if (!target) return
+    const willOpen = target.hidden
+    // A top-level toggle closes any other open menu first; a toggle nested
+    // inside a panel (burger sub-list) must not close its own parent.
+    if (!toggle.closest("[data-menu]")) closeAll()
+    target.hidden = !willOpen
+    toggle.setAttribute("aria-expanded", String(willOpen))
+    return
+  }
+
+  // The backdrop lives inside [data-menu], so handle it before the
+  // outside-click rule below.
+  if (event.target.closest("[data-menu-close]")) {
+    closeAll()
     return
   }
 

@@ -39,6 +39,11 @@ defmodule AppWeb.Layouts do
       </div>
       <.app_footer />
     </div>
+    <%!-- The menu panels live OUTSIDE the header: its backdrop-blur makes it a
+         containing block for fixed descendants (the "inset-0" backdrop would be
+         sized to the header and paint over its own buttons). Same reason the
+         old Vue header teleported them to <body>. --%>
+    <.header_menus locale={@locale} />
     <.flash_group flash={@flash} />
     """
   end
@@ -104,63 +109,73 @@ defmodule AppWeb.Layouts do
           </button>
         </div>
       </div>
+    </header>
+    """
+  end
 
-      <%!-- Full-width "Exercises" mega-menu (desktop). Backdrop closes on click;
-           Escape and link navigation close it too (assets/js/menu.js). --%>
-      <div id="header-exercises-menu-wrap" hidden data-menu>
-        <div class="fixed inset-0 z-30" aria-hidden="true" data-menu-close></div>
-        <nav
-          id="header-exercises-menu"
-          class="fixed left-0 right-0 z-40 bg-page border-b border-rule shadow-sm top-[var(--header-height)]"
-          aria-label={gettext("Exercises")}
-        >
-          <div class="mx-auto max-w-6xl px-4 sm:px-6 py-6">
-            <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
-              <a
-                :for={module <- exercise_modules()}
-                href={localized_path(@locale, module.path)}
-                class="block p-4 rounded-md border border-rule hover:border-rule-strong transition-colors"
-              >
-                <div class="text-sm font-medium leading-tight">{module.title}</div>
-                <p class="text-xs text-mute mt-1">{module.subtitle}</p>
-              </a>
-            </div>
-          </div>
-        </nav>
-      </div>
+  # The header menu panels: the desktop "Exercises" mega-menu and the mobile
+  # burger. Rendered as siblings of the header (not children) so their fixed
+  # backdrop/panel are positioned against the viewport, below the z-40 header -
+  # the header buttons stay clickable while a menu is open.
+  attr :locale, :string, required: true
 
-      <%!-- Burger panel (< lg): full-width dropdown under the header --%>
-      <div id="header-burger-menu" hidden data-menu>
-        <div class="fixed inset-0 z-30" aria-hidden="true" data-menu-close></div>
-        <div class="app-dropdown app-dropdown--full fixed left-0 right-0 z-40 top-[var(--header-height)]">
-          <button
-            type="button"
-            class="app-dropdown-item w-full"
-            aria-controls="burger-exercises-sub"
-            aria-expanded="false"
-            data-menu-toggle="burger-exercises-sub"
-          >
-            <.icon name="hero-code-bracket" class="app-dropdown-item-icon" />
-            {gettext("Exercises")}
-            <.icon name="hero-chevron-down" class="w-4 h-4 ml-auto transition-transform menu-chevron" />
-          </button>
-          <div id="burger-exercises-sub" hidden>
+  defp header_menus(assigns) do
+    ~H"""
+    <%!-- Full-width "Exercises" mega-menu (desktop). Backdrop closes on click;
+         Escape and link navigation close it too (assets/js/menu.js). --%>
+    <div id="header-exercises-menu-wrap" hidden data-menu>
+      <div class="fixed inset-0 z-30" aria-hidden="true" data-menu-close></div>
+      <nav
+        id="header-exercises-menu"
+        class="fixed left-0 right-0 z-40 bg-page border-b border-rule shadow-sm top-[var(--header-height)]"
+        aria-label={gettext("Exercises")}
+      >
+        <div class="mx-auto max-w-6xl px-4 sm:px-6 py-6">
+          <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
             <a
               :for={module <- exercise_modules()}
               href={localized_path(@locale, module.path)}
-              class="app-dropdown-item app-dropdown-subitem"
+              class="block p-4 rounded-md border border-rule hover:border-rule-strong transition-colors"
             >
-              {module.title}
+              <div class="text-sm font-medium leading-tight">{module.title}</div>
+              <p class="text-xs text-mute mt-1">{module.subtitle}</p>
             </a>
           </div>
-          <div class="app-dropdown-separator"></div>
-          <a href={localized_path(@locale, "/sandbox")} class="app-dropdown-item">
-            <.icon name="hero-beaker" class="app-dropdown-item-icon" />
-            {gettext("Sandbox")}
+        </div>
+      </nav>
+    </div>
+
+    <%!-- Burger panel (< lg): full-width dropdown under the header --%>
+    <div id="header-burger-menu" hidden data-menu>
+      <div class="fixed inset-0 z-30" aria-hidden="true" data-menu-close></div>
+      <div class="app-dropdown app-dropdown--full fixed left-0 right-0 z-40 top-[var(--header-height)]">
+        <button
+          type="button"
+          class="app-dropdown-item w-full"
+          aria-controls="burger-exercises-sub"
+          aria-expanded="false"
+          data-menu-toggle="burger-exercises-sub"
+        >
+          <.icon name="hero-code-bracket" class="app-dropdown-item-icon" />
+          {gettext("Exercises")}
+          <.icon name="hero-chevron-down" class="w-4 h-4 ml-auto transition-transform menu-chevron" />
+        </button>
+        <div id="burger-exercises-sub" hidden>
+          <a
+            :for={module <- exercise_modules()}
+            href={localized_path(@locale, module.path)}
+            class="app-dropdown-item app-dropdown-subitem"
+          >
+            {module.title}
           </a>
         </div>
+        <div class="app-dropdown-separator"></div>
+        <a href={localized_path(@locale, "/sandbox")} class="app-dropdown-item">
+          <.icon name="hero-beaker" class="app-dropdown-item-icon" />
+          {gettext("Sandbox")}
+        </a>
       </div>
-    </header>
+    </div>
     """
   end
 
