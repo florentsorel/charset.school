@@ -753,7 +753,8 @@ abbr[title] {
   margin-bottom: 0.4rem;
 }
 .exercise-prompt-card-content { display: flex; gap: 0.6rem; align-items: center; font-family: var(--font-mono); font-size: 1.4rem; }
-.exercise-prompt-card .codepoint-glyph { font-size: 2.1rem; line-height: 1; letter-spacing: 0.04em; }
+/* Page-wide on main (Vue scoped style): prompt card AND resolved answers. */
+.exercise-page .codepoint-glyph { font-size: 2.1rem; line-height: 1; letter-spacing: 0.04em; }
 .legacy-badge {
   align-self: center;
   font-family: var(--font-mono);
