@@ -1,57 +1,6 @@
-# AGENTS.md — Charset Playground (réécriture Phoenix/LiveView)
+# AGENTS.md — Charset Playground
 
-## Contexte : cette branche est une migration
-
-Cette branche (`phoenix`) est une **réécriture complète** de charset.school, repartie de
-zéro. Elle deviendra le nouveau `main` à la fin de la migration.
-
-- **L'ancienne implémentation vit sur la branche `main`** : Kotlin 2.x + Spring Boot 4
-  (backend REST) + Nuxt 4 / Vue 3 (frontend SSR). ~18 000 lignes au total.
-- **La cible** : un monolithe Phoenix/LiveView unique. Plus de séparation front/back,
-  plus d'API REST, plus de couche de sérialisation.
-- **Le métier et le design ne changent pas.** On porte à l'identique : la logique
-  d'encodage/décodage, les générateurs d'exercices, la validation step-by-step, le modèle
-  de données, les textes i18n FR/EN, et le design Tailwind existant (classes reprises
-  quasi verbatim depuis les templates Vue).
-
-### Workflow git pendant la migration
-
-**`phoenix` est la branche d'intégration, pas `main`.** Tant que la migration n'est pas
-terminée :
-
-- Toute nouvelle branche de travail part de `phoenix` (`git switch -c <branche> phoenix`),
-  jamais de `main`.
-- Les PRs ciblent `phoenix` comme branche de base, jamais `main`
-  (`gh pr create --base phoenix`).
-- `main` reste figée en lecture seule : c'est la référence de l'ancienne implémentation
-  (métier, design, schéma, i18n). On n'y committe plus rien.
-- À la fin de la migration (Phase 7), `phoenix` deviendra le nouveau `main`.
-
-### Consulter l'ancien code (référence permanente pendant la migration)
-
-```bash
-git show main:src/main/kotlin/school/charset/app/domain/encoding/Codec.kt
-git show main:web/app/pages/sandbox/encode/utf-8.vue
-git show main:CLAUDE.md                          # conventions détaillées de l'ancien projet
-git ls-tree -r main --name-only | grep sandbox   # lister les fichiers d'une zone
-```
-
-Zones clés sur `main` :
-
-| Zone | Chemin sur `main` |
-|---|---|
-| Domaine encodage (Codec, Windows1252Spec, CodePoint, Encoding) | `src/main/kotlin/school/charset/app/domain/encoding/` |
-| Domaine exercice (Step, Answer, AnswerValidator, ErrorType, ParamKey, generators) | `src/main/kotlin/school/charset/app/domain/exercise/` |
-| Domaine sandbox (parsers, SandboxService) | `src/main/kotlin/school/charset/app/domain/sandbox/` |
-| Domaine progression | `src/main/kotlin/school/charset/app/domain/progress/` |
-| Tests unitaires (la spec exécutable du domaine) | `src/test/kotlin/` |
-| Tests d'intégration (contrats HTTP, repos) | `src/intTest/kotlin/` |
-| Migrations SQL (schéma à reprendre tel quel) | `src/main/resources/db/migration/` |
-| Pages et composants Vue (design de référence) | `web/app/pages/`, `web/app/components/` |
-| Locales FR/EN | `web/i18n/locales/{fr,en}/` |
-| Theme / tokens Tailwind | `web/app/` (`app.config.ts`, CSS), `theme/` |
-
-## Produit (rappel)
+## Produit
 
 Exercices interactifs pour apprendre **l'encodage et le décodage** des caractères :
 ASCII, Latin-1, Windows-1252, UTF-8, UTF-16, UTF-32, endianness, BOM.
@@ -59,18 +8,36 @@ ASCII, Latin-1, Windows-1252, UTF-8, UTF-16, UTF-32, endianness, BOM.
 - **Sandbox** : 10 pages (encode/decode × utf-8, utf-16, utf-32, latin1, windows-1252)
   où l'utilisateur saisit un caractère/des bytes et voit la conversion décomposée étape
   par étape, avec feedback immédiat à la frappe.
-- **Exercices** : l'utilisateur fait les conversions à la main, step par step, avec
-  validation immédiate côté serveur, hints gradués (3 niveaux), et progression persistée.
-- **Pas de compte utilisateur** : tout est keyé par un token anonyme opaque dans un
-  cookie HttpOnly (l'auth a été retirée de l'ancienne version, ne pas la réintroduire).
+- **Exercices** : 6 modules jouables (encode/decode × utf-8, utf-16, utf-32) où
+  l'utilisateur fait les conversions à la main, step par step, avec validation
+  immédiate côté serveur, un hint par type d'erreur, reveal après 3 essais, et
+  progression persistée (niveau auto-avancé par streak de 5).
+- **Pas de compte utilisateur** : tout est keyé par un token anonyme opaque (UUID) dans
+  un cookie HttpOnly. Ne pas réintroduire d'auth.
 
-## Stack cible
+### Historique
+
+Le projet est une réécriture Phoenix/LiveView (terminée le 2026-06-06) d'une stack
+Kotlin 2.x + Spring Boot 4 (API REST) + Nuxt 4 / Vue 3 (~18 000 lignes). L'ancienne
+implémentation reste consultable sur la branche **`legacy`**
+(`git show legacy:src/main/kotlin/...`, `git show legacy:web/app/...`) - elle fait foi
+uniquement comme archéologie, le code actuel est la référence.
+
+## Workflow git
+
+- Branches de travail depuis `main`, PRs vers `main` (`gh pr create`).
+- `mix precommit` doit passer avant toute PR.
+- Reviews Copilot : vérifier ses affirmations sur la stdlib Elixir avant d'obtempérer
+  (historique de faux positifs : casse de `Integer.to_string/2`, sémantique multi-`when`,
+  captures Regex) ; ses remarques de cohérence produit sont en revanche souvent bonnes.
+
+## Stack
 
 | Brique | Choix | Version |
 |---|---|---|
 | Langage | Elixir | **1.20** (OTP 29) |
 | Framework | Phoenix | **1.8.7** |
-| UI temps réel | Phoenix LiveView | **1.1.30** |
+| UI temps réel | Phoenix LiveView | 1.1.x |
 | HTTP server | Bandit | dernière compatible |
 | DB | SQLite (mode WAL) | via `ecto_sqlite3` |
 | Backups | aucun automatisé (décision 2026-06-06 : progression anonyme = enjeu faible) ; sauvegarder le volume `/data` côté hôte si besoin | — |
@@ -94,8 +61,7 @@ def decode_utf8(<<0::1, cp::7, rest::binary>>), do: {cp, rest}
 def decode_utf8(<<0b110::3, h::5, 0b10::2, l::6, rest::binary>>), do: {Bitwise.bsl(h, 6) + l, rest}
 ```
 
-Le port du `Codec` Kotlin (masques/shifts manuels) doit exploiter ce style — c'est la
-raison d'être de la migration, pas un détail.
+`Charset.Encoding.Codec` est écrit dans ce style - le conserver pour toute évolution.
 
 ### Typage — exploiter le type system d'Elixir 1.20 au maximum
 
@@ -105,170 +71,151 @@ https://elixir-lang.org/blog/2026/06/03/elixir-v1-20-0-released/). Le compilateu
 infère les types depuis les guards, le pattern matching et le control flow, et
 remonte les violations garanties d'échouer au runtime.
 
-Important : les **signatures de types écrites par le développeur n'existent pas encore
-en 1.20** (elles viendront avec les typed structs puis les signatures dans les versions
-suivantes). « Utiliser les types au maximum » signifie donc écrire du code que
-l'inférence peut exploiter :
+Les **signatures de types écrites par le développeur n'existent pas encore en 1.20**
+(elles viendront avec les typed structs puis les signatures). « Utiliser les types au
+maximum » signifie donc écrire du code que l'inférence peut exploiter :
 
 - **Toutes les violations de typage sont des erreurs.** `mix compile
   --warnings-as-errors` dans `mix precommit` et en CI — un warning de typage ne se
   merge pas.
 - **Guards systématiques** sur les fonctions publiques du domaine (`when is_integer(cp)
-  and cp >= 0 and cp <= 0x10FFFF`) : c'est à la fois la validation des invariants
-  (l'équivalent des `init { require(...) }` Kotlin de main) et de l'information de type
-  pour l'inférence.
+  and cp >= 0 and cp <= 0x10FFFF`) : à la fois validation des invariants et information
+  de type pour l'inférence.
 - **Structs partout, maps nues nulle part** dans le domaine : `%Step.Binary{}`,
   `%ValidationResult{}`, etc. avec `@enforce_keys` sur les champs obligatoires.
-  L'inférence narrowe les structs bien mieux que les maps anonymes.
 - **Pattern matching plutôt qu'accès dynamique** : `%Step.Binary{expected: expected} =
   step` plutôt que `step.expected` sur un type incertain, `case`/`with` avec clauses
-  exhaustives plutôt que conditions sur des valeurs non narrowées.
+  exhaustives.
 - **Pas de `dynamic()` volontaire** : éviter les constructions qui forcent le
   compilateur à abandonner le narrowing (maps hétérogènes fourre-tout, `apply/3`,
-  `Map.get` sur des structs).
-- **`@spec` sur l'API publique des contexts et du domaine** : pas encore consommées par
-  le nouveau type system, mais elles documentent, alimentent Dialyzer si on l'ajoute,
-  et préparent la conversion vers les vraies signatures quand elles arriveront dans une
-  future version — on les écrira alors en priorité sur le domaine.
+  `Map.get` sur des structs, `String.to_existing_atom` là où un ensemble fermé de
+  clauses suffit).
+- **`@spec` sur l'API publique des contexts et du domaine** : documentation +
+  préparation des vraies signatures à venir.
 - Quand une nouvelle version d'Elixir étend le type system (typed structs, signatures),
   **adopter immédiatement** sur `Charset.Encoding` et `Charset.Exercise` — le domaine
-  est petit, pur et déjà entièrement testé, c'est le candidat idéal.
+  est petit, pur et entièrement testé, c'est le candidat idéal.
 
-## Architecture cible
+## Architecture
 
 Phoenix Contexts classiques. Le domaine reste pur (pas d'Ecto, pas de Phoenix dans les
-modules de calcul), même esprit que l'archi ports & adapters de l'ancien projet.
+modules de calcul).
 
-**Namespaces (choix tranché le 2026-06-05)** : l'OTP app s'appelle **`:app`** (style
-tracker-tv). `App`/`AppWeb` portent l'infrastructure (Application, Repo, Mailer,
-endpoint, LiveViews) ; les **domaines** sont des namespaces top-level à côté -
-`Charset.*` aujourd'hui (encoding, exercise, ...), d'autres demain (ex. `Binary.*`)
-sans toucher à la couche web.
+**Namespaces** : l'OTP app s'appelle **`:app`**. `App`/`AppWeb` portent
+l'infrastructure (Application, Repo, endpoint, LiveViews) ; les **domaines** sont des
+namespaces top-level à côté - `Charset.*` aujourd'hui (encoding, exercise, sandbox,
+progress), d'autres demain (ex. `Binary.*`) sans toucher à la couche web.
 
 ```
 lib/
   charset/                          # Domaine charset (pur, pas d'Ecto ni Phoenix)
-    encoding/                       # Codec, specs d'encodage
-      codec.ex                      # encode/decode pour les 8 encodings (bitstrings !)
-      code_point.ex
-      windows1252.ex                # table de mapping 0x80..0x9F
-    exercise/                       # Pur : steps, answers, validation, génération
-      step.ex                       # structs par type de step (format, binary, bit_groups, hex_bytes, code_point, endianness)
-      answer.ex
-      answer_validator.ex           # validate(step, answer) -> %ValidationResult{}
-      validation_result.ex          # ok / error_type / params / hint_level — JAMAIS de `expected`
-      error_type.ex                 # identifiants stables (clés gettext côté UI)
-      param_key.ex
-      generator/                    # un générateur par encoding × niveau
-    sandbox/                        # Pur : parsers d'input + décomposition step-by-step
-    progress/                       # Context Ecto : module_progress (token, module_id)
-    exercise_attempts.ex            # Context Ecto : attempts + steps (table-per-type)
+    encoding/                       # codec.ex (bitstrings !), code_point.ex, bytes.ex,
+                                    # encoding.ex, windows1252.ex, {encode,decode}_error.ex
+    exercise/                       # Pur : step/ (8 types), answer.ex, answer_validator.ex,
+                                    # validation_result.ex, error_type.ex, param_key.ex,
+                                    # format_choice.ex, exercise_module.ex, generator/,
+                                    # attempt.ex, attempt_step.ex (structs domain),
+                                    # service.ex (orchestration : génération, validation,
+                                    # reveal, finalisation, garde de propriété par token)
+    sandbox/                        # Pur : parsers d'input + labels + décomposition
+    progress/                       # module_progress.ex (struct + streak/level-up)
     schema/                         # Schemas Ecto (un fichier par table)
+    exercise_attempts.ex            # Context Ecto : attempts + steps (table-per-type)
+    progress.ex                     # Context Ecto : module_progress (token, module_id)
   app/                              # Infrastructure app-wide (App.*)
-    application.ex                  # OTP supervision tree
+    application.ex                  # OTP supervision tree (inclut Ecto.Migrator au boot)
     repo.ex                         # App.Repo (SQLite)
-    mailer.ex
   app_web/                          # Couche web partagée par tous les domaines (AppWeb.*)
-    router.ex
-    plugs/visitor_token.ex          # pose/lit le cookie token anonyme HttpOnly
-    live/
-      sandbox/                      # 10 LiveViews (encode/decode × 5 encodings)
-      exercise_live.ex              # flow d'exercice step-by-step
-    controllers/page_controller.ex  # landing (statique, SEO)
-    components/                     # core_components + composants portés depuis Vue
+    router.ex                       # scopes / et /fr, live_sessions par locale
+    locale.ex                       # localized_path/2, alternate_path/2
+    plugs/locale.ex                 # plug HTTP locale
+    plugs/visitor_token.ex          # mint/lit le cookie token anonyme HttpOnly (UUID only)
+    live/locale_hook.ex             # on_mount : Gettext + :locale sur le websocket
+    live/sandbox/                   # 10 LiveViews (encode/decode × 5 encodings)
+    live/exercise_live.ex           # 1 LiveView, 6 modules via live actions
+    controllers/                    # landing (statique, SEO), redirect /sandbox
+    components/                     # layouts, core, sandbox_components, exercise_components
 assets/                             # Vite + Tailwind v4 (package.json à la racine du repo)
 priv/repo/migrations/
-priv/gettext/{fr,en}/LC_MESSAGES/
-test/                               # Miroir de lib/ — le port des tests Kotest/JUnit de main
+priv/gettext/{fr,en}/LC_MESSAGES/   # default.po + labels.po + feedback.po
+test/                               # Miroir de lib/
 ```
-
-### Ce qui disparaît par rapport à main (et ne doit PAS être recréé)
-
-- L'API REST (`/api/exercise/*`, `/api/progress`, `/api/sandbox/*`) — LiveView fait le
-  round-trip via websocket.
-- Les DTOs, serializers Jackson custom, et toute la logique « stripper `expected` au
-  HTTP layer » — voir anti-cheat ci-dessous.
-- Le client API front (`useFetch`, intercepteur XSRF, zod, types TS partagés).
-- Le double runtime Node SSR + JVM : un seul release OTP derrière Caddy.
 
 ### Anti-cheat — par construction avec LiveView
 
-Règle invariante héritée de main : **la valeur attendue (`expected`) ne traverse jamais
-le réseau vers le client.**
+Règle invariante : **la valeur attendue (`expected`) ne traverse jamais le réseau vers
+le client** (sauf reveal explicite).
 
-En LiveView c'est structurel : `expected` vit dans les assigns du process serveur (et en
-DB dans `attempt_step_<type>.expected`). Il n'y a pas de couche JSON où il pourrait
-leaker. Vigilance quand même :
+`expected` vit dans les assigns du process serveur et en DB
+(`attempt_step_<type>.expected`). Vigilance :
 
 - Ne jamais interpoler `expected` dans le HEEx (même dans un attribut `data-*` ou un
-  commentaire HTML).
+  commentaire HTML). Le test « anti-cheat » de `exercise_live_test.exs` le pinne.
 - `ValidationResult.params` peut contenir des hints structurels (`expected_length`,
   `expected_count`, `position`, bornes) et le `got` de l'utilisateur — **jamais** la
   valeur canonique attendue. Cas particulier `endianness` : 2 choix possibles, donc même
   le `got` révèle la réponse — aucun params.
 - La DB reste la source de vérité pour la validation (defense in depth) : on lit
   `expected` depuis la row `attempt_step_<type>`, jamais depuis ce qu'envoie le client.
+- La sandbox est exemptée : c'est un visualiseur, elle révèle tout par design.
 
-### Hints gradués (repris de main)
+### Hints et reveal
 
-1ère erreur → `hint_level: 1` (question ouverte), 2ème → `2` (indice conceptuel),
-3ème+ → niveau `3` (réponse + raison) **uniquement sur demande explicite** (bouton
-« Donne-moi la réponse »). Le compteur `attempts` et le flag `revealed` vivent dans
-`attempt_steps`. Clé i18n côté UI : `feedback.{error_type}.level{hint_level}`.
+1 hint par `error_type` (domaine gettext `feedback`, clé = l'identifiant stable), avec
+compteur d'essais affiché (`Try n/3`). Le bouton « Show me the answer » n'apparaît
+qu'au seuil de 3 essais sur le step (gate serveur dans `Exercise.Service`, pas
+seulement UI). Un step révélé rend l'attempt entier incorrect ; la complétion est
+enregistrée sur la progression dans tous les cas.
 
 ## Modèle de données
-
-**Reprendre le schéma de `main`** (mêmes tables, mêmes colonnes, mêmes index), converti
-en migrations Ecto pour SQLite. Source : `git show main:src/main/resources/db/migration/...`
-L'ancien schéma était Postgres ; la seule adaptation est le mapping des arrays (voir
-ci-dessous).
 
 - `exercise_attempts` (token, module_id, level, code_point, encoding, correct,
   finalized, duration_ms) + index `(token, module_id)`
 - `attempt_steps` (attempt_id, position, step_type, correct, error_type, attempts,
   revealed) + UNIQUE(attempt_id, position)
-- 6 tables filles table-per-type : `attempt_step_format`, `_binary`, `_bit_groups`,
-  `_hex_bytes`, `_code_point`, `_endianness`
+- 8 tables filles table-per-type : `attempt_step_format`, `_binary`, `_bit_groups`,
+  `_hex_bytes`, `_code_point`, `_useful_bit_count`, `_offset`, `_endianness` —
+  chacune porte `expected` et `user_answer`
 - `module_progress` (token, module_id, level, streak, attempts, errors,
   last_played_at) + UNIQUE(token, module_id)
 
-Conventions DB conservées :
+Conventions DB :
 - **Pas de CHECK constraints sur les valeurs énumérées** (l'app est le seul writer, les
-  enums Elixir/Ecto sont la source de vérité). Les FK restent (`PRAGMA foreign_keys=ON`,
+  enums Elixir sont la source de vérité). Les FK restent (`PRAGMA foreign_keys=ON`,
   activé par `ecto_sqlite3`).
-- Les séquences de bits/bytes (`bit_groups.expected`, `hex_bytes.expected`, ...) étaient
-  des arrays Postgres natifs (`TEXT[]`, `SMALLINT[]`) sur main. En SQLite : champs Ecto
-  `{:array, :string}` / `{:array, :integer}`, stockés en JSON text par `ecto_sqlite3`.
-  Le domaine ne query jamais ces séquences par position (toujours lues en bloc par le
-  validator), donc la perte de queryabilité est théorique. Pas de table de valeurs.
-- Timestamps UTC.
+- Les séquences de bits/bytes sont des champs Ecto `{:array, :string}` /
+  `{:array, :integer}`, stockés en JSON text par `ecto_sqlite3`. Le domaine ne query
+  jamais ces séquences par position (toujours lues en bloc par le validator).
+- Timestamps UTC. Migrations générées par `mix ecto.gen.migration`, appliquées au boot
+  par l'`Ecto.Migrator` de l'arbre de supervision.
 
 ### Réglages SQLite
 
-- **Mode WAL obligatoire** (`journal_mode: :wal` dans la config `ecto_sqlite3`) :
-  lecteurs et writer ne se bloquent pas, indispensable pour un serveur web.
-- `busy_timeout` raisonnable (ex. 5000 ms) pour absorber la contention single-writer.
-- Le fichier DB vit dans un répertoire dédié monté en volume Docker (ex. `/data/charset.db`),
+- **Mode WAL** (défaut `ecto_sqlite3`) : lecteurs et writer ne se bloquent pas.
+- `busy_timeout` raisonnable pour absorber la contention single-writer.
+- Le fichier DB vit dans un répertoire dédié monté en volume Docker (`/data/charset.db`),
   configuré via `DATABASE_PATH` dans `config/runtime.exs`.
 
 ## i18n
 
-- **Gettext**, **EN locale par défaut** (msgids = texte anglais), FR en second sous le
-  préfixe `/fr/...` (équivalent de la stratégie `prefix_except_default` de l'ancien
-  front, qui avait `defaultLocale: 'en'` malgré ce que disait son CLAUDE.md).
-- Mécanique en place : plug `AppWeb.Plugs.Locale` (assigns `:locale` +
-  `:alternate_path`), scopes router dupliqués `/` et `/fr`, helper
-  `localized_path/2`, traductions dans `priv/gettext/fr/LC_MESSAGES/`.
-- Porter les locales depuis `main:web/i18n/locales/{fr,en}.json` (~1 100 lignes) au
-  fil des pages.
+- **Gettext**, **EN locale par défaut** (msgids = texte anglais), FR sous le préfixe
+  `/fr/...`. Plug `AppWeb.Plugs.Locale` (HTTP) + hook `AppWeb.LocaleHook` (websocket),
+  scopes router dupliqués `/` et `/fr`, helper `localized_path/2`.
+- Trois catalogues : `default.po` (extrait du code), `labels.po` (mnémoniques Unicode,
+  liste fermée maintenue à la main, lookup dynamique) et `feedback.po` (hints
+  d'exercice, clé = `error_type` stable, liste fermée).
 - Les `error_type` produits par le domaine (`binary.wrong-value`, etc.) sont des
   **identifiants stables** déclarés comme constantes dans `error_type.ex` — jamais de
-  string literal au call site (ni en prod ni en test). L'UI les mappe vers des clés
-  gettext.
+  string literal au call site (ni en prod ni en test).
+- **Mini-markup InlineDesc** dans les catalogues : `` `code` `` → `<code>`,
+  `[texte^titre]` → `<abbr title>`, `\n` → `<br>`. Rendu par
+  `SandboxComponents.inline_desc/1` avec échappement **par token**. Ne pas remplacer
+  par du HTML littéral dans les .po : on perdrait l'échappement et les phrases
+  complètes traduisibles (décision du 2026-06-05).
 
-### Conventions de contenu user-facing (NON négociables, héritées de main)
+### Conventions de contenu user-facing (NON négociables)
 
-- **Tutoiement en FR**, toujours (« Crée ton compte », « Saisis ton mot de passe »).
+- **Tutoiement en FR**, toujours.
 - **Tiret simple `-`, jamais d'em dash `—`** dans tout contenu visible par
   l'utilisateur (templates HEEx, fichiers gettext). Les commentaires de code ne sont
   pas concernés.
@@ -276,106 +223,77 @@ Conventions DB conservées :
 
 ## Design / front
 
-- Le design de référence est celui de `main` : reprendre les classes Tailwind des
-  templates Vue quasi verbatim dans les HEEx. Comparer visuellement avec le site
-  existant (lancer les deux côte à côte) avant de considérer une page terminée.
-- Les composants Nuxt UI (boutons, tooltips, toggles, menus) n'ont pas d'équivalent :
-  les recréer en HEEx + Tailwind dans `app_web/components/`.
-- Composants d'exercice à porter (depuis `main:web/app/components/exercise/`) :
-  BitInput, BitGroupsInput, HexInput, CodePointInput, FormatSelector, OffsetInput,
-  UsefulBitCountInput, StepProgress, FeedbackPanel, BitDisplay, ExerciseSubHeader.
-- Sandbox : feedback à la frappe via `phx-change` + debounce (l'ancien front appelait
-  l'API à chaque frappe ; ici l'état du LiveView fait le travail).
-- Conserver les meta OG/Twitter et l'image de preview sociale (voir commits récents de
-  `main` : OG image light theme, logo, JetBrains Mono).
-- Dark/light theme toggle et locale toggle existent sur main : à conserver.
+- Le design vit dans `assets/css/app.css` (tokens light/dark via `.dark`, composants
+  `.bit`, `.btn`, `.surface`, etc.) et les composants HEEx. `bit-sm` est réservé au
+  sandbox (cellules resserrées) ; l'exercice utilise les cellules pleine taille.
+- Composants maison (pas de lib UI) : menus header (`assets/js/menu.js`), toggles
+  theme/locale, widgets d'exercice à cellules (`assets/js/exercise_hooks.js` :
+  BitCells, HexCells, FilteredInput - auto-avance, flèches, ↑/↓ = 1/0).
+- Sandbox : feedback à la frappe via `phx-change` + debounce, état dans l'URL
+  (`push_patch` + `replace: true`, liens partageables).
+- Exercice : conteneurs de saisie en `phx-update="ignore"` (la frappe survit aux
+  patches), ids remontés par attempt+step pour forcer le remount au changement.
+- Meta OG/Twitter + image sociale en place ; dark/light theme et locale toggle.
 
 ## Assets — Vite + Tailwind v4
 
-Contrairement au scaffolding Phoenix par défaut (esbuild + tailwind CLI), ce projet
-utilise **Vite** :
-
-- `package.json` avec `vite`, `tailwindcss` 4.x, `@tailwindcss/vite`.
-- Build de prod : Vite émet dans `priv/static/assets/`, puis `mix phx.digest`.
-- Dev : watcher Vite déclaré dans `config/dev.exs` (`watchers: [npm: ["run", "dev"]]`
-  ou équivalent), HMR pour le CSS/JS.
+- `package.json` à la racine avec `vite`, `tailwindcss` 4.x, `@tailwindcss/vite`.
 - Tailwind v4 : config par CSS (`@theme` dans `assets/css/app.css`), pas de
-  `tailwind.config.js`. Porter les tokens du theme depuis main.
+  `tailwind.config.js`.
+- Dev : watcher Vite déclaré dans `config/dev.exs`, HMR.
+- Prod : Vite émet dans `priv/static/assets/`, puis `mix phx.digest`.
+- **Le build Vite dépend d'un projet mix compilé** : les aliases résolvent les clients
+  JS Phoenix depuis `deps/` et les colocated hooks depuis
+  `_build/${MIX_ENV}/phoenix-colocated/`. D'où le builder Docker unique (voir Docker).
 
 ## Docker
 
-S'inspirer de `/Users/florent/Code/tracker-tv/tracker-tv/Dockerfile` (projet Elixir du
-même auteur), en adaptant le stage assets à Vite :
-
-1. **Stage assets** : `node:24-alpine` → `npm ci` → `npm run build` (Vite) →
-   `priv/static/assets/`
-2. **Stage builder** : `elixir:1.20-otp-29-alpine` → `mix deps.get --only prod` →
-   compile → `mix phx.digest` → `mix release`
-3. **Stage runtime** : `alpine` nu + `libstdc++ openssl ncurses-libs ca-certificates`,
-   user non-root, `ENV LANG=C.UTF-8`, `EXPOSE 4000`, `CMD ["bin/app", "start"]`
-
-Runtime config via env vars dans `config/runtime.exs` : `DATABASE_PATH` (fichier SQLite
-sur un volume), `SECRET_KEY_BASE`, `PHX_HOST`, `PORT`. Caddy reste le reverse proxy
-devant (un seul backend désormais, plus de split :3000/:8080).
-
-Pas de service DB dans le compose : SQLite est embarqué, le fichier vit sur un volume.
-**Pas de backup automatisé** (décision 2026-06-06) : la DB ne contient que la
-progression anonyme, l'enjeu ne justifie pas l'infra. Si ça change, Litestream
-(réplication continue du WAL, supervision `litestream replicate -exec`) est le
-candidat naturel - il a existé dans l'image jusqu'à la PR #71, voir l'historique.
+- **Builder unique Elixir + Node** (apk) — pas de stage assets séparé style tracker-tv,
+  car Vite a besoin de `mix compile` au préalable (voir Assets). Ordre :
+  `deps.get` → `deps.compile` → `npm ci` → `mix compile` → `npm run build` →
+  `phx.digest` → `mix release`. Le layer `npm ci` est placé avant le COPY du code pour
+  rester en cache.
+- Node du builder = celui d'apk (≈ v22), pas le `.nvmrc` (26) : divergence connue et
+  acceptée, la sortie Vite est identique.
+- **Runtime** : Alpine nu + `libstdc++ openssl ncurses-libs ca-certificates`, user
+  non-root, `ENV LANG=C.UTF-8`, volume `/data`, `EXPOSE 4000`, `CMD ["bin/app", "start"]`.
+- Migrations au boot (Ecto.Migrator), pas de commande de release à orchestrer.
+- Runtime config via env vars (`config/runtime.exs`) : `DATABASE_PATH`,
+  `SECRET_KEY_BASE`, `PHX_HOST`, `PORT`. `PHX_SERVER=true` est posé dans l'image.
+- `compose.prod.yml` : un service app + volume `appdata:/data`, pas de service DB.
+  Caddy reste le reverse proxy sur l'hôte.
+- **Pas de backup automatisé** (décision 2026-06-06) : la DB ne contient que la
+  progression anonyme, l'enjeu ne justifie pas l'infra. Si ça change, Litestream
+  (réplication continue du WAL, supervision `litestream replicate -exec`) est le
+  candidat naturel - il a existé dans l'image jusqu'à la PR #71, voir l'historique.
+- CI image : `.github/workflows/docker.yml` — push ghcr (`latest` + `sha-<short>` +
+  semver sur tags `v*`) depuis `main` uniquement.
 
 ## Tests
 
-- **ExUnit** partout. Les tests Kotest/JUnit de `main` (~6 200 lignes) sont la spec du
-  domaine : les porter AVANT ou AVEC le code qu'ils couvrent, pas après.
-- **Doctests** bienvenus sur le codec (les exemples d'encodage font une excellente doc).
-- Couverture minimale obligatoire (héritée de main) :
+- **ExUnit** partout, ~560 tests. Doctests bienvenus sur le codec.
+- Couverture minimale à maintenir :
   - `Charset.Encoding.Codec` : tous les cas frontières — U+007F, U+0080, U+07FF,
-    U+0800, U+FFFF, U+10000, U+10FFFF, surrogates UTF-16 — pour encode ET decode,
-    chaque encoding, chaque endianness.
+    U+0800, U+FFFF, U+10000, U+10FFFF, surrogates — pour encode ET decode, chaque
+    encoding, chaque endianness. Sweeps exhaustifs contre les encodeurs natifs BEAM
+    comme oracle.
   - `AnswerValidator` : chaque `error_type` produit avec les bons `params`.
   - Contexts Ecto : upsert, find, contraintes uniques (via la DB de test, pas de mocks).
-  - LiveViews : tests `Phoenix.LiveViewTest` sur les flows sandbox et exercice,
-    incluant « `expected` n'apparaît jamais dans le HTML rendu ».
-- Sandbox de test DB : `Ecto.Adapters.SQL.Sandbox` sur SQLite (fichier de test dédié,
-  pas de service externe à démarrer). Contrainte single-writer : les tests qui touchent
-  la DB restent en `async: false` ; les tests du domaine pur (la grande majorité)
-  restent async.
-
-## Plan de migration (phases)
-
-Cocher au fil de l'eau. Chaque phase doit laisser la branche verte (`mix test` passe).
-
-- [x] **Phase 0 — Squelette** : `mix phx.new`, Vite + Tailwind v4 câblés, Gettext
-      FR/EN, plug visitor token, Dockerfile + compose, CI minimale. `mix phx.server`
-      affiche une page.
-- [ ] **Phase 1 — Domaine encoding** : port de `Codec` + `Windows1252Spec` +
-      `CodePoint` + `Encoding` en bitstrings, avec TOUS les tests frontières portés.
-- [x] **Phase 2 — Domaine exercise** : steps, answers, `AnswerValidator` (chaque
-      `error_type` testé), generators par encoding × niveau. (Les hints gradués
-      restent côté Phase 5 : le compteur `attempts` vit dans la persistance.)
-- [x] **Phase 3 — Persistance** : migrations Ecto (schéma de main, arrays adaptés en
-      JSON), schemas, contexts attempts + progress, ExerciseService, plug visitor
-      token, tests d'intégration DB.
-- [x] **Phase 4 — Sandbox LiveView** : les 10 pages, parsers portés, feedback à la
-      frappe, design comparé visuellement à main.
-- [x] **Phase 5 — Exercice LiveView** : flow step-by-step complet (génération,
-      validation, hints, reveal, finalisation, progression). Comme main : un hint
-      unique par error_type + reveal après 3 essais (pas les 3 niveaux spéculatifs
-      du vieux CLAUDE.md), et 6 modules jouables (latin1/windows-1252 non routés).
-- [ ] **Phase 6 — Landing + i18n + SEO** : page d'accueil, locales complètes FR/EN,
-      meta OG/Twitter + image sociale, sitemap/robots.
-- [ ] **Phase 7 — Parité & bascule** : checklist de parité fonctionnelle page par page
-      contre main, déploiement Docker, puis cette branche devient le nouveau `main`.
+  - LiveViews : flows sandbox et exercice complets, incluant « `expected` n'apparaît
+    jamais dans le HTML rendu ».
+- Sandbox DB : `Ecto.Adapters.SQL.Sandbox` sur SQLite. Contrainte single-writer : les
+  tests qui touchent la DB restent en `async: false` ; les tests du domaine pur (la
+  grande majorité) restent async.
 
 ## Commandes
 
 ```bash
-mix setup            # deps + DB + npm install (alias à définir dans mix.exs)
+mix setup            # deps + DB + npm install
 mix phx.server       # dev server (lance le watcher Vite)
 mix test             # tests
 mix precommit        # alias : compile --warnings-as-errors + format --check + test
-npm run build        # build Vite de prod (depuis assets/ ou la racine selon le setup)
+npm run build        # build Vite de prod
+docker build .       # image complète (builder Elixir+Node, runtime Alpine)
 ```
 
 ---
