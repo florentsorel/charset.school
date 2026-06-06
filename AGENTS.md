@@ -73,7 +73,7 @@ ASCII, Latin-1, Windows-1252, UTF-8, UTF-16, UTF-32, endianness, BOM.
 | UI temps réel | Phoenix LiveView | **1.1.30** |
 | HTTP server | Bandit | dernière compatible |
 | DB | SQLite (mode WAL) | via `ecto_sqlite3` |
-| Backups | Litestream (réplication continue du WAL vers un stockage objet) | — |
+| Backups | aucun automatisé (décision 2026-06-06 : progression anonyme = enjeu faible) ; sauvegarder le volume `/data` côté hôte si besoin | — |
 | ORM / migrations | Ecto + ecto_sql + ecto_sqlite3 | dernière compatible |
 | CSS | Tailwind CSS v4 **via Vite** | tailwind 4.x + vite |
 | i18n | Gettext (EN par défaut, FR sous `/fr`) | `{:gettext, "~> 1.0"}` |
@@ -319,10 +319,10 @@ sur un volume), `SECRET_KEY_BASE`, `PHX_HOST`, `PORT`. Caddy reste le reverse pr
 devant (un seul backend désormais, plus de split :3000/:8080).
 
 Pas de service DB dans le compose : SQLite est embarqué, le fichier vit sur un volume.
-**Backups via Litestream** : réplication continue du WAL vers un stockage objet
-(R2/B2/S3), soit en sidecar dans le compose, soit en superviseur du release
-(`litestream replicate -exec "bin/app start"`). Restauration point-in-time via
-`litestream restore`.
+**Pas de backup automatisé** (décision 2026-06-06) : la DB ne contient que la
+progression anonyme, l'enjeu ne justifie pas l'infra. Si ça change, Litestream
+(réplication continue du WAL, supervision `litestream replicate -exec`) est le
+candidat naturel - il a existé dans l'image jusqu'à la PR #71, voir l'historique.
 
 ## Tests
 
@@ -346,7 +346,7 @@ Pas de service DB dans le compose : SQLite est embarqué, le fichier vit sur un 
 
 Cocher au fil de l'eau. Chaque phase doit laisser la branche verte (`mix test` passe).
 
-- [ ] **Phase 0 — Squelette** : `mix phx.new`, Vite + Tailwind v4 câblés, Gettext
+- [x] **Phase 0 — Squelette** : `mix phx.new`, Vite + Tailwind v4 câblés, Gettext
       FR/EN, plug visitor token, Dockerfile + compose, CI minimale. `mix phx.server`
       affiche une page.
 - [ ] **Phase 1 — Domaine encoding** : port de `Codec` + `Windows1252Spec` +
