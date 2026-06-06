@@ -1,3 +1,7 @@
+# No database service: SQLite is embedded, the file lives on the /data
+# volume. TLS terminates on Caddy in a separate LXC (192.168.1.102) on the
+# same Proxmox node, which reaches this app over the LAN - so port 4000
+# must stay bound on all interfaces, NOT loopback.
 services:
   app:
     image: ghcr.io/florentsorel/charset.school:latest
