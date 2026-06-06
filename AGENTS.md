@@ -346,7 +346,7 @@ Pas de service DB dans le compose : SQLite est embarqué, le fichier vit sur un 
 
 Cocher au fil de l'eau. Chaque phase doit laisser la branche verte (`mix test` passe).
 
-- [ ] **Phase 0 — Squelette** : `mix phx.new`, Vite + Tailwind v4 câblés, Gettext
+- [x] **Phase 0 — Squelette** : `mix phx.new`, Vite + Tailwind v4 câblés, Gettext
       FR/EN, plug visitor token, Dockerfile + compose, CI minimale. `mix phx.server`
       affiche une page.
 - [ ] **Phase 1 — Domaine encoding** : port de `Codec` + `Windows1252Spec` +
