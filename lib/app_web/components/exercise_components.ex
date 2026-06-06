@@ -371,7 +371,7 @@ defmodule AppWeb.ExerciseComponents do
           :if={@boundary_every > 0 and index > 0 and rem(index, @boundary_every) == 0}
           class="bit-sep-mid"
         >
-        </span><span class={["bit bit-sm", role && "bit-#{role}"]}>{char}</span>
+        </span><span class={["bit", role && "bit-#{role}"]}>{char}</span>
       <% end %>
     </span>
     """
