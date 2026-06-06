@@ -1,0 +1,90 @@
+## Hint messages of the exercise feedback panel, keyed by the stable
+## `error_type` identifiers produced by Charset.Exercise.AnswerValidator.
+## Closed list maintained by hand (the lookup is dynamic - msgids are NOT
+## extracted from code). Interpolation bindings use the ParamKey names.
+msgid ""
+msgstr ""
+"Language: fr\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "answer.type-mismatch"
+msgstr "Type de réponse inattendu pour cette étape."
+
+msgid "binary.empty"
+msgstr "Saisis une suite de bits."
+
+msgid "binary.invalid-character"
+msgstr "Tu as saisi `%{got}` - seuls `0` et `1` sont attendus."
+
+msgid "binary.too-few-bits"
+msgstr "Il manque des bits : tu en as `%{got-length}` sur `%{expected-length}` attendus. Pense au padding par zéros en tête si la valeur est plus petite que la largeur."
+
+msgid "binary.too-many-bits"
+msgstr "Tu as `%{got-length}` bits, mais on attend exactement `%{expected-length}`. Retire les zéros de tête en trop."
+
+msgid "binary.wrong-value"
+msgstr "Le nombre de bits est bon mais la valeur ne correspond pas. Convertis l'hexa chiffre par chiffre - chaque chiffre hexa fait 4 bits (un nibble)."
+
+msgid "bit-groups.empty"
+msgstr "Saisis les groupes de bits."
+
+msgid "bit-groups.invalid-character"
+msgstr "Le groupe à la position `%{position}` contient des caractères autres que `0` et `1`."
+
+msgid "bit-groups.wrong-group-count"
+msgstr "Tu as `%{got-count}` groupe(s), `%{expected-count}` attendu(s)."
+
+msgid "bit-groups.wrong-group-length"
+msgstr "Le groupe à la position `%{position}` a `%{got-length}` bits, on en attend `%{expected-length}`."
+
+msgid "bit-groups.wrong-value"
+msgstr "Les groupes ont la bonne taille mais le contenu ne correspond pas. Vérifie que tu as bien réparti les bits du code point dans le format."
+
+msgid "code-point.out-of-range"
+msgstr "`%{got}` est hors de la plage Unicode (`U+0000` → `U+10FFFF`)."
+
+msgid "code-point.surrogate"
+msgstr "`%{got}` est dans la plage des surrogates (`U+D800` → `U+DFFF`), interdite en Unicode."
+
+msgid "code-point.wrong-value"
+msgstr "Code point incorrect. Convertis les bits directement en hexa - 4 bits par chiffre hexa, pas de détour par le décimal."
+
+msgid "endianness.wrong-choice"
+msgstr "Mauvaise endianness. Compare l'ordre des octets attendu à l'ordre des octets natifs du format."
+
+msgid "format.empty"
+msgstr "Choisis un format."
+
+msgid "format.unknown-choice"
+msgstr "Le choix `%{got}` n'est pas dans les options proposées."
+
+msgid "format.wrong-choice"
+msgstr "Ce n'est pas le bon format. Regarde la plage de valeurs où tombe le code point."
+
+msgid "hex-bytes.byte-out-of-range"
+msgstr "L'octet à la position `%{position}` (`%{got}`) est hors plage (0..255)."
+
+msgid "hex-bytes.empty"
+msgstr "Saisis les octets en hexadécimal."
+
+msgid "hex-bytes.too-few-bytes"
+msgstr "Il manque des octets : tu en as `%{got-count}` sur `%{expected-count}`."
+
+msgid "hex-bytes.too-many-bytes"
+msgstr "Trop d'octets : tu en as `%{got-count}`, on en attend exactement `%{expected-count}`."
+
+msgid "hex-bytes.wrong-value"
+msgstr "Le nombre d'octets est bon mais la valeur ne correspond pas. Recompose les bits du format en hex (4 bits par chiffre)."
+
+msgid "offset.out-of-range"
+msgstr "`%{got}` est hors de `0..0xFFFFF` (la plage 20 bits)."
+
+msgid "offset.wrong-value"
+msgstr "Mauvaise valeur. C'est la valeur 20 bits écrite en hexadécimal."
+
+msgid "useful-bit-count.non-positive"
+msgstr "`%{got}` n'est pas un nombre positif. Compte les bits qui portent réellement de l'information."
+
+msgid "useful-bit-count.wrong-value"
+msgstr "`%{got}` n'est pas le bon nombre de bits utiles. Rappel UTF-8 (bits de payload, hors markers) : `1 octet = 7 bits utiles`, `2 octets = 11`, `3 octets = 16`, `4 octets = 21`."
+

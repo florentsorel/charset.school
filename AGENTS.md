@@ -359,8 +359,10 @@ Cocher au fil de l'eau. Chaque phase doit laisser la branche verte (`mix test` p
       token, tests d'intégration DB.
 - [x] **Phase 4 — Sandbox LiveView** : les 10 pages, parsers portés, feedback à la
       frappe, design comparé visuellement à main.
-- [ ] **Phase 5 — Exercice LiveView** : flow step-by-step complet (génération,
-      validation, hints, reveal, finalisation, progression).
+- [x] **Phase 5 — Exercice LiveView** : flow step-by-step complet (génération,
+      validation, hints, reveal, finalisation, progression). Comme main : un hint
+      unique par error_type + reveal après 3 essais (pas les 3 niveaux spéculatifs
+      du vieux CLAUDE.md), et 6 modules jouables (latin1/windows-1252 non routés).
 - [ ] **Phase 6 — Landing + i18n + SEO** : page d'accueil, locales complètes FR/EN,
       meta OG/Twitter + image sociale, sitemap/robots.
 - [ ] **Phase 7 — Parité & bascule** : checklist de parité fonctionnelle page par page
