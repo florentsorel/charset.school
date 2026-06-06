@@ -100,17 +100,30 @@ const HexCells = {
 }
 
 // Single-value filtered inputs: data-filter="hex" keeps hex digits
-// (uppercased, optional 0x/U+ prefix stripped), data-filter="digits" keeps
-// decimal digits.
+// (uppercased, optional 0x/U+ prefix stripped); "hex4" additionally
+// re-renders the value zero-padded to 4 digits on every keystroke (typing
+// 6 shows 0006, then F shows 006F - the U+XXXX notation), mirroring the
+// old CodePointInput. The offset input stays plain "hex": no fixed-width
+// padding there. "digits" keeps decimal digits.
 const FilteredInput = {
   mounted() {
     this.el.addEventListener("input", () => {
-      if (this.el.dataset.filter === "hex") {
-        this.el.value = this.el.value
+      const filter = this.el.dataset.filter
+      if (filter === "hex" || filter === "hex4") {
+        const cleaned = this.el.value
           .replace(/^(0x|U\+)/i, "")
           .replace(/[^0-9a-fA-F]/g, "")
           .toUpperCase()
-      } else if (this.el.dataset.filter === "digits") {
+
+        if (filter === "hex4" && cleaned !== "") {
+          this.el.value = parseInt(cleaned, 16)
+            .toString(16)
+            .toUpperCase()
+            .padStart(4, "0")
+        } else {
+          this.el.value = cleaned
+        }
+      } else if (filter === "digits") {
         this.el.value = this.el.value.replace(/[^0-9]/g, "")
       }
     })

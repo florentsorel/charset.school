@@ -232,7 +232,7 @@ defmodule AppWeb.ExerciseComponents do
         autocapitalize="characters"
         name="value"
         value={@prefill}
-        data-filter="hex"
+        data-filter="hex4"
         phx-hook="FilteredInput"
         id={@id <> "-input"}
         aria-label={gettext("Enter the code point in hex")}
