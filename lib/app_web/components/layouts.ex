@@ -184,17 +184,29 @@ defmodule AppWeb.Layouts do
               {gettext("Teaching tool. No tracking, no ads.")}
             </p>
           </div>
-          <p class="text-xs text-mute sm:text-right">
-            {gettext("Developed by")}
-            <a
-              href="https://sorel.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-ink hover:text-accent transition-colors"
-            >
-              Florent Sorel
-            </a>
-          </p>
+          <div class="text-xs text-mute sm:text-right flex flex-col gap-1">
+            <p>
+              {gettext("Developed by")}
+              <a
+                href="https://sorel.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-ink hover:text-accent transition-colors"
+              >
+                Florent Sorel
+              </a>
+            </p>
+            <p>
+              <a
+                href="https://github.com/florentsorel/charset.school"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-ink hover:text-accent transition-colors"
+              >
+                {gettext("Source code on GitHub")}
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </footer>
