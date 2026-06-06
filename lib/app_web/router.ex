@@ -23,6 +23,14 @@ defmodule AppWeb.Router do
     plug AppWeb.Plugs.Locale, "fr"
   end
 
+  # Locale-less utility routes (XML, no session needed beyond :browser basics).
+  scope "/", AppWeb do
+    pipe_through :browser
+
+    get "/sitemap.xml", SitemapController, :index
+    get "/sitemap_index.xml", SitemapController, :legacy_index
+  end
+
   # EN (default locale) at the root, FR under /fr - keep both scopes in sync.
   # The locale plug covers the HTTP request; live_session re-establishes the
   # locale on the websocket mount via AppWeb.LocaleHook.
