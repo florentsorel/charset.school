@@ -124,14 +124,12 @@ defmodule AppWeb.ExerciseComponents do
   end
 
   defp bit_rows(length, boundary_every) do
-    # One line when the value fits (<= 20 bits, e.g. UTF-16), else wrap at
-    # two boundaries per row (UTF-32 32 -> 16|16, UTF-8 4-byte 24 -> 16|8).
-    wrap =
-      cond do
-        boundary_every <= 0 -> length
-        length <= 20 -> length
-        true -> boundary_every * 2
-      end
+    # Bytes are the wrap unit: each row is one nowrap byte (8 cells, with the
+    # nibble separator inside when boundary_every is 4), and the .bit-rows
+    # container reflows them on the available width - one line on desktop when
+    # the value fits, one byte per line on narrow phones. An unseparated value
+    # (a single bit-group) stays whole.
+    wrap = if boundary_every > 0, do: 8, else: length
 
     0..(length - 1) |> Enum.chunk_every(wrap)
   end
@@ -362,28 +360,33 @@ defmodule AppWeb.ExerciseComponents do
   attr :segments, :list, default: nil, doc: "list of {length, role} or nil"
 
   def bit_display(assigns) do
-    assigns = assign(assigns, :cells, bit_display_cells(assigns))
+    assigns = assign(assigns, :rows, bit_display_rows(assigns))
 
     ~H"""
-    <span class="bit-row">
-      <%= for {char, index, role} <- @cells do %>
-        <span
-          :if={@boundary_every > 0 and index > 0 and rem(index, @boundary_every) == 0}
-          class="bit-sep-mid"
-        >
-        </span><span class={["bit", role && "bit-#{role}"]}>{char}</span>
-      <% end %>
+    <span class="bit-rows">
+      <span :for={row <- @rows} class="bit-row bit-row-nowrap">
+        <%= for {{char, index, role}, cell_pos} <- Enum.with_index(row) do %>
+          <span
+            :if={@boundary_every > 0 and cell_pos > 0 and rem(index, @boundary_every) == 0}
+            class="bit-sep-mid"
+          >
+          </span><span class={["bit", role && "bit-#{role}"]}>{char}</span>
+        <% end %>
+      </span>
     </span>
     """
   end
 
-  defp bit_display_cells(%{bits: bits, segments: segments}) do
+  # Mirrors bit_rows/2: byte rows reflowing on the available width.
+  defp bit_display_rows(%{bits: bits, segments: segments, boundary_every: boundary_every}) do
     chars = String.graphemes(bits)
     roles = segment_roles(segments, length(chars))
+    wrap = if boundary_every > 0, do: 8, else: length(chars)
 
     chars
     |> Enum.with_index()
     |> Enum.map(fn {char, index} -> {char, index, Enum.at(roles, index)} end)
+    |> Enum.chunk_every(wrap)
   end
 
   defp segment_roles(nil, length), do: List.duplicate(nil, length)

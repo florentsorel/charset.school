@@ -820,7 +820,10 @@ abbr[title] {
 
 /* ─── Exercise step widgets ─── */
 
-.bit-rows { display: inline-flex; flex-direction: column; gap: 0.4rem; }
+/* Byte rows reflow on the available width: one line on desktop when the value
+   fits, one byte per line on narrow phones. The 14px column gap matches the
+   in-row byte separator (3px gap + 8px .bit-sep-mid + 3px gap). */
+.bit-rows { display: inline-flex; flex-wrap: wrap; align-items: center; column-gap: 14px; row-gap: 0.4rem; }
 .bit-row-nowrap { flex-wrap: nowrap; }
 .bit-input { text-align: center; outline: none; caret-color: transparent; }
 .bit-input:focus {
