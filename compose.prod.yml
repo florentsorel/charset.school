@@ -1,18 +1,9 @@
-# No database service: SQLite is embedded, the file lives on the volume and
-# Litestream (inside the app container) streams its WAL to object storage.
-# Caddy stays on the host as the reverse proxy, like the old stack - but
-# with a single backend now.
 services:
   app:
     image: ghcr.io/florentsorel/charset.school:latest
     environment:
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:?SECRET_KEY_BASE is required}
       PHX_HOST: ${PHX_HOST:?PHX_HOST is required}
-      # Optional continuous backup (e.g. s3://bucket/charset or an
-      # S3-compatible endpoint). Leave unset to run without Litestream.
-      LITESTREAM_REPLICA_URL: ${LITESTREAM_REPLICA_URL:-}
-      LITESTREAM_ACCESS_KEY_ID: ${LITESTREAM_ACCESS_KEY_ID:-}
-      LITESTREAM_SECRET_ACCESS_KEY: ${LITESTREAM_SECRET_ACCESS_KEY:-}
     ports:
       - "${PORT:-4000}:4000"
     volumes:
