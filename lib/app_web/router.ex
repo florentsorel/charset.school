@@ -1,0 +1,116 @@
+defmodule AppWeb.Router do
+  use AppWeb, :router
+
+  pipeline :browser do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :fetch_live_flash
+    plug :put_root_layout, html: {AppWeb.Layouts, :root}
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+    plug AppWeb.Plugs.VisitorToken
+  end
+
+  pipeline :api do
+    plug :accepts, ["json"]
+  end
+
+  pipeline :locale_en do
+    plug AppWeb.Plugs.Locale, "en"
+  end
+
+  pipeline :locale_fr do
+    plug AppWeb.Plugs.Locale, "fr"
+  end
+
+  # Locale-less utility routes (XML, no session needed beyond :browser basics).
+  scope "/", AppWeb do
+    pipe_through :browser
+
+    get "/sitemap.xml", SitemapController, :index
+    get "/sitemap_index.xml", SitemapController, :legacy_index
+  end
+
+  # EN (default locale) at the root, FR under /fr - keep both scopes in sync.
+  # The locale plug covers the HTTP request; live_session re-establishes the
+  # locale on the websocket mount via AppWeb.LocaleHook.
+  scope "/", AppWeb do
+    pipe_through [:browser, :locale_en]
+
+    get "/", PageController, :home
+    get "/sandbox", SandboxController, :index
+
+    live_session :sandbox_en,
+      session: %{"locale" => "en"},
+      on_mount: AppWeb.LocaleHook do
+      live "/sandbox/encode/utf-8", SandboxLive.Utf8Encode
+      live "/sandbox/decode/utf-8", SandboxLive.Utf8Decode
+      live "/sandbox/encode/utf-16", SandboxLive.Utf16Encode
+      live "/sandbox/decode/utf-16", SandboxLive.Utf16Decode
+      live "/sandbox/encode/utf-32", SandboxLive.Utf32Encode
+      live "/sandbox/decode/utf-32", SandboxLive.Utf32Decode
+      live "/sandbox/encode/latin1", SandboxLive.Latin1Encode
+      live "/sandbox/decode/latin1", SandboxLive.Latin1Decode
+      live "/sandbox/encode/windows-1252", SandboxLive.Windows1252Encode
+      live "/sandbox/decode/windows-1252", SandboxLive.Windows1252Decode
+
+      live "/exercise/encode/utf-8", ExerciseLive, :utf8_encode
+      live "/exercise/decode/utf-8", ExerciseLive, :utf8_decode
+      live "/exercise/encode/utf-16", ExerciseLive, :utf16_encode
+      live "/exercise/decode/utf-16", ExerciseLive, :utf16_decode
+      live "/exercise/encode/utf-32", ExerciseLive, :utf32_encode
+      live "/exercise/decode/utf-32", ExerciseLive, :utf32_decode
+    end
+  end
+
+  scope "/fr", AppWeb do
+    pipe_through [:browser, :locale_fr]
+
+    get "/", PageController, :home
+    get "/sandbox", SandboxController, :index
+
+    live_session :sandbox_fr,
+      session: %{"locale" => "fr"},
+      on_mount: AppWeb.LocaleHook do
+      live "/sandbox/encode/utf-8", SandboxLive.Utf8Encode
+      live "/sandbox/decode/utf-8", SandboxLive.Utf8Decode
+      live "/sandbox/encode/utf-16", SandboxLive.Utf16Encode
+      live "/sandbox/decode/utf-16", SandboxLive.Utf16Decode
+      live "/sandbox/encode/utf-32", SandboxLive.Utf32Encode
+      live "/sandbox/decode/utf-32", SandboxLive.Utf32Decode
+      live "/sandbox/encode/latin1", SandboxLive.Latin1Encode
+      live "/sandbox/decode/latin1", SandboxLive.Latin1Decode
+      live "/sandbox/encode/windows-1252", SandboxLive.Windows1252Encode
+      live "/sandbox/decode/windows-1252", SandboxLive.Windows1252Decode
+
+      live "/exercise/encode/utf-8", ExerciseLive, :utf8_encode
+      live "/exercise/decode/utf-8", ExerciseLive, :utf8_decode
+      live "/exercise/encode/utf-16", ExerciseLive, :utf16_encode
+      live "/exercise/decode/utf-16", ExerciseLive, :utf16_decode
+      live "/exercise/encode/utf-32", ExerciseLive, :utf32_encode
+      live "/exercise/decode/utf-32", ExerciseLive, :utf32_decode
+    end
+  end
+
+  # Other scopes may use custom stacks.
+  # scope "/api", AppWeb do
+  #   pipe_through :api
+  # end
+
+  # Enable LiveDashboard and Swoosh mailbox preview in development
+  if Application.compile_env(:app, :dev_routes) do
+    # If you want to use the LiveDashboard in production, you should put
+    # it behind authentication and allow only admins to access it.
+    # If your application does not have an admins-only section yet,
+    # you can use Plug.BasicAuth to set up some basic authentication
+    # as long as you are also using SSL (which you should anyway).
+    import Phoenix.LiveDashboard.Router
+
+    scope "/dev" do
+      pipe_through :browser
+
+      live_dashboard "/dashboard", metrics: AppWeb.Telemetry
+      forward "/mailbox", Plug.Swoosh.MailboxPreview
+    end
+  end
+end

@@ -1,32 +1,52 @@
-FROM eclipse-temurin:25-jdk AS builder
-WORKDIR /opt/app/sources
+FROM elixir:1.20-otp-29-alpine AS builder
 
-COPY . .
+RUN apk add --no-cache build-base git nodejs npm
 
-RUN chmod +x gradlew
-
-RUN --mount=type=cache,target=/root/.gradle \
-    ./gradlew --no-daemon bootJar -x test
-
-
-RUN java -Djarmode=tools \
-        -jar build/libs/charset.school.jar \
-        extract \
-        --destination /opt/app/output \
-        --layers \
-        --launcher
-
-FROM eclipse-temurin:25-jre
 WORKDIR /app
 
-RUN groupadd --system app && useradd --system --gid app --home-dir /app app \
-    && chown -R app:app /app
+ENV MIX_ENV=prod
+
+RUN mix local.hex --force && mix local.rebar --force
+
+COPY mix.exs mix.lock ./
+RUN mix deps.get --only prod \
+  && mkdir config
+COPY config/config.exs config/prod.exs config/runtime.exs config/
+RUN mix deps.compile
+
+COPY package.json package-lock.json vite.config.js ./
+RUN npm ci
+
+COPY lib lib
+COPY priv priv
+COPY assets assets
+
+RUN mix compile \
+  && npm run build \
+  && mix phx.digest \
+  && mix release
+
+FROM alpine:3.23
+
+RUN apk add --no-cache libstdc++ openssl ncurses-libs ca-certificates
+
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
+WORKDIR /app
+
+ENV MIX_ENV=prod
+ENV PHX_SERVER=true
+ENV DATABASE_PATH=/data/charset.db
+
+RUN addgroup -S app && adduser -S -G app app \
+  && mkdir /data && chown app:app /data
+
+COPY --from=builder --chown=app:app /app/_build/prod/rel/app ./
+
 USER app
 
-COPY --chown=app:app --from=builder /opt/app/output/dependencies/ ./
-COPY --chown=app:app --from=builder /opt/app/output/spring-boot-loader/ ./
-COPY --chown=app:app --from=builder /opt/app/output/snapshot-dependencies/ ./
-COPY --chown=app:app --from=builder /opt/app/output/application/ ./
+VOLUME /data
+EXPOSE 4000
 
-EXPOSE 8080
-ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+CMD ["bin/app", "start"]

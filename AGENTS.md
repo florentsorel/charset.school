@@ -1,1135 +1,751 @@
-# CLAUDE.md — Charset Playground
+# AGENTS.md — Charset Playground
 
-Projet d'exercices interactifs pour apprendre **l'encodage et le décodage** des caractères :
+## Produit
+
+Exercices interactifs pour apprendre **l'encodage et le décodage** des caractères :
 ASCII, Latin-1, Windows-1252, UTF-8, UTF-16, UTF-32, endianness, BOM.
 
-L'utilisateur s'inscrit/se connecte, choisit un module et un niveau, et fait les conversions
-à la main, étape par étape, avec validation immédiate et explications pédagogiques en cas
-d'erreur. Progression et statistiques persistées en base par utilisateur. Pas de QCM.
+- **Sandbox** : 10 pages (encode/decode × utf-8, utf-16, utf-32, latin1, windows-1252)
+  où l'utilisateur saisit un caractère/des bytes et voit la conversion décomposée étape
+  par étape, avec feedback immédiat à la frappe.
+- **Exercices** : 6 modules jouables (encode/decode × utf-8, utf-16, utf-32) où
+  l'utilisateur fait les conversions à la main, step par step, avec validation
+  immédiate côté serveur, un hint par type d'erreur, reveal après 3 essais, et
+  progression persistée (niveau auto-avancé par streak de 5).
+- **Pas de compte utilisateur** : tout est keyé par un token anonyme opaque (UUID) dans
+  un cookie HttpOnly. Ne pas réintroduire d'auth.
 
----
+### Historique
+
+Le projet est une réécriture Phoenix/LiveView (terminée le 2026-06-06) d'une stack
+Kotlin 2.x + Spring Boot 4 (API REST) + Nuxt 4 / Vue 3 (~18 000 lignes). L'ancienne
+implémentation reste consultable sur la branche **`kotlin-nuxt`**
+(`git show kotlin-nuxt:src/main/kotlin/...`, `git show kotlin-nuxt:web/app/...`) - elle fait foi
+uniquement comme archéologie, le code actuel est la référence.
+
+## Workflow git
+
+- Branches de travail depuis `main`, PRs vers `main` (`gh pr create`).
+- `mix precommit` doit passer avant toute PR.
+- Reviews Copilot : vérifier ses affirmations sur la stdlib Elixir avant d'obtempérer
+  (historique de faux positifs : casse de `Integer.to_string/2`, sémantique multi-`when`,
+  captures Regex) ; ses remarques de cohérence produit sont en revanche souvent bonnes.
 
 ## Stack
 
-### Backend
-- **Kotlin 2.x** + **Spring Boot 4.0** (Spring Framework 7)
-- **Spring Web** (REST controllers)
-- **Spring Security** (auth session-based, cookie HttpOnly, bcrypt)
-- **Spring Session JDBC** (sessions persistées en Postgres)
-- **Exposed** v1.3+ (DSL fluide) avec **exposed-kotlin-datetime** pour le mapping
-  `kotlin.time.Instant` ↔ colonnes Postgres `TIMESTAMP`
-- **Postgres 18** + **Flyway** pour les migrations (SQL pur, autoconfig Spring Boot) +
-  `flyway-database-postgresql` en `runtimeOnly` (requis en Flyway 11.x pour le support Postgres)
-- **Bean Validation** (Hibernate Validator) pour la validation des inputs côté HTTP
-- **`kotlin.time.Instant`** (stdlib Kotlin 2.x) pour les timestamps en domaine. `kotlinx.datetime.Instant`
-  est un typealias déprécié vers stdlib — on importe directement `kotlin.time.*`. ISO-8601
-  sur la wire via `Instant.toString()`
-- **Jackson 3** + `jackson-module-kotlin` (sérialisation JSON sans pollution du domaine)
-- **Testcontainers** (Postgres) — démarré en `companion object` via `@Container` + injecté
-  dans Spring via `@DynamicPropertySource`
-- **Tests d'intégration** : JUnit 5 direct (`@Test` `org.junit.jupiter.api`) — nécessaire pour
-  `@SpringBootTest` + extensions Testcontainers
-- **Tests unitaires** : **Kotest** spec BDD-style :
-  - `FunSpec` pour des tests plats (1-N cas indépendants — ex. `UserSerializerTest`)
-  - `FreeSpec` quand on a un groupement par méthode (ex. service avec plusieurs méthodes
-    ayant chacune leurs cas — `"methodName" - { "case description" { ... } }`)
-  - **Pas d'`AnnotationSpec`** — autant utiliser JUnit directement si on veut `@Test fun`
-- **MockK** pour les mocks Kotlin idiomatiques
-- **Gradle 9** Kotlin DSL
-
-### Frontend
-- **Nuxt 4** (Vue 3 + Vite + SSR activé, file-based routing, server routes possibles si besoin).
-  Structure Nuxt 4 : sources sous `web/app/` (`app/pages/`, `app/components/`, `app/composables/`, etc.)
-- **Vue 3** Composition API avec `<script setup>` + **TypeScript** (strict)
-- **`useFetch` / `$fetch`** (built-in Nuxt) pour les appels API vers Spring Boot, avec
-  intercepteur global pour `credentials: 'include'` + injection du header `X-XSRF-TOKEN`
-- **VeeValidate + zod** pour les formulaires (validation déclarative, type-safe)
-- **Tailwind CSS v4** (`@theme` dans CSS, intégré via Nuxt UI)
-- **Nuxt UI v4** (composants Vue prêts à l'emploi, theming Tailwind v4 natif, accessibilité,
-  inclut `@iconify-json/lucide` pour les icônes Lucide)
-- **Pinia** uniquement si nécessaire (user courant, locale, progression) — partir sans,
-  ajouter quand le besoin de state cross-vue mutable apparaît réellement
-- **zod** pour valider les schémas des réponses API (en plus de VeeValidate côté forms)
-- **`@nuxtjs/i18n`** (FR + EN, FR par défaut, détection via cookie ou `users.locale`)
-- **pnpm** comme package manager (déclaré dans `packageManager` field). CI cache la `pnpm-store`
-
-### Reverse proxy / déploiement
-- **Caddy** comme reverse proxy unique (HTTPS auto via Let's Encrypt, proxy de Nuxt SSR
-  Node sur :3000, proxy `/api/*` vers Spring Boot sur :8080)
-- Spring Boot tourne en JAR exécutable derrière Caddy
-- Nuxt en mode SSR (`nuxt build` puis `node .output/server/index.mjs`) pour le SEO sur
-  la landing et toutes les pages publiques
-
----
-
-## Architecture — domain / infrastructure
-
-Pattern **ports & adapters léger** (pas de DDD strict, pas de CQRS).
-
-### Principes
-
-1. **Le domaine est pur Kotlin.** Pas de Spring, pas de Jackson, pas d'Exposed, pas
-   d'annotation framework. Uniquement le stdlib Kotlin (incluant `kotlin.time.*` pour
-   les timestamps et le clock).
-2. **Le domaine ne définit que ses contrats.** Les interfaces (ex. `*Repository`,
-   `Clock`) vivent dans le package de la feature concernée (`domain/exercise/`,
-   `domain/progress/`, etc., **pas** dans un dossier `port/` à part). Les
-   implémentations concrètes vivent dans `infrastructure/`.
-3. **Le wiring est explicite via `@Bean`.** Aucun composant scan sur ton code : pas de
-   `@Service`, pas de `@Repository`, pas de `@Component` sur les classes domain ou infra
-   non-HTTP. Les beans sont déclarés dans des classes `@Configuration` dédiées.
-4. **Annotations Spring uniquement pour ce qui est intrinsèquement Spring.** Controllers
-   (`@RestController`), filters Spring Security, classes `@Configuration`. Le reste reste
-   en classes Kotlin pures.
-
-### Pourquoi cette approche
-
-- Tests unitaires sur le domaine sans booter Spring (rapide, MockK direct sur les ports)
-- Wiring auditable d'un coup d'œil dans `config/`
-- Substitution triviale en test via `@TestConfiguration`
-- Tests d'intégration ciblés qui ne tirent qu'une config
-
-### Stratégie d'enregistrement des composants
-
-| Composant | Façon d'enregistrer | Pourquoi |
+| Brique | Choix | Version |
 |---|---|---|
-| `domain/<feature>/*Service`, `*Validator`, `*Generator`, `Codec`, `*Hasher` | `@Bean` dans le **`<Feature>Config`** correspondant (ex. `AuthConfig` héberge `authService` + `passwordHasher`) | Cohérent avec l'archi feature-first |
-| `domain/<feature>/*Repository` (interfaces) | rien (interface) | C'est un contrat |
-| `infrastructure/repository/<feature>/*` + `infrastructure/http/<feature>/serde/*` | `@Bean` dans le même **`<Feature>Config`** (regroupe repo + serializers + autres beans liés à l'entité, façon nbog) | Cohérent — tout ce qui touche à `User` vit dans `UserConfig`, etc. |
-| `Database` Exposed + `DataSource` | `@Bean` dans `DatabaseConfig` | Plomberie partagée par tous les repos, pas spécifique à un feature |
-| `infrastructure/http/*Controller` | `@RestController` direct | Intrinsèquement Spring |
-| `infrastructure/security/*` | `@Bean` dans `SecurityConfig` | Centralisation du wiring sécurité |
-| `kotlin.time.Clock` (stdlib) | `@Bean clock(): Clock = Clock.System` dans `ApplicationConfig` (+ `@PostConstruct setTz("UTC")`) | Pas d'abstraction custom — MockK mocke directement `Clock`. `Clock.System` n'est qu'une instance, le port est déjà dans la stdlib |
-| `JacksonModule` (un par feature) | `@Bean userJacksonModule()` dans `UserConfig`, idem `ExerciseConfig`, etc. Spring Boot collecte **tous** les beans `JacksonModule` et les enregistre sur l'ObjectMapper auto-configuré | Pattern marker bean — pas de registre central à maintenir |
-| `config/*Config` | `@Configuration` | C'est leur rôle |
-| `DataSource` | Autoconfig Spring Boot via `application.yml` | Pas de raison de réinventer |
-| Flyway | Autoconfig Spring Boot | Idem |
-| Spring Session JDBC | `@EnableJdbcHttpSession` sur `SecurityConfig` | Annotation Spring de config |
+| Langage | Elixir | **1.20** (OTP 29) |
+| Framework | Phoenix | **1.8.7** |
+| UI temps réel | Phoenix LiveView | 1.1.x |
+| HTTP server | Bandit | dernière compatible |
+| DB | SQLite (mode WAL) | via `ecto_sqlite3` |
+| Backups | aucun automatisé (décision 2026-06-06 : progression anonyme = enjeu faible) ; sauvegarder le volume `/data` côté hôte si besoin | — |
+| ORM / migrations | Ecto + ecto_sql + ecto_sqlite3 | dernière compatible |
+| CSS | Tailwind CSS v4 **via Vite** | tailwind 4.x + vite |
+| i18n | Gettext (EN par défaut, FR sous `/fr`) | `{:gettext, "~> 1.0"}` |
+| Assets pipeline | **Vite** (pas esbuild, pas tailwind CLI) — il y a donc un `package.json` | — |
+| Conteneurisation | Docker multi-stage (voir section Docker) | — |
 
-### Restriction du component scan
+### Pourquoi Elixir pour ce projet
 
-Spring Boot fait du component scan par défaut sur le package racine de
-`@SpringBootApplication`. Pour garantir qu'aucune annotation Spring (`@Service`,
-`@Repository`, `@Component`) ne soit accidentellement scannée dans `domain/` ou
-`infrastructure/repository/`, on restreint explicitement le scan à `config/` et
-`infrastructure/http/` :
+Le domaine métier est littéralement « découper des code points en bits ». Les bitstrings
+Elixir expriment les formats d'encodage directement dans la syntaxe :
 
-```kotlin
-// CharsetApplication.kt
-@SpringBootApplication(scanBasePackages = [
-    "school.charset.app.config",
-    "school.charset.app.infrastructure.http",
-])
-class CharsetApplication
+```elixir
+# UTF-8 2 bytes : le format EST le pattern
+<<0b110::3, high::5, 0b10::2, low::6>>
 
-fun main(args: Array<String>) {
-    runApplication<CharsetApplication>(*args)
-}
+# Décodage par pattern matching déclaratif
+def decode_utf8(<<0::1, cp::7, rest::binary>>), do: {cp, rest}
+def decode_utf8(<<0b110::3, h::5, 0b10::2, l::6, rest::binary>>), do: {Bitwise.bsl(h, 6) + l, rest}
 ```
 
-Conséquences :
+`Charset.Encoding.Codec` est écrit dans ce style - le conserver pour toute évolution.
 
-- Si quelqu'un colle un `@Service` sur une classe dans `domain/`, **rien ne se passe** :
-  le bean ne sera pas enregistré, donc l'app refusera de démarrer si quelque chose
-  dépend de ce service. L'erreur est immédiate et visible.
-- Tous les beans du domaine et de la persistance doivent passer par `@Bean` dans
-  `config/` — c'est imposé par la structure, pas juste par convention.
-- Les controllers (`@RestController` dans `infrastructure/http/`) et les classes
-  `@Configuration` (dans `config/`) restent scannés normalement.
+### Typage — exploiter le type system d'Elixir 1.20 au maximum
 
-Cette restriction est une **garantie statique** qui tient la discipline dans le temps,
-y compris quand le projet grossit ou que d'autres personnes contribuent.
+Elixir 1.20 marque le premier jalon production-ready du type system set-theoretic :
+**inférence automatique sur tout le code, sans annotation** (voir
+https://elixir-lang.org/blog/2026/06/03/elixir-v1-20-0-released/). Le compilateur
+infère les types depuis les guards, le pattern matching et le control flow, et
+remonte les violations garanties d'échouer au runtime.
 
----
+Les **signatures de types écrites par le développeur n'existent pas encore en 1.20**
+(elles viendront avec les typed structs puis les signatures). « Utiliser les types au
+maximum » signifie donc écrire du code que l'inférence peut exploiter :
 
-### Structure des packages
+- **Toutes les violations de typage sont des erreurs.** `mix compile
+  --warnings-as-errors` dans `mix precommit` et en CI — un warning de typage ne se
+  merge pas.
+- **Guards systématiques** sur les fonctions publiques du domaine (`when is_integer(cp)
+  and cp >= 0 and cp <= 0x10FFFF`) : à la fois validation des invariants et information
+  de type pour l'inférence.
+- **Structs partout, maps nues nulle part** dans le domaine : `%Step.Binary{}`,
+  `%ValidationResult{}`, etc. avec `@enforce_keys` sur les champs obligatoires.
+- **Pattern matching plutôt qu'accès dynamique** : `%Step.Binary{expected: expected} =
+  step` plutôt que `step.expected` sur un type incertain, `case`/`with` avec clauses
+  exhaustives.
+- **Pas de `dynamic()` volontaire** : éviter les constructions qui forcent le
+  compilateur à abandonner le narrowing (maps hétérogènes fourre-tout, `apply/3`,
+  `Map.get` sur des structs, `String.to_existing_atom` là où un ensemble fermé de
+  clauses suffit).
+- **`@spec` sur l'API publique des contexts et du domaine** : documentation +
+  préparation des vraies signatures à venir.
+- Quand une nouvelle version d'Elixir étend le type system (typed structs, signatures),
+  **adopter immédiatement** sur `Charset.Encoding` et `Charset.Exercise` — le domaine
+  est petit, pur et entièrement testé, c'est le candidat idéal.
+
+## Architecture
+
+Phoenix Contexts classiques. Le domaine reste pur (pas d'Ecto, pas de Phoenix dans les
+modules de calcul).
+
+**Namespaces** : l'OTP app s'appelle **`:app`**. `App`/`AppWeb` portent
+l'infrastructure (Application, Repo, endpoint, LiveViews) ; les **domaines** sont des
+namespaces top-level à côté - `Charset.*` aujourd'hui (encoding, exercise, sandbox,
+progress), d'autres demain (ex. `Binary.*`) sans toucher à la couche web.
 
 ```
-school.charset.app/
-├── domain/                             # Pure Kotlin, zéro dépendance framework.
-│   │                                   # Organisé par **feature/entité**, pas par couche
-│   │                                   # technique (pas de `model/` / `service/` / `port/`).
-│   │                                   # Inspiré du package `bl/` du projet widder.
-│   │
-│   ├── encoding/                       # Tout ce qui concerne les encodages
-│   │   ├── CodePoint.kt                # @JvmInline value class Int wrapper
-│   │   ├── Encoding.kt                 # enum (Ascii, Latin1, Windows1252, Utf8, Utf16Be, ...)
-│   │   ├── ByteArrayExt.kt             # extension toHex()
-│   │   ├── Codec.kt                    # encode/decode pour les 8 encodings
-│   │   ├── EncoderException.kt
-│   │   └── DecoderException.kt
-│   │
-│   ├── exercise/                       # Tout ce qui concerne les exercices et leur validation
-│   │   ├── StepType.kt                 # enum Format / Binary / BitGroups / HexBytes / CodePointEntry / Endianness
-│   │   ├── Step.kt                     # sealed class — un step par valeur de StepType
-│   │   ├── Answer.kt                   # sealed class — un Answer par type de step
-│   │   ├── ValidationResult.kt         # data class (ok, errorType?, params) — pas d'expected (anti-cheat)
-│   │   ├── ErrorType.kt                # object — identifiants stables des erreurs de validation
-│   │   ├── ParamKey.kt                 # object — noms des variables d'interpolation
-│   │   ├── FormatChoice.kt             # object — identifiants stables des choix Step.Format (byte-count.*)
-│   │   ├── Exercise.kt                 # data class (codePoint, encoding, level, steps)
-│   │   ├── ExerciseAttempt.kt          # data class (id, userId, moduleId, level, steps, correct, ...)
-│   │   ├── ExerciseModule.kt           # enum des modules (utf8-encode, utf8-decode, ...)
-│   │   ├── ExerciseLevel.kt
-│   │   ├── ExerciseAttemptRepository.kt  # interface (port)
-│   │   ├── AnswerValidator.kt          # class — validate(step: Step, answer: Answer) -> ValidationResult
-│   │   └── generator/                  # ExerciseGenerator + per-encoding generators (see "Generators" section)
-│   │
-│   ├── progress/                       # Tout ce qui concerne la progression utilisateur
-│   │   ├── ModuleProgress.kt           # data class (userId, moduleId, level, streak, attempts, errors, lastPlayedAt)
-│   │   ├── ProgressRepository.kt       # interface (port)
-│   │   └── ProgressService.kt          # class — record d'une tentative + mise à jour de la progression
-│   │
-│   └── user/                           # Tout ce qui concerne les utilisateurs
-│       ├── User.kt                     # data class (id, email, name, locale, ...)
-│       └── UserRepository.kt           # interface (port)
-│   # Pour les besoins temporels (timestamps, etc.), on injecte directement
-│   # `kotlin.time.Clock` (stdlib) — pas d'interface `Clock` custom dans `domain/time/`.
-│   # MockK mocke `Clock` natif sans effort, et le bean est fourni par
-│   # `config/ApplicationConfig.kt`.
-│   #
-│   # Note : les constantes "stables vers le front" (ErrorType, ParamKey, plus tard
-│   # HintType, MessageType, ...) vivent **dans le package du feature qui les produit**,
-│   # pas dans un package i18n/ transverse. Cohérent avec l'archi feature-first.
-│
-├── infrastructure/                     # Le seul endroit où on a un mix Spring/Exposed/Jackson.
-│   │                                   # Top-level split par couche technique (repository, http,
-│   │                                   # security, time), puis feature-package À L'INTÉRIEUR
-│   │                                   # de chaque couche quand c'est pertinent.
-│   │
-│   ├── repository/                    # Implémentations Exposed (sans annotation Spring)
-│   │   ├── exercise/                   # ExposedExerciseAttemptRepository + tables +
-│   │   │                               # mappers pour Step → table fille
-│   │   ├── progress/                   # ExposedProgressRepository + ModuleProgressTable
-│   │   └── user/                       # ExposedUserRepository + UsersTable
-│   │
-│   ├── http/                           # Controllers + DTOs + serializers (déjà feature-packagé)
-│   │   ├── auth/
-│   │   ├── exercise/
-│   │   ├── progress/
-│   │   ├── profile/
-│   │   └── serialization/              # serializers/deserializers Jackson custom transverses
-│   │
-│   └── security/                       # Spring Security config + UserDetailsService
-│
-├── config/                             # Wiring Spring centralisé, **per-entity**
-│   ├── ApplicationConfig.kt            # @Bean Clock (= Clock.System) + @PostConstruct setTz(UTC)
-│   ├── DatabaseConfig.kt               # @Bean DataSource + @Bean Database Exposed (plomberie)
-│   ├── SecurityConfig.kt               # SecurityFilterChain, UserDetailsService, AuthenticationManager, RememberMeServices, etc.
-│   ├── AuthConfig.kt                   # @Bean authService + passwordHasher (feature auth)
-│   ├── UserConfig.kt                   # @Bean userRepository + userJacksonModule (feature user)
-│   ├── ProgressConfig.kt               # @Bean progressRepository + progressService + progressJacksonModule (Phase 4)
-│   ├── ExerciseConfig.kt               # @Bean exerciseAttemptRepository + exerciseGenerator + exerciseJacksonModule (Phase 4)
-│   └── WebConfig.kt                    # CORS, MessageSource, etc.
-│
-└── CharsetApplication.kt               # @SpringBootApplication (scan limité à config/, http/)
+lib/
+  charset/                          # Domaine charset (pur, pas d'Ecto ni Phoenix)
+    encoding/                       # codec.ex (bitstrings !), code_point.ex, bytes.ex,
+                                    # encoding.ex, windows1252.ex, {encode,decode}_error.ex
+    exercise/                       # Pur : step/ (8 types), answer.ex, answer_validator.ex,
+                                    # validation_result.ex, error_type.ex, param_key.ex,
+                                    # format_choice.ex, exercise_module.ex, generator/,
+                                    # attempt.ex, attempt_step.ex (structs domain),
+                                    # service.ex (orchestration : génération, validation,
+                                    # reveal, finalisation, garde de propriété par token)
+    sandbox/                        # Pur : parsers d'input + labels + décomposition
+    progress/                       # module_progress.ex (struct + streak/level-up)
+    schema/                         # Schemas Ecto (un fichier par table)
+    exercise_attempts.ex            # Context Ecto : attempts + steps (table-per-type)
+    progress.ex                     # Context Ecto : module_progress (token, module_id)
+  app/                              # Infrastructure app-wide (App.*)
+    application.ex                  # OTP supervision tree (inclut Ecto.Migrator au boot)
+    repo.ex                         # App.Repo (SQLite)
+  app_web/                          # Couche web partagée par tous les domaines (AppWeb.*)
+    router.ex                       # scopes / et /fr, live_sessions par locale
+    locale.ex                       # localized_path/2, alternate_path/2
+    plugs/locale.ex                 # plug HTTP locale
+    plugs/visitor_token.ex          # mint/lit le cookie token anonyme HttpOnly (UUID only)
+    live/locale_hook.ex             # on_mount : Gettext + :locale sur le websocket
+    live/sandbox/                   # 10 LiveViews (encode/decode × 5 encodings)
+    live/exercise_live.ex           # 1 LiveView, 6 modules via live actions
+    controllers/                    # landing (statique, SEO), redirect /sandbox
+    components/                     # layouts, core, sandbox_components, exercise_components
+assets/                             # Vite + Tailwind v4 (package.json à la racine du repo)
+priv/repo/migrations/
+priv/gettext/{fr,en}/LC_MESSAGES/   # default.po + labels.po + feedback.po
+test/                               # Miroir de lib/
 ```
 
-### Exemple — domaine pur
+### Anti-cheat — par construction avec LiveView
 
-Data class, interface (port) et service de la **même feature** vivent dans le
-**même package** (`domain/progress/`) :
+Règle invariante : **la valeur attendue (`expected`) ne traverse jamais le réseau vers
+le client** (sauf reveal explicite).
 
-```kotlin
-// domain/progress/ModuleProgress.kt — aucune annotation, aucune dépendance framework
-package school.charset.app.domain.progress
+`expected` vit dans les assigns du process serveur et en DB
+(`attempt_step_<type>.expected`). Vigilance :
 
-import kotlin.time.Instant
+- Ne jamais interpoler `expected` dans le HEEx (même dans un attribut `data-*` ou un
+  commentaire HTML). Le test « anti-cheat » de `exercise_live_test.exs` le pinne.
+- `ValidationResult.params` peut contenir des hints structurels (`expected_length`,
+  `expected_count`, `position`, bornes) et le `got` de l'utilisateur — **jamais** la
+  valeur canonique attendue. Cas particulier `endianness` : 2 choix possibles, donc même
+  le `got` révèle la réponse — aucun params.
+- La DB reste la source de vérité pour la validation (defense in depth) : on lit
+  `expected` depuis la row `attempt_step_<type>`, jamais depuis ce qu'envoie le client.
+- La sandbox est exemptée : c'est un visualiseur, elle révèle tout par design.
 
-data class ModuleProgress(
-    val userId: Long,
-    val moduleId: String,
-    val level: Int,
-    val streak: Int,
-    val attempts: Int,
-    val errors: Int,
-    val lastPlayedAt: Instant?,
-) {
-    fun recordAttempt(correct: Boolean, now: Instant): ModuleProgress = copy(
-        attempts = attempts + 1,
-        errors = if (correct) errors else errors + 1,
-        streak = if (correct) streak + 1 else 0,
-        lastPlayedAt = now,
-    )
+### Hints et reveal
 
-    companion object {
-        fun initial(userId: Long, moduleId: String): ModuleProgress =
-            ModuleProgress(userId, moduleId, 1, 0, 0, 0, null)
-    }
-}
-```
-
-```kotlin
-// domain/progress/ProgressRepository.kt — contrat pur, même package que l'entité
-package school.charset.app.domain.progress
-
-interface ProgressRepository {
-    fun findByUserAndModule(userId: Long, moduleId: String): ModuleProgress?
-    fun upsert(progress: ModuleProgress): ModuleProgress
-}
-```
-
-```kotlin
-// domain/progress/ProgressService.kt — logique métier, classe Kotlin pure
-package school.charset.app.domain.progress
-
-import kotlin.time.Clock
-
-class ProgressService(
-    private val progressRepository: ProgressRepository,
-    private val clock: Clock,
-) {
-    fun recordAttempt(userId: Long, moduleId: String, correct: Boolean): ModuleProgress {
-        val current = progressRepository.findByUserAndModule(userId, moduleId)
-            ?: ModuleProgress.initial(userId, moduleId)
-        return progressRepository.upsert(current.recordAttempt(correct, clock.now()))
-    }
-}
-```
-
-### Exemple — wiring Spring
-
-```kotlin
-// config/ProgressConfig.kt (Phase 5) — service domain + repo regroupés par entité
-@Configuration
-class ProgressConfig {
-    @Bean
-    fun progressRepository(): ProgressRepository = ExposedProgressRepository()
-
-    @Bean
-    fun progressService(
-        progressRepository: ProgressRepository,
-        clock: Clock,
-    ): ProgressService = ProgressService(progressRepository, clock)
-
-    @Bean
-    fun progressJacksonModule(): JacksonModule = SimpleModule().apply {
-        addSerializer(ProgressSerializer())
-    }
-}
-
-// config/DatabaseConfig.kt — plomberie partagée par tous les repos
-@Configuration
-@EnableConfigurationProperties(DataSourceProperties::class)
-class DatabaseConfig {
-
-    @Bean
-    fun dataSource(properties: DataSourceProperties): DataSource =
-        DataSourceBuilder.create()
-            .driverClassName(properties.driverClassName)
-            .url(properties.url)
-            .username(properties.username)
-            .password(properties.password)
-            .build()
-
-    @Bean
-    fun database(dataSource: DataSource): Database =
-        Database.connect(
-            dataSource,
-            databaseConfig = ExposedDatabaseConfig { useNestedTransactions = true },
-        )
-}
-
-// config/UserConfig.kt — un fichier par entité, regroupe TOUT ce qui touche à User
-@Configuration
-class UserConfig {
-    @Bean
-    fun userRepository(clock: Clock): UserRepository = ExposedUserRepository(clock)
-
-    @Bean
-    fun userJacksonModule(): JacksonModule = SimpleModule().apply {
-        addSerializer(UserSerializer())
-    }
-}
-
-// config/AuthConfig.kt — un fichier pour la feature auth (entity-agnostic)
-@Configuration
-class AuthConfig {
-    @Bean
-    fun passwordHasher(passwordEncoder: PasswordEncoder): PasswordHasher =
-        BCryptPasswordHasher(passwordEncoder)
-
-    @Bean
-    fun authService(userRepository: UserRepository, passwordHasher: PasswordHasher): AuthService =
-        AuthService(userRepository, passwordHasher)
-}
-
-// config/ExerciseConfig.kt (Phase 4) — repo + générateurs + serializer Step
-@Configuration
-class ExerciseConfig {
-    @Bean
-    fun exerciseAttemptRepository(): ExerciseAttemptRepository =
-        ExposedExerciseAttemptRepository()
-
-    @Bean
-    fun exerciseGenerator(clock: Clock): ExerciseGenerator = ExerciseGenerator(clock)
-
-    @Bean
-    fun exerciseJacksonModule(): JacksonModule = SimpleModule().apply {
-        addSerializer(StepSerializer())  // strip `expected` anti-cheat
-    }
-}
-
-// config/ApplicationConfig.kt — bean Clock (stdlib) + TZ forcé en UTC
-@Configuration
-class ApplicationConfig {
-
-    @PostConstruct
-    fun setTz() {
-        TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
-    }
-
-    @Bean
-    fun clock(): Clock = Clock.System  // kotlin.time.Clock
-}
-```
-
-### Transactions
-
-Dans les repositories, on utilise la DSL Exposed `transaction { }` (sans argument).
-Le `Database` est enregistré comme **default global** par `Database.connect(dataSource)` dans
-`DatabaseConfig.database()` au démarrage Spring (le bean est instancié eagerly), donc tous
-les `transaction { }` ultérieurs partagent ce default. Plus besoin d'injecter `Database`
-dans chaque repo, le constructeur reste minimal (juste les vraies dépendances métier comme
-`Clock`).
-
-**Pas de `@Transactional` Spring** dans les repos :
-
-- Spring `@Transactional` et Exposed `transaction { }` sont deux systèmes de transaction
-  distincts. Spring ouvre une transaction via `PlatformTransactionManager` ; Exposed via
-  son `TransactionManager` interne. Sans bridge, Exposed ne voit pas la transaction Spring
-  et lève "No transaction" à l'exécution.
-- Le bridge officiel existe (`org.jetbrains.exposed:exposed-spring-transaction`) et serait
-  une option **défendable** sur le plan archi — `infrastructure/repository/` est de
-  l'infra, donc des annotations Spring n'y violent pas le principe (le principe protège
-  uniquement le `domain/`). On l'évite pour des raisons pragmatiques, pas de pureté :
-    - Une dépendance en plus
-    - Frontières de transaction implicites (proxy Spring) vs explicites au call site
-      (bloc `transaction { }` visible)
-    - Match avec le pattern nrea déjà éprouvé
-    - Pas un gain significatif : la DSL Exposed est aussi concise que l'annotation
-
----
-
-## Sérialisation JSON — Jackson 3 sans pollution du domaine
-
-### Stratégie
-
-- `jackson-module-kotlin` gère les data classes Kotlin out of the box pour les **DTOs HTTP**
-  (data classes dans `infrastructure/http/<feature>/`) — pas besoin de serializer custom
-- Pour les **entités domain** qu'on retourne directement depuis un controller (`User`, `Step`...),
-  on écrit un **`ValueSerializer<T>` Jackson 3 custom** dans `infrastructure/http/<feature>/serde/`.
-  Pas de DTO intermédiaire, pas d'annotation Jackson sur le domaine, et **anti-leak par
-  construction** — un champ non écrit ne peut pas leaker
-- **Aucune annotation Jackson dans `domain/`** (ni dans `domain/exercise/`, ni `user/`, etc.)
-- Les modules Jackson sont enregistrés **per-entité** via un `@Bean JacksonModule` dans
-  le `<Feature>Config` correspondant. Spring Boot collecte tous les beans `JacksonModule`
-  et les enregistre automatiquement sur l'ObjectMapper global
-
-### Exemple
-
-```kotlin
-// infrastructure/http/auth/serde/UserSerializer.kt — Jackson 3 ValueSerializer
-package school.charset.app.infrastructure.http.auth.serde
-
-class UserSerializer : ValueSerializer<User>() {
-    override fun serialize(user: User, gen: JsonGenerator, ctx: SerializationContext) {
-        gen.writeStartObject()
-        gen.writeNumberProperty("id", user.id)
-        gen.writeStringProperty("email", user.email)
-        gen.writeStringProperty("name", user.name)
-        gen.writeStringProperty("locale", user.locale)
-        gen.writeStringProperty("createdAt", user.createdAt.toString())
-        // passwordHash et updatedAt **jamais** écrits → anti-leak by construction
-        gen.writeEndObject()
-    }
-
-    override fun handledType(): Class<User> = User::class.java
-}
-
-// config/UserConfig.kt — bean JacksonModule co-localisé avec le userRepository
-@Configuration
-class UserConfig {
-    @Bean
-    fun userRepository(clock: Clock): UserRepository = ExposedUserRepository(clock)
-
-    @Bean
-    fun userJacksonModule(): JacksonModule = SimpleModule().apply {
-        addSerializer(UserSerializer())
-    }
-}
-```
-
-Spring Boot trouve `userJacksonModule` (bean de type `JacksonModule`) et l'enregistre sur
-l'ObjectMapper auto-configuré. Quand un `@RestController` retourne `ResponseEntity<User>`,
-Jackson invoque automatiquement `UserSerializer`.
-
-### Tests des serializers
-
-Tests unitaires purs, sans Spring. Convention :
-- **Kotest `FunSpec`** pour des tests plats (1-N cas indépendants)
-- **Kotest `FreeSpec`** quand on a besoin de nesting (un service avec plusieurs méthodes)
-- Helper de test partagé `ObjectMapperTestUtils.withSerializer(serializer)` dans `src/test/.../test/`
-- Comparaison JSON par **tree-match** (`mapper.readTree(...) shouldBe mapper.readTree(...)`)
-  pour ignorer whitespace/ordre. Test 2 valide l'anti-leak en passant des valeurs sensibles
-  distinctives et asseratant que le tree complet correspond à la shape attendue.
-
-```kotlin
-class UserSerializerTest : FunSpec({
-    val mapper = JsonMapper().withSerializer(UserSerializer())
-
-    fun aUser(/* defaults */): User = ...
-
-    fun User.serializeAndAssert(expectedJson: String) {
-        val actual = mapper.writeValueAsString(this)
-        mapper.readTree(actual) shouldBe mapper.readTree(expectedJson)
-    }
-
-    test("serializes id, email, name, locale and createdAt") { ... }
-    test("never exposes passwordHash or updatedAt") {
-        // passe un passwordHash distinctif puis assert que le JSON ne le contient pas
-    }
-})
-```
-
----
+1 hint par `error_type` (domaine gettext `feedback`, clé = l'identifiant stable), avec
+compteur d'essais affiché (`Try n/3`). Le bouton « Show me the answer » n'apparaît
+qu'au seuil de 3 essais sur le step (gate serveur dans `Exercise.Service`, pas
+seulement UI). Un step révélé rend l'attempt entier incorrect ; la complétion est
+enregistrée sur la progression dans tous les cas.
 
 ## Modèle de données
 
-### `users`
-```sql
-CREATE TABLE users (
-    id            BIGSERIAL PRIMARY KEY,
-    email         VARCHAR(255) NOT NULL UNIQUE,
-    name          VARCHAR(255),
-    password_hash VARCHAR(255) NOT NULL,
-    locale        VARCHAR(5)   NOT NULL DEFAULT 'fr',
-    created_at    TIMESTAMP    NOT NULL DEFAULT NOW(),
-    updated_at    TIMESTAMP    NOT NULL DEFAULT NOW()
-);
-```
-
-### `module_progress`
-```sql
-CREATE TABLE module_progress (
-    id             BIGSERIAL PRIMARY KEY,
-    user_id        BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    module_id      VARCHAR(64)  NOT NULL,
-    level          SMALLINT     NOT NULL DEFAULT 1,
-    streak         INT          NOT NULL DEFAULT 0,
-    attempts       INT          NOT NULL DEFAULT 0,
-    errors         INT          NOT NULL DEFAULT 0,
-    last_played_at TIMESTAMP,
-    created_at     TIMESTAMP    NOT NULL DEFAULT NOW(),
-    updated_at     TIMESTAMP    NOT NULL DEFAULT NOW(),
-    UNIQUE (user_id, module_id)
-);
-```
-
-### Exercices — modèle relationnel pur (Option A : table-per-type)
-
-**Choix d'archi tranché le 2026-05-20** : on stocke les attempts et leurs steps en
-**relationnel pur**, pas en JSONB. Une table parent `exercise_attempts` agrège un
-exercice complet ; une table parent `attempt_steps` agrège les micro-questions ; et
-six tables filles (une par `StepType`) stockent les données spécifiques. Type-safe
-DB-level, queries SQL natives faciles (stats par step_type), pas de JSON.
-
-Le schéma doit **rester aligné** avec les objets domain (`Step` sealed class,
-`StepType` enum, `Answer` sealed class, `AnswerValidator`, `ValidationResult`) —
-toute évolution du domaine doit refléter une migration et inversement.
-
-#### Pas de CHECK constraints sur les valeurs énumérées
-
-**Choix tranché le 2026-05-20** : pas de `CHECK (... IN (...))` sur les colonnes
-correspondant à des enums Kotlin (`step_type`, `encoding`, etc.). Raisons :
-
-- L'enum Kotlin est l'unique source de vérité ; la validation se fait au mapping
-  Exposed (`enumerationByName`) — la DB n'a jamais à voir une valeur invalide
-  écrite par l'app.
-- Le coût d'évolution est asymétrique : ajouter une valeur Kotlin = 1 ligne ;
-  faire la même chose avec CHECK = `ALTER TABLE DROP CONSTRAINT ... ADD CONSTRAINT ...`
-  dans une migration Flyway. Bruit inutile.
-- L'app est le seul writer de cette DB (pas d'ETL externe ni d'admin manuelle).
-
-Les **FK** restent. Ce sont des contraintes d'intégrité référentielle, pas des
-restrictions de valeurs.
-
-#### `exercise_attempts`
-```sql
-CREATE TABLE exercise_attempts (
-    id            BIGSERIAL PRIMARY KEY,
-    user_id       BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    module_id     VARCHAR(64)  NOT NULL,
-    level         SMALLINT     NOT NULL,
-    code_point    INT          NOT NULL,    -- input du module encode (et identifiant pour le module decode)
-    encoding      VARCHAR(16)  NOT NULL,    -- 'utf-8', 'utf-16be', ... (matche Encoding.id)
-    correct       BOOLEAN      NOT NULL,    -- agrégé : tous les steps corrects
-    duration_ms   INT,
-    created_at    TIMESTAMP    NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_attempts_user_module ON exercise_attempts(user_id, module_id);
-```
-
-#### `attempt_steps` (parent — discriminateur)
-```sql
-CREATE TABLE attempt_steps (
-    id            BIGSERIAL PRIMARY KEY,
-    attempt_id    BIGINT       NOT NULL REFERENCES exercise_attempts(id) ON DELETE CASCADE,
-    position      SMALLINT     NOT NULL,
-    step_type     VARCHAR(32)  NOT NULL,     -- StepType.id : 'format','binary','bit-groups',
-                                             -- 'hex-bytes','code-point','endianness' (validé côté app)
-    correct       BOOLEAN      NOT NULL,
-    error_type    VARCHAR(64),               -- NULL si correct ; sinon clé i18n consommée par le front
-    UNIQUE (attempt_id, position)
-);
-
-CREATE INDEX idx_attempt_steps_attempt ON attempt_steps(attempt_id);
-```
-
-#### Tables filles (une par `StepType`)
-
-```sql
--- StepType.Format
-CREATE TABLE attempt_step_format (
-    step_id      BIGINT       PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
-    choices      TEXT[]       NOT NULL,           -- redondant mais permet le replay/audit fidèle
-    expected     VARCHAR(64)  NOT NULL,
-    user_answer  VARCHAR(64)
-);
-
--- StepType.Binary
-CREATE TABLE attempt_step_binary (
-    step_id      BIGINT       PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
-    expected     VARCHAR(64)  NOT NULL,            -- ex. "11101001"
-    bit_length   SMALLINT     NOT NULL,
-    user_answer  VARCHAR(64)
-);
-
--- StepType.BitGroups
-CREATE TABLE attempt_step_bit_groups (
-    step_id      BIGINT       PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
-    expected     TEXT[]       NOT NULL,            -- ex. {"00011","101001"}
-    user_answer  TEXT[]
-);
-
--- StepType.HexBytes
-CREATE TABLE attempt_step_hex_bytes (
-    step_id      BIGINT       PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
-    expected     SMALLINT[]   NOT NULL,            -- ex. {195, 169} = {0xC3, 0xA9}
-    user_answer  SMALLINT[]
-);
-
--- StepType.CodePointEntry
-CREATE TABLE attempt_step_code_point (
-    step_id      BIGINT       PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
-    expected     INT          NOT NULL,            -- la valeur du code point (0..0x10FFFF)
-    user_answer  INT
-);
-
--- StepType.Endianness
-CREATE TABLE attempt_step_endianness (
-    step_id      BIGINT       PRIMARY KEY REFERENCES attempt_steps(id) ON DELETE CASCADE,
-    expected     VARCHAR(16)  NOT NULL,        -- 'BigEndian' | 'LittleEndian' (validé côté app)
-    user_answer  VARCHAR(16)
-);
-```
-
-#### Mapping `Step` ↔ table fille
-
-| `StepType` enum | Table fille | Type Postgres natif des champs |
-|---|---|---|
-| `Format` | `attempt_step_format` | `TEXT[]`, `VARCHAR` |
-| `Binary` | `attempt_step_binary` | `VARCHAR`, `SMALLINT` |
-| `BitGroups` | `attempt_step_bit_groups` | `TEXT[]` |
-| `HexBytes` | `attempt_step_hex_bytes` | `SMALLINT[]` |
-| `CodePointEntry` | `attempt_step_code_point` | `INT` |
-| `Endianness` | `attempt_step_endianness` | `VARCHAR` (enum string) |
-
-#### Arrays Postgres natifs : choix tranché
-
-Les step types qui portent une **séquence** (`BitGroups`, `HexBytes`) utilisent les
-**arrays natifs Postgres** (`TEXT[]`, `SMALLINT[]`), pas des tables de valeurs
-séparées. Justification :
-
-- Les bits/bytes sont **toujours lus en bloc** par le validator (jamais filtrés par
-  position individuelle dans le métier)
-- Une table de valeurs par step augmenterait le nombre de tables à 12+
-- Exposed supporte les arrays via `exposed-postgresql` (`array<Short>()`, `array<String>()`)
-- Reste relationnel et typé — un `SMALLINT[]` n'est pas du JSON, il est typé,
-  queryable et indexable nativement
-
-Si un besoin d'analytics par position individuelle apparaît (ex. "à quelle position
-du bit-groups l'utilisateur se trompe le plus ?"), on pourra extraire en table dédiée
-à ce moment-là. Pas avant.
-
-#### Insert d'un attempt complet
-
-À chaque exercice soumis, le repository fait (dans une transaction Exposed) :
-
-1. `INSERT INTO exercise_attempts ...` → récupère `id` (= `attempt_id`)
-2. Pour chaque `Step` (position 0..N-1) :
-   - `INSERT INTO attempt_steps (attempt_id, position, step_type, correct, error_type)`
-     → récupère `step_id`
-   - `INSERT INTO attempt_step_<type> (step_id, ...)` selon `step.type`
-
-À la lecture (replay) : `JOIN` du parent avec les filles via `step_type` discriminator,
-ou multi-query selon ce qui est le plus simple à exprimer en Exposed.
-
-### Tables Spring Session JDBC
-Générées via le script officiel `schema-postgresql.sql` dans une migration Flyway.
-
----
-
-## Modules d'exercices
-
-### 1. Encoder en UTF-8 (priorité 1)
-Code point → bytes UTF-8, 5 étapes : choisir le format, écrire le binaire, découper bits
-hauts/bas, remplir le format avec marqueurs, convertir en hex.
-
-### 2. Décoder UTF-8 — bytes → code point
-### 3. Encoder en UTF-16 (avec endianness)
-### 4. Décoder UTF-16 (avec BOM)
-### 5. Encoder en UTF-32 (avec endianness)
-### 6. Décoder UTF-32 (avec BOM)
-### 7. Endianness — module dédié au BOM et à l'ordre des bytes
-### 8. Mojibake — `Ã©` → `é` + identifier les encodages
-### 9. Identifier l'encodage — séquence de bytes → encodages possibles
-
-### Difficulté graduée (par module)
-- Niveau 1 : ASCII / cas simples
-- Niveau 2 : Latin-1 / 2 bytes
-- Niveau 3 : CJK / 3 bytes
-- Niveau 4 : Emojis / 4 bytes
-- Niveau 5 : Random sur toute la plage Unicode
-
----
-
-## API REST (Spring Boot)
-
-### Auth
-- `POST /api/auth/register` — inscription
-- `POST /api/auth/login` — connexion (crée session, écrit cookie HttpOnly)
-- `POST /api/auth/logout` — invalide session
-- `POST /api/auth/forgot-password`
-- `POST /api/auth/reset-password`
-- `GET  /api/auth/me`
-
-### Exercices
-- `POST /api/exercise/generate` — génère un exercice (sans révéler la solution)
-- `POST /api/exercise/validate` — valide une tentative, met à jour la progression
-- `GET  /api/progress`
-
-### Profil
-- `PATCH  /api/profile`
-- `PATCH  /api/profile/password`
-- `DELETE /api/profile`
-
-Tous les endpoints (sauf `/api/auth/register`, `/login`, `/forgot-password`,
-`/reset-password`) nécessitent l'authentification.
-
----
-
-## Authentification
-
-### Stratégie
-Sessions Spring Security avec cookie HttpOnly, SameSite=Strict, Secure (en prod).
-Pas de JWT.
-
-### CSRF
-Activé. Spring émet un cookie `XSRF-TOKEN` (non HttpOnly, lisible par JS). Le frontend
-(via un intercepteur `$fetch` global Nuxt) lit ce cookie et le renvoie en header
-`X-XSRF-TOKEN` sur toute requête mutante (POST/PUT/PATCH/DELETE).
-
-### CORS
-Configuré pour `credentials: include`. En prod : même domaine via Caddy = pas de CORS.
-En dev : `localhost:3000` → `localhost:8080`.
-
-### Bcrypt
-Force 12 (par défaut Spring Security = 10, on monte un peu).
-
-### Reset password
-- Token random 32 bytes, hash bcrypt stocké en DB avec expiration 1h
-- Envoi par email (Mailpit en dev, vrai SMTP en prod)
-- Une fois utilisé, le token est invalidé
-
----
-
-## Internationalisation
-
-### Backend
-`MessageSource` Spring pour les emails et messages de validation. Fichiers
-`messages_fr.properties` et `messages_en.properties` dans `src/main/resources/`.
-
-### Frontend
-`@nuxtjs/i18n` avec stratégie `prefix_except_default` (FR pas de préfixe, EN sous
-`/en/...`). Namespaces / fichiers locaux : `common.json`, `auth.json`, `landing.json`,
-`exercise.json`, `modules.json`, `feedback.json` dans `i18n/locales/{fr,en}/`.
-
-### Conventions de rédaction du contenu user-facing
-
-**Tutoiement en FR.** Toujours, partout. Pas de "vous", "votre", "vos". L'app
-s'adresse à l'utilisateur comme un coach, pas comme un manuel administratif.
-Exemples : « Crée ton compte », « Saisis ton mot de passe », « Tu as déjà un
-compte ? ».
-
-**Tiret simple `-`, jamais le tiret cadratin `—`.** Dans tous les contenus
-visibles par l'utilisateur (i18n locales, textes dans les `<template>`),
-on utilise `-` (U+002D, le tiret du clavier). Le caractère `—` (U+2014, em
-dash) est interdit dans le contenu — il rompt l'homogénéité visuelle et
-introduit une variation typographique sans valeur ajoutée. Les commentaires
-de code (`//`, `/* */`, `<!-- -->`) ne sont pas du contenu user-facing et
-peuvent garder le caractère qu'on veut.
-
-### Synchronisation
-La locale courante est dans `users.locale` (DB) ou cookie `locale` (invités). Renvoyée
-dans `GET /api/auth/me`.
-
-### Hints découplés du domaine
-
-`domain/exercise/AnswerValidator` valide **un couple (Step, Answer) à la fois**, et
-renvoie un `ValidationResult` avec `errorType` + `params` :
-
-```kotlin
-data class ValidationResult(
-    val ok: Boolean,
-    val errorType: String? = null,
-    val params: Map<String, String> = emptyMap(),
-)
-
-class AnswerValidator {
-    fun validate(step: Step, answer: Answer): ValidationResult = when (step) {
-        is Step.Format         -> validateFormat(step, answer)
-        is Step.Binary         -> validateBinary(step, answer)
-        is Step.BitGroups      -> validateBitGroups(step, answer)
-        is Step.HexBytes       -> validateHexBytes(step, answer)
-        is Step.CodePointEntry -> validateCodePoint(step, answer)
-        is Step.Endianness     -> validateEndianness(step, answer)
-    }
-    // une fonction privée par type de step
-}
-```
-
-### Feedback gradué — `hintLevel` côté domaine
-
-**À implémenter en Phase 5** (TBD au moment où on câblera l'API exercice).
-Pour l'instant la landing montre juste un mock direct du feedback "niveau 3".
-
-L'idée : ne pas donner la réponse au premier échec. Le coach guide
-progressivement pour préserver la dimension pédagogique (chercher d'abord par
-soi-même, l'aide arrive si on bloque).
-
-Architecture suggérée :
-
-| Tentative | `hintLevel` | Forme du feedback |
-|---|---|---|
-| 1ère erreur | `1` | Question ouverte qui force la réflexion sans rien révéler ("Quel format UTF-8 correspond à un code point < 2048 ?") |
-| 2ème erreur | `2` | Indice conceptuel — range, format, mais pas la solution ("U+00E9 = 233 < 2048, donc format 2 octets. Le marker 2 octets ressemble à quoi ?") |
-| 3ème erreur | `3` (sur demande) | Réponse + raison ("Le marker 2 octets c'est `110xxxxx`. Sans lui, le décodeur croit que c'est de l'ASCII.") |
-
-**Niveau 3 = sur demande explicite**. Après le 3ème échec, ne pas pousser
-la réponse automatiquement : afficher un bouton "Donne-moi la réponse" qui
-révèle le niveau 3 quand l'utilisateur clique. Sinon il reste sur le hint
-niveau 2 et continue à chercher. L'utilisateur qui veut vraiment apprendre
-ne se fait pas spoiler ; celui qui est bloqué peut débloquer quand il veut.
-
-Modélisation côté domaine :
-
-```kotlin
-data class ValidationResult(
-    val ok: Boolean,
-    val errorType: String? = null,
-    val params: Map<String, String> = emptyMap(),
-    val hintLevel: Int? = null,   // 1, 2 ou 3 — null quand ok = true
-)
-```
-
-Le compteur de tentatives par step vit côté back (dans la session ou dans
-`attempt_steps` selon le besoin de persistence). Le front choisit la clé
-i18n à afficher en fonction du `hintLevel` reçu :
-`feedback.{errorType}.level{hintLevel}`. Le niveau 3 n'est envoyé que si
-le front l'a demandé explicitement via le payload de validation.
-
-Cohérent avec la convention `errorType` stable côté domaine : on ajoute
-une dimension de progression, pas une explosion de codes d'erreur.
-
-### Anti-cheat — `ValidationResult` ne porte pas la valeur attendue
-
-**Choix tranché le 2026-05-20** : `ValidationResult` n'a **PAS** de champ `expected`,
-et ses `params` ne contiennent **jamais** la valeur canonique attendue lors d'un
-échec. Sinon, l'utilisateur ouvre l'onglet réseau de devtools, lit la réponse HTTP
-de `/api/exercise/validate`, et obtient la solution.
-
-Concrètement :
-
-- `params` peuvent contenir des **hints structurels** : longueur attendue
-  (`expected-length`), nombre de bytes/groupes attendus (`expected-count`),
-  position d'une erreur (`position`), bornes Unicode (`min`/`max`), liste de
-  choix d'un format (`choices` — déjà publique côté UI).
-- `params` peuvent contenir le **`got`** (la valeur saisie par l'utilisateur) —
-  c'est sa propre saisie, ce n'est pas une révélation.
-- `params` ne contiennent **JAMAIS** :
-  - les bits attendus pour un `Binary.wrong-value`
-  - les bytes attendus pour un `HexBytes.wrong-value`
-  - les groupes attendus pour un `BitGroups.wrong-value`
-  - la valeur attendue pour un `CodePoint.wrong-value`
-  - le bon choix pour un `Format.wrong-choice` ou `Endianness.wrong-choice`
-
-Cas particulier : pour `Endianness` (2 choix possibles), même renvoyer le `got` de
-l'utilisateur révèle la réponse par déduction. On renvoie donc juste l'`errorType`
-sans aucun `params` quand le choix est faux.
-
-La valeur attendue reste exclusivement **côté serveur** : elle vit dans le `Step`
-au moment de la validation, et est persistée dans `attempt_step_<type>.expected`
-pour le replay / l'audit. Elle ne traverse jamais le réseau dans une réponse
-d'erreur.
-
-### Anti-cheat — `Step.expected` à stripper au HTTP layer
-
-**Note pour la Phase 4 (HTTP layer)** : `Step.*` carries `expected` server-side
-(le validator en a besoin pour comparer à la réponse de l'utilisateur). Mais ce
-champ ne doit **JAMAIS** apparaître dans la réponse JSON envoyée au front quand
-le serveur retourne l'exercice initial via `POST /api/exercise/generate`.
-
-Sinon : l'utilisateur ouvre devtools, lit `step.expected` dans la réponse, et a
-la solution avant de répondre.
-
-**Solution prévue** : custom Jackson `ValueSerializer<Step>` (sealed class → un serializer
-qui dispatche sur le sous-type, ou un par sous-type) dans
-`infrastructure/http/exercise/serde/` (per-feature, à côté des controllers exercise).
-Le ou les serializers sont enregistrés via `@Bean exerciseJacksonModule()` dans
-`ExerciseConfig`. Chaque serializer écrit uniquement les champs nécessaires au front
-pour rendre l'input widget — et **omet `expected`**.
-
-| `Step` sous-type | Champs gardés dans le JSON sortant |
-|---|---|
-| `Step.Binary` | `type`, `length` (pour rendre N input boxes) |
-| `Step.Format` | `type`, `choices` (pour rendre les radio buttons) |
-| `Step.HexBytes` | `type`, `byteCount = expected.size` (pour rendre N hex boxes) |
-| `Step.BitGroups` | `type`, `groupLengths = expected.map { it.length }` (sizes des groupes) |
-| `Step.CodePointEntry` | `type` (rien d'autre nécessaire) |
-| `Step.Endianness` | `type` (les 2 valeurs sont connues du front) |
-
-**Defense in depth — la DB est la vraie source de vérité** : même si le serializer
-leakait `expected` par bug, la validation côté serveur reste sûre parce qu'elle
-lit `expected` depuis Postgres (`attempt_step_<type>.expected` row chargée via
-`attemptId`), **pas** depuis ce que l'utilisateur envoie. L'attaquant ne peut pas
-manipuler la valeur attendue.
-
-Flow complet :
-1. `POST /api/exercise/generate` → server génère, persiste l'attempt + ses steps
-   en DB avec `expected`, retourne l'exercise **sans** `expected`
-2. `POST /api/exercise/validate { attemptId, stepIndex, answer }` → server load
-   `attempt_step_<type>` row depuis DB, lit `expected`, compare à `answer`
-3. Réponse `ValidationResult` (déjà sans `expected` par construction)
-
-### Exceptions techniques vs `errorType` i18n
-
-Deux chemins d'erreur distincts, à ne pas confondre :
-
-| Type d'erreur | Mécanisme | Audience | Traduit ? |
-|---|---|---|---|
-| **Invariant de domaine violé** (`init { require(...) }`, `error()`, `IllegalArgumentException`, `IllegalStateException`) | exception qui bubble up jusqu'au global handler → HTTP 500 + log | **Dev** qui debug une stack trace | ❌ Non — message technique en anglais |
-| **Validation business échouée** (réponse utilisateur incorrecte) | `ValidationResult.errorType` → HTTP 200 + body JSON | **End user** via le front | ✅ Oui — clé i18n traduite |
-
-Exemples concrets :
-
-```kotlin
-// Invariant — un Step.Binary mal construit (bug de générateur ou de mapper DB).
-// L'utilisateur ne voit JAMAIS ce message. Dev seul.
-init {
-    require(length > 0) { "Binary step length must be positive, got $length" }
-}
-
-// Validation — la réponse de l'user est mauvaise. L'user voit le message traduit.
-return ValidationResult.incorrect(
-    errorType = ErrorType.Binary.WRONG_VALUE,
-    params = mapOf(ParamKey.GOT to answer.bits),
-)
-```
-
-Règle : si un code path peut produire l'erreur uniquement à cause d'un **bug dans le
-code**, c'est une exception technique anglais. Si l'erreur peut être produite par
-une **action légitime de l'user** (saisir une mauvaise valeur), c'est un
-`errorType` traduit.
-
-### Identifiants stables — `ErrorType` et `ParamKey`, co-localisés avec leur producteur
-
-**Choix tranché le 2026-05-20** : les identifiants stables qui voyagent vers le
-front (noms d'événements métier consommés comme clés i18n, noms de variables
-d'interpolation) sont déclarés comme `const val` dans des `object` situés **dans
-le package du feature qui les produit**, et non dans un package transverse `i18n/`.
-
-Pour l'instant : `domain/exercise/ErrorType.kt`, `domain/exercise/ParamKey.kt`, et
-`domain/exercise/FormatChoice.kt` (identifiants des choix d'un `Step.Format`, ex.
-`format-choice.byte-count.2` pour "2 bytes"). Quand `domain/auth/` produira ses
-propres événements d'erreur, il aura son propre `ErrorType.kt` dans son package.
-Cohérent avec l'archi feature-first.
-
-**Distinction importante** : ces constantes ne sont **pas** des traductions. Les
-traductions ("Vous avez écrit la mauvaise valeur") vivent uniquement côté front,
-dans `i18n/locales/{fr,en}/feedback.json`. Les constantes Kotlin sont des
-**identifiants stables d'événements métier** qui se trouvent être consommés
-comme clés de translation par le front.
-
-**Aucun string literal** au call site dans le code de production ni dans les tests :
-
-```kotlin
-// Mauvais (typo silencieux possible) :
-errorType = "binary.wrong-value"
-params = mapOf("expected-length" to "8")
-
-// Bon (typo = compile error) :
-errorType = ErrorType.Binary.WRONG_VALUE
-params = mapOf(ParamKey.EXPECTED_LENGTH to "8")
-```
-
-Bénéfices :
-- IDE autocomplete + "Rename" qui propage partout (validator, tests, futurs HTTP serializers)
-- Les `ErrorType.kt` / `ParamKey.kt` de chaque feature documentent l'API stable
-  produite par ce feature
-- Pas de Jackson custom à écrire — `const val String` se sérialise nativement comme une string
-- Les tests assertent sur les **mêmes** constantes que celles produites par le validator,
-  donc renommer une clé met à jour les deux côtés en une opération
-
-Convention de nommage : suffixe **`Type`** pour les catégories d'identifiants
-(ErrorType, HintType, MessageType, ...). Pour les noms d'interpolation, c'est
-**`ParamKey`** (sans suffixe Type, parce que ce ne sont pas des "types de
-messages" mais des variables).
-
-Le validator est **agnostic de l'exercice** (encoding, code point, niveau).
-Il ne sait que valider un step isolé. La composition d'un exercice (quels steps,
-dans quel ordre) est la responsabilité de `ExerciseGenerator` selon le niveau
-demandé.
-
-Conventions de nommage des `errorType` :
-- préfixe = nom du step (`binary.`, `hex-bytes.`, `format.`, ...)
-- suffixe = nature de l'erreur (`wrong-value`, `too-few-bits`, `invalid-character`, ...)
-- exemples : `binary.wrong-value`, `binary.too-few-bits`, `hex-bytes.wrong-byte-count`,
-  `format.unknown-choice`
-
-Le frontend traduit `errorType` via `@nuxtjs/i18n` (`$t(errorType, params)`) avec
-interpolation des `params`. Les fichiers de traduction sont organisés par namespace
-(`feedback.json` typiquement) avec les clés en dot-notation matchant les `errorType`.
-
----
+- `exercise_attempts` (token, module_id, level, code_point, encoding, correct,
+  finalized, duration_ms) + index `(token, module_id)`
+- `attempt_steps` (attempt_id, position, step_type, correct, error_type, attempts,
+  revealed) + UNIQUE(attempt_id, position)
+- 8 tables filles table-per-type : `attempt_step_format`, `_binary`, `_bit_groups`,
+  `_hex_bytes`, `_code_point`, `_useful_bit_count`, `_offset`, `_endianness` —
+  chacune porte `expected` et `user_answer`
+- `module_progress` (token, module_id, level, streak, attempts, errors,
+  last_played_at) + UNIQUE(token, module_id)
+
+Conventions DB :
+- **Pas de CHECK constraints sur les valeurs énumérées** (l'app est le seul writer, les
+  enums Elixir sont la source de vérité). Les FK restent (`PRAGMA foreign_keys=ON`,
+  activé par `ecto_sqlite3`).
+- Les séquences de bits/bytes sont des champs Ecto `{:array, :string}` /
+  `{:array, :integer}`, stockés en JSON text par `ecto_sqlite3`. Le domaine ne query
+  jamais ces séquences par position (toujours lues en bloc par le validator).
+- Timestamps UTC. Migrations générées par `mix ecto.gen.migration`, appliquées au boot
+  par l'`Ecto.Migrator` de l'arbre de supervision.
+
+### Réglages SQLite
+
+- **Mode WAL** (défaut `ecto_sqlite3`) : lecteurs et writer ne se bloquent pas.
+- `busy_timeout` raisonnable pour absorber la contention single-writer.
+- Le fichier DB vit dans un répertoire dédié monté en volume Docker (`/data/charset.db`),
+  configuré via `DATABASE_PATH` dans `config/runtime.exs`.
+
+## i18n
+
+- **Gettext**, **EN locale par défaut** (msgids = texte anglais), FR sous le préfixe
+  `/fr/...`. Plug `AppWeb.Plugs.Locale` (HTTP) + hook `AppWeb.LocaleHook` (websocket),
+  scopes router dupliqués `/` et `/fr`, helper `localized_path/2`.
+- Trois catalogues : `default.po` (extrait du code), `labels.po` (mnémoniques Unicode,
+  liste fermée maintenue à la main, lookup dynamique) et `feedback.po` (hints
+  d'exercice, clé = `error_type` stable, liste fermée).
+- Les `error_type` produits par le domaine (`binary.wrong-value`, etc.) sont des
+  **identifiants stables** déclarés comme constantes dans `error_type.ex` — jamais de
+  string literal au call site (ni en prod ni en test).
+- **Mini-markup InlineDesc** dans les catalogues : `` `code` `` → `<code>`,
+  `[texte^titre]` → `<abbr title>`, `\n` → `<br>`. Rendu par
+  `SandboxComponents.inline_desc/1` avec échappement **par token**. Ne pas remplacer
+  par du HTML littéral dans les .po : on perdrait l'échappement et les phrases
+  complètes traduisibles (décision du 2026-06-05).
+
+### Conventions de contenu user-facing (NON négociables)
+
+- **Tutoiement en FR**, toujours.
+- **Tiret simple `-`, jamais d'em dash `—`** dans tout contenu visible par
+  l'utilisateur (templates HEEx, fichiers gettext). Les commentaires de code ne sont
+  pas concernés.
+- **Les commentaires de code sont en anglais**, même si la doc projet est en français.
+
+## Design / front
+
+- Le design vit dans `assets/css/app.css` (tokens light/dark via `.dark`, composants
+  `.bit`, `.btn`, `.surface`, etc.) et les composants HEEx. `bit-sm` est réservé au
+  sandbox (cellules resserrées) ; l'exercice utilise les cellules pleine taille.
+- Composants maison (pas de lib UI) : menus header (`assets/js/menu.js`), toggles
+  theme/locale, widgets d'exercice à cellules (`assets/js/exercise_hooks.js` :
+  BitCells, HexCells, FilteredInput - auto-avance, flèches, ↑/↓ = 1/0).
+- Sandbox : feedback à la frappe via `phx-change` + debounce, état dans l'URL
+  (`push_patch` + `replace: true`, liens partageables).
+- Exercice : conteneurs de saisie en `phx-update="ignore"` (la frappe survit aux
+  patches), ids remontés par attempt+step pour forcer le remount au changement.
+- Meta OG/Twitter + image sociale en place ; dark/light theme et locale toggle.
+
+## Assets — Vite + Tailwind v4
+
+- `package.json` à la racine avec `vite`, `tailwindcss` 4.x, `@tailwindcss/vite`.
+- Tailwind v4 : config par CSS (`@theme` dans `assets/css/app.css`), pas de
+  `tailwind.config.js`.
+- Dev : watcher Vite déclaré dans `config/dev.exs`, HMR.
+- Prod : Vite émet dans `priv/static/assets/`, puis `mix phx.digest`.
+- **Le build Vite dépend d'un projet mix compilé** : les aliases résolvent les clients
+  JS Phoenix depuis `deps/` et les colocated hooks depuis
+  `_build/${MIX_ENV}/phoenix-colocated/`. D'où le builder Docker unique (voir Docker).
+
+## Docker
+
+- **Builder unique Elixir + Node** (apk) — pas de stage assets séparé style tracker-tv,
+  car Vite a besoin de `mix compile` au préalable (voir Assets). Ordre :
+  `deps.get` → `deps.compile` → `npm ci` → `mix compile` → `npm run build` →
+  `phx.digest` → `mix release`. Le layer `npm ci` est placé avant le COPY du code pour
+  rester en cache.
+- Node du builder = celui d'apk (≈ v22), pas le `.nvmrc` (26) : divergence connue et
+  acceptée, la sortie Vite est identique.
+- **Runtime** : Alpine nu + `libstdc++ openssl ncurses-libs ca-certificates`, user
+  non-root, `ENV LANG=C.UTF-8`, volume `/data`, `EXPOSE 4000`, `CMD ["bin/app", "start"]`.
+- Migrations au boot (Ecto.Migrator), pas de commande de release à orchestrer.
+- Runtime config via env vars (`config/runtime.exs`) : `DATABASE_PATH`,
+  `SECRET_KEY_BASE`, `PHX_HOST`, `PORT`. `PHX_SERVER=true` est posé dans l'image.
+- `compose.prod.yml` : un service app + volume `appdata:/data`, pas de service DB.
+  Caddy reste le reverse proxy sur l'hôte.
+- **Pas de backup automatisé** (décision 2026-06-06) : la DB ne contient que la
+  progression anonyme, l'enjeu ne justifie pas l'infra. Si ça change, Litestream
+  (réplication continue du WAL, supervision `litestream replicate -exec`) est le
+  candidat naturel - il a existé dans l'image jusqu'à la PR #71, voir l'historique.
+- CI image : `.github/workflows/docker.yml` — push ghcr (`latest` + `sha-<short>` +
+  semver sur tags `v*`) depuis `main` uniquement.
 
 ## Tests
 
-### Tests unitaires domain (Kotest + MockK)
+- **ExUnit** partout, ~560 tests. Doctests bienvenus sur le codec.
+- Couverture minimale à maintenir :
+  - `Charset.Encoding.Codec` : tous les cas frontières — U+007F, U+0080, U+07FF,
+    U+0800, U+FFFF, U+10000, U+10FFFF, surrogates — pour encode ET decode, chaque
+    encoding, chaque endianness. Sweeps exhaustifs contre les encodeurs natifs BEAM
+    comme oracle.
+  - `AnswerValidator` : chaque `error_type` produit avec les bons `params`.
+  - Contexts Ecto : upsert, find, contraintes uniques (via la DB de test, pas de mocks).
+  - LiveViews : flows sandbox et exercice complets, incluant « `expected` n'apparaît
+    jamais dans le HTML rendu ».
+- Sandbox DB : `Ecto.Adapters.SQL.Sandbox` sur SQLite. Contrainte single-writer : les
+  tests qui touchent la DB restent en `async: false` ; les tests du domaine pur (la
+  grande majorité) restent async.
 
-```kotlin
-class ProgressServiceTest : FunSpec({
-    val repo = mockk<ProgressRepository>()
-    val clock = mockk<Clock>()
-    val service = ProgressService(repo, clock)
+## Commandes
 
-    test("records first attempt as success") {
-        every { clock.now() } returns Instant.parse("2026-01-01T00:00:00Z")
-        every { repo.findByUserAndModule(1, "utf8-encode") } returns null
-        every { repo.upsert(any()) } answers { firstArg() }
-
-        val result = service.recordAttempt(1, "utf8-encode", correct = true)
-
-        result.attempts shouldBe 1
-        result.errors shouldBe 0
-        result.streak shouldBe 1
-    }
-})
+```bash
+mix setup            # deps + DB + npm install
+mix phx.server       # dev server (lance le watcher Vite)
+mix test             # tests
+mix precommit        # alias : compile --warnings-as-errors + format --check + test
+npm run build        # build Vite de prod
+docker build .       # image complète (builder Elixir+Node, runtime Alpine)
 ```
 
-### Tests d'intégration ciblés (Testcontainers)
+---
 
-JUnit 5 direct (pas Kotest spec — pour rester compatible avec les extensions Spring/Testcontainers).
-Tu peux n'importer que les configs nécessaires pour gagner en vitesse :
+# Guidelines Phoenix/Elixir (générées par phx.new)
 
-```kotlin
-@SpringBootTest(
-    classes = [DatabaseConfig::class, UserConfig::class, ApplicationConfigTest::class],
-)
-@ImportAutoConfiguration(FlywayAutoConfiguration::class)
-@Testcontainers
-class ExposedUserRepositoryTest(
-    private val userRepository: UserRepository,
-) {
-    companion object {
-        @Container
-        @JvmStatic
-        val postgres: PostgreSQLContainer = PostgreSQLContainer("postgres:18-alpine")
+This is a web application written using the Phoenix web framework.
 
-        @JvmStatic
-        @DynamicPropertySource
-        @Suppress("unused")
-        fun dataSourceProperties(registry: DynamicPropertyRegistry) {
-            registry.add("app.datasource.url") { postgres.jdbcUrl }
-            registry.add("app.datasource.username") { postgres.username }
-            registry.add("app.datasource.password") { postgres.password }
-            registry.add("app.datasource.driver-class-name") { postgres.driverClassName }
+## Project guidelines
+
+- Use `mix precommit` alias when you are done with all changes and fix any pending issues
+- Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
+
+### Phoenix v1.8 guidelines
+
+- **Always** begin your LiveView templates with `<Layouts.app flash={@flash} ...>` which wraps all inner content
+- The `MyAppWeb.Layouts` module is aliased in the `my_app_web.ex` file, so you can use it without needing to alias it again
+- Anytime you run into errors with no `current_scope` assign:
+  - You failed to follow the Authenticated Routes guidelines, or you failed to pass `current_scope` to `<Layouts.app>`
+  - **Always** fix the `current_scope` error by moving your routes to the proper `live_session` and ensure you pass `current_scope` as needed
+- Phoenix v1.8 moved the `<.flash_group>` component to the `Layouts` module. You are **forbidden** from calling `<.flash_group>` outside of the `layouts.ex` module
+- Out of the box, `core_components.ex` imports an `<.icon name="hero-x-mark" class="w-5 h-5"/>` component for hero icons. **Always** use the `<.icon>` component for icons, **never** use `Heroicons` modules or similar
+- **Always** use the imported `<.input>` component for form inputs from `core_components.ex` when available. `<.input>` is imported and using it will save steps and prevent errors
+- If you override the default input classes (`<.input class="myclass px-2 py-1 rounded-lg">)`) class with your own values, no default classes are inherited, so your
+custom classes must fully style the input
+
+### JS and CSS guidelines
+
+- **Use Tailwind CSS classes and custom CSS rules** to create polished, responsive, and visually stunning interfaces.
+- Tailwindcss v4 **no longer needs a tailwind.config.js** and uses a new import syntax in `app.css`:
+
+      @import "tailwindcss" source(none);
+      @source "../css";
+      @source "../js";
+      @source "../../lib/my_app_web";
+
+- **Always use and maintain this import syntax** in the app.css file for projects generated with `phx.new`
+- **Never** use `@apply` when writing raw css
+- **Always** manually write your own tailwind-based components instead of using daisyUI for a unique, world-class design
+- Out of the box **only the app.js and app.css bundles are supported**
+  - You cannot reference an external vendor'd script `src` or link `href` in the layouts
+  - You must import the vendor deps into app.js and app.css to use them
+  - **Never write inline <script>custom js</script> tags within templates**
+
+### UI/UX & design guidelines
+
+- **Produce world-class UI designs** with a focus on usability, aesthetics, and modern design principles
+- Implement **subtle micro-interactions** (e.g., button hover effects, and smooth transitions)
+- Ensure **clean typography, spacing, and layout balance** for a refined, premium look
+- Focus on **delightful details** like hover effects, loading states, and smooth page transitions
+
+
+<!-- usage-rules-start -->
+
+<!-- phoenix:elixir-start -->
+## Elixir guidelines
+
+- Elixir lists **do not support index based access via the access syntax**
+
+  **Never do this (invalid)**:
+
+      i = 0
+      mylist = ["blue", "green"]
+      mylist[i]
+
+  Instead, **always** use `Enum.at`, pattern matching, or `List` for index based list access, ie:
+
+      i = 0
+      mylist = ["blue", "green"]
+      Enum.at(mylist, i)
+
+- Elixir variables are immutable, but can be rebound, so for block expressions like `if`, `case`, `cond`, etc
+  you *must* bind the result of the expression to a variable if you want to use it and you CANNOT rebind the result inside the expression, ie:
+
+      # INVALID: we are rebinding inside the `if` and the result never gets assigned
+      if connected?(socket) do
+        socket = assign(socket, :val, val)
+      end
+
+      # VALID: we rebind the result of the `if` to a new variable
+      socket =
+        if connected?(socket) do
+          assign(socket, :val, val)
+        end
+
+- **Never** nest multiple modules in the same file as it can cause cyclic dependencies and compilation errors
+- **Never** use map access syntax (`changeset[:field]`) on structs as they do not implement the Access behaviour by default. For regular structs, you **must** access the fields directly, such as `my_struct.field` or use higher level APIs that are available on the struct if they exist, `Ecto.Changeset.get_field/2` for changesets
+- Elixir's standard library has everything necessary for date and time manipulation. Familiarize yourself with the common `Time`, `Date`, `DateTime`, and `Calendar` interfaces by accessing their documentation as necessary. **Never** install additional dependencies unless asked or for date/time parsing (which you can use the `date_time_parser` package)
+- Don't use `String.to_atom/1` on user input (memory leak risk)
+- Predicate function names should not start with `is_` and should end in a question mark. Names like `is_thing` should be reserved for guards
+- Elixir's builtin OTP primitives like `DynamicSupervisor` and `Registry`, require names in the child spec, such as `{DynamicSupervisor, name: MyApp.MyDynamicSup}`, then you can use `DynamicSupervisor.start_child(MyApp.MyDynamicSup, child_spec)`
+- Use `Task.async_stream(collection, callback, options)` for concurrent enumeration with back-pressure. The majority of times you will want to pass `timeout: :infinity` as option
+
+## Mix guidelines
+
+- Read the docs and options before using tasks (by using `mix help task_name`)
+- To debug test failures, run tests in a specific file with `mix test test/my_test.exs` or run all previously failed tests with `mix test --failed`
+- `mix deps.clean --all` is **almost never needed**. **Avoid** using it unless you have good reason
+
+## Test guidelines
+
+- **Always use `start_supervised!/1`** to start processes in tests as it guarantees cleanup between tests
+- **Avoid** `Process.sleep/1` and `Process.alive?/1` in tests
+  - Instead of sleeping to wait for a process to finish, **always** use `Process.monitor/1` and assert on the DOWN message:
+
+      ref = Process.monitor(pid)
+      assert_receive {:DOWN, ^ref, :process, ^pid, :normal}
+
+   - Instead of sleeping to synchronize before the next call, **always** use `_ = :sys.get_state/1` to ensure the process has handled prior messages
+<!-- phoenix:elixir-end -->
+
+<!-- phoenix:phoenix-start -->
+## Phoenix guidelines
+
+- Remember Phoenix router `scope` blocks include an optional alias which is prefixed for all routes within the scope. **Always** be mindful of this when creating routes within a scope to avoid duplicate module prefixes.
+
+- You **never** need to create your own `alias` for route definitions! The `scope` provides the alias, ie:
+
+      scope "/admin", AppWeb.Admin do
+        pipe_through :browser
+
+        live "/users", UserLive, :index
+      end
+
+  the UserLive route would point to the `AppWeb.Admin.UserLive` module
+
+- `Phoenix.View` no longer is needed or included with Phoenix, don't use it
+<!-- phoenix:phoenix-end -->
+
+<!-- phoenix:ecto-start -->
+## Ecto Guidelines
+
+- **Always** preload Ecto associations in queries when they'll be accessed in templates, ie a message that needs to reference the `message.user.email`
+- Remember `import Ecto.Query` and other supporting modules when you write `seeds.exs`
+- `Ecto.Schema` fields always use the `:string` type, even for `:text`, columns, ie: `field :name, :string`
+- `Ecto.Changeset.validate_number/2` **DOES NOT SUPPORT the `:allow_nil` option**. By default, Ecto validations only run if a change for the given field exists and the change value is not nil, so such as option is never needed
+- You **must** use `Ecto.Changeset.get_field(changeset, :field)` to access changeset fields
+- Fields which are set programmatically, such as `user_id`, must not be listed in `cast` calls or similar for security purposes. Instead they must be explicitly set when creating the struct
+- **Always** invoke `mix ecto.gen.migration migration_name_using_underscores` when generating migration files, so the correct timestamp and conventions are applied
+<!-- phoenix:ecto-end -->
+
+<!-- phoenix:html-start -->
+## Phoenix HTML guidelines
+
+- Phoenix templates **always** use `~H` or .html.heex files (known as HEEx), **never** use `~E`
+- **Always** use the imported `Phoenix.Component.form/1` and `Phoenix.Component.inputs_for/1` function to build forms. **Never** use `Phoenix.HTML.form_for` or `Phoenix.HTML.inputs_for` as they are outdated
+- When building forms **always** use the already imported `Phoenix.Component.to_form/2` (`assign(socket, form: to_form(...))` and `<.form for={@form} id="msg-form">`), then access those forms in the template via `@form[:field]`
+- **Always** add unique DOM IDs to key elements (like forms, buttons, etc) when writing templates, these IDs can later be used in tests (`<.form for={@form} id="product-form">`)
+- For "app wide" template imports, you can import/alias into the `my_app_web.ex`'s `html_helpers` block, so they will be available to all LiveViews, LiveComponent's, and all modules that do `use MyAppWeb, :html` (replace "my_app" by the actual app name)
+
+- Elixir supports `if/else` but **does NOT support `if/else if` or `if/elsif`**. **Never use `else if` or `elseif` in Elixir**, **always** use `cond` or `case` for multiple conditionals.
+
+  **Never do this (invalid)**:
+
+      <%= if condition do %>
+        ...
+      <% else if other_condition %>
+        ...
+      <% end %>
+
+  Instead **always** do this:
+
+      <%= cond do %>
+        <% condition -> %>
+          ...
+        <% condition2 -> %>
+          ...
+        <% true -> %>
+          ...
+      <% end %>
+
+- HEEx require special tag annotation if you want to insert literal curly's like `{` or `}`. If you want to show a textual code snippet on the page in a `<pre>` or `<code>` block you *must* annotate the parent tag with `phx-no-curly-interpolation`:
+
+      <code phx-no-curly-interpolation>
+        let obj = {key: "val"}
+      </code>
+
+  Within `phx-no-curly-interpolation` annotated tags, you can use `{` and `}` without escaping them, and dynamic Elixir expressions can still be used with `<%= ... %>` syntax
+
+- HEEx class attrs support lists, but you must **always** use list `[...]` syntax. You can use the class list syntax to conditionally add classes, **always do this for multiple class values**:
+
+      <a class={[
+        "px-2 text-white",
+        @some_flag && "py-5",
+        if(@other_condition, do: "border-red-500", else: "border-blue-100"),
+        ...
+      ]}>Text</a>
+
+  and **always** wrap `if`'s inside `{...}` expressions with parens, like done above (`if(@other_condition, do: "...", else: "...")`)
+
+  and **never** do this, since it's invalid (note the missing `[` and `]`):
+
+      <a class={
+        "px-2 text-white",
+        @some_flag && "py-5"
+      }> ...
+      => Raises compile syntax error on invalid HEEx attr syntax
+
+- **Never** use `<% Enum.each %>` or non-for comprehensions for generating template content, instead **always** use `<%= for item <- @collection do %>`
+- HEEx HTML comments use `<%!-- comment --%>`. **Always** use the HEEx HTML comment syntax for template comments (`<%!-- comment --%>`)
+- HEEx allows interpolation via `{...}` and `<%= ... %>`, but the `<%= %>` **only** works within tag bodies. **Always** use the `{...}` syntax for interpolation within tag attributes, and for interpolation of values within tag bodies. **Always** interpolate block constructs (if, cond, case, for) within tag bodies using `<%= ... %>`.
+
+  **Always** do this:
+
+      <div id={@id}>
+        {@my_assign}
+        <%= if @some_block_condition do %>
+          {@another_assign}
+        <% end %>
+      </div>
+
+  and **Never** do this – the program will terminate with a syntax error:
+
+      <%!-- THIS IS INVALID NEVER EVER DO THIS --%>
+      <div id="<%= @invalid_interpolation %>">
+        {if @invalid_block_construct do}
+        {end}
+      </div>
+<!-- phoenix:html-end -->
+
+<!-- phoenix:liveview-start -->
+## Phoenix LiveView guidelines
+
+- **Never** use the deprecated `live_redirect` and `live_patch` functions, instead **always** use the `<.link navigate={href}>` and  `<.link patch={href}>` in templates, and `push_navigate` and `push_patch` functions LiveViews
+- **Avoid LiveComponent's** unless you have a strong, specific need for them
+- LiveViews should be named like `AppWeb.WeatherLive`, with a `Live` suffix. When you go to add LiveView routes to the router, the default `:browser` scope is **already aliased** with the `AppWeb` module, so you can just do `live "/weather", WeatherLive`
+
+### LiveView streams
+
+- **Always** use LiveView streams for collections for assigning regular lists to avoid memory ballooning and runtime termination with the following operations:
+  - basic append of N items - `stream(socket, :messages, [new_msg])`
+  - resetting stream with new items - `stream(socket, :messages, [new_msg], reset: true)` (e.g. for filtering items)
+  - prepend to stream - `stream(socket, :messages, [new_msg], at: -1)`
+  - deleting items - `stream_delete(socket, :messages, msg)`
+
+- When using the `stream/3` interfaces in the LiveView, the LiveView template must 1) always set `phx-update="stream"` on the parent element, with a DOM id on the parent element like `id="messages"` and 2) consume the `@streams.stream_name` collection and use the id as the DOM id for each child. For a call like `stream(socket, :messages, [new_msg])` in the LiveView, the template would be:
+
+      <div id="messages" phx-update="stream">
+        <div :for={{id, msg} <- @streams.messages} id={id}>
+          {msg.text}
+        </div>
+      </div>
+
+- LiveView streams are *not* enumerable, so you cannot use `Enum.filter/2` or `Enum.reject/2` on them. Instead, if you want to filter, prune, or refresh a list of items on the UI, you **must refetch the data and re-stream the entire stream collection, passing reset: true**:
+
+      def handle_event("filter", %{"filter" => filter}, socket) do
+        # re-fetch the messages based on the filter
+        messages = list_messages(filter)
+
+        {:noreply,
+         socket
+         |> assign(:messages_empty?, messages == [])
+         # reset the stream with the new messages
+         |> stream(:messages, messages, reset: true)}
+      end
+
+- LiveView streams *do not support counting or empty states*. If you need to display a count, you must track it using a separate assign. For empty states, you can use Tailwind classes:
+
+      <div id="tasks" phx-update="stream">
+        <div class="hidden only:block">No tasks yet</div>
+        <div :for={{id, task} <- @streams.tasks} id={id}>
+          {task.name}
+        </div>
+      </div>
+
+  The above only works if the empty state is the only HTML block alongside the stream for-comprehension.
+
+- When updating an assign that should change content inside any streamed item(s), you MUST re-stream the items
+  along with the updated assign:
+
+      def handle_event("edit_message", %{"message_id" => message_id}, socket) do
+        message = Chat.get_message!(message_id)
+        edit_form = to_form(Chat.change_message(message, %{content: message.content}))
+
+        # re-insert message so @editing_message_id toggle logic takes effect for that stream item
+        {:noreply,
+         socket
+         |> stream_insert(:messages, message)
+         |> assign(:editing_message_id, String.to_integer(message_id))
+         |> assign(:edit_form, edit_form)}
+      end
+
+  And in the template:
+
+      <div id="messages" phx-update="stream">
+        <div :for={{id, message} <- @streams.messages} id={id} class="flex group">
+          {message.username}
+          <%= if @editing_message_id == message.id do %>
+            <%!-- Edit mode --%>
+            <.form for={@edit_form} id="edit-form-#{message.id}" phx-submit="save_edit">
+              ...
+            </.form>
+          <% end %>
+        </div>
+      </div>
+
+- **Never** use the deprecated `phx-update="append"` or `phx-update="prepend"` for collections
+
+### LiveView JavaScript interop
+
+- Remember anytime you use `phx-hook="MyHook"` and that JS hook manages its own DOM, you **must** also set the `phx-update="ignore"` attribute
+- **Always** provide an unique DOM id alongside `phx-hook` otherwise a compiler error will be raised
+
+LiveView hooks come in two flavors, 1) colocated js hooks for "inline" scripts defined inside HEEx,
+and 2) external `phx-hook` annotations where JavaScript object literals are defined and passed to the `LiveSocket` constructor.
+
+#### Inline colocated js hooks
+
+**Never** write raw embedded `<script>` tags in heex as they are incompatible with LiveView.
+Instead, **always use a colocated js hook script tag (`:type={Phoenix.LiveView.ColocatedHook}`)
+when writing scripts inside the template**:
+
+    <input type="text" name="user[phone_number]" id="user-phone-number" phx-hook=".PhoneNumber" />
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".PhoneNumber">
+      export default {
+        mounted() {
+          this.el.addEventListener("input", e => {
+            let match = this.el.value.replace(/\D/g, "").match(/^(\d{3})(\d{3})(\d{4})$/)
+            if(match) {
+              this.el.value = `${match[1]}-${match[2]}-${match[3]}`
+            }
+          })
         }
+      }
+    </script>
+
+- colocated hooks are automatically integrated into the app.js bundle
+- colocated hooks names **MUST ALWAYS** start with a `.` prefix, i.e. `.PhoneNumber`
+
+#### External phx-hook
+
+External JS hooks (`<div id="myhook" phx-hook="MyHook">`) must be placed in `assets/js/` and passed to the
+LiveSocket constructor:
+
+    const MyHook = {
+      mounted() { ... }
+    }
+    let liveSocket = new LiveSocket("/live", Socket, {
+      hooks: { MyHook }
+    });
+
+#### Pushing events between client and server
+
+Use LiveView's `push_event/3` when you need to push events/data to the client for a phx-hook to handle.
+**Always** return or rebind the socket on `push_event/3` when pushing events:
+
+    # re-bind socket so we maintain event state to be pushed
+    socket = push_event(socket, "my_event", %{...})
+
+    # or return the modified socket directly:
+    def handle_event("some_event", _, socket) do
+      {:noreply, push_event(socket, "my_event", %{...})}
+    end
+
+Pushed events can then be picked up in a JS hook with `this.handleEvent`:
+
+    mounted() {
+      this.handleEvent("my_event", data => console.log("from server:", data));
     }
 
-    @Test
-    fun `create persists and returns the generated id`() { ... }
-}
-```
+Clients can also push an event to the server and receive a reply with `this.pushEvent`:
 
-Points-clés :
+    mounted() {
+      this.el.addEventListener("click", e => {
+        this.pushEvent("my_event", { one: 1 }, reply => console.log("got reply from server:", reply));
+      })
+    }
 
-- `ApplicationConfigTest` (en `src/intTest/.../config/`) override `@Bean clock` avec une
-  `Instant` fixe pour rendre les timestamps déterministes
-- `spring.main.allow-bean-definition-overriding=true` dans `src/intTest/resources/application.yaml`
-  pour autoriser cet override
-- Les controller tests utilisent `@SpringBootTest` + `@AutoConfigureMockMvc` + `@Import(ApplicationConfigTest::class)`
-- `flyway-database-postgresql` est requis en `runtimeOnly` (Flyway 11.x a sorti le support
-  Postgres de son module core)
+Where the server handled it via:
 
-### Tests de serializers (purs, sans Spring)
-Voir section "Sérialisation JSON" ci-dessus.
+    def handle_event("my_event", %{"one" => 1}, socket) do
+      {:reply, %{two: 2}, socket}
+    end
 
-### Couverture minimale obligatoire
-- `domain/encoding/Codec` : tous les cas frontières (U+007F, U+0080, U+07FF, U+0800,
-  U+FFFF, U+10000, U+10FFFF, surrogates UTF-16) — pour `encode()` ET `decode()`
-- `domain/exercise/AnswerValidator` : chaque `errorType` produit avec les bons `params`
-- `infrastructure/repository/*` : upsert, find, contraintes uniques
-- Controllers : 401 si non auth, 403 si mauvais user, 200 si OK
-- Serializers custom : structure JSON exacte
+### LiveView tests
 
----
+- `Phoenix.LiveViewTest` module and `LazyHTML` (included) for making your assertions
+- Form tests are driven by `Phoenix.LiveViewTest`'s `render_submit/2` and `render_change/2` functions
+- Come up with a step-by-step test plan that splits major test cases into small, isolated files. You may start with simpler tests that verify content exists, gradually add interaction tests
+- **Always reference the key element IDs you added in the LiveView templates in your tests** for `Phoenix.LiveViewTest` functions like `element/2`, `has_element/2`, selectors, etc
+- **Never** tests again raw HTML, **always** use `element/2`, `has_element/2`, and similar: `assert has_element?(view, "#my-form")`
+- Instead of relying on testing text content, which can change, favor testing for the presence of key elements
+- Focus on testing outcomes rather than implementation details
+- Be aware that `Phoenix.Component` functions like `<.form>` might produce different HTML than expected. Test against the output HTML structure, not your mental model of what you expect it to be
+- When facing test failures with element selectors, add debug statements to print the actual HTML, but use `LazyHTML` selectors to limit the output, ie:
 
-## Déploiement & roadmap
+      html = render(view)
+      document = LazyHTML.from_fragment(html)
+      matches = LazyHTML.filter(document, "your-complex-selector")
+      IO.inspect(matches, label: "Matches")
 
-Pour garder ce fichier centré sur l'architecture et les conventions de code,
-deux blocs ont été déplacés :
+### Form handling
 
-- **Plan de phases (1→10) + post-v1** → `ROADMAP.md`, section
-  « Plan de phases — cible v1 ».
-- **Config Caddy (dev/prod) + infra/hébergement** (VPS, tuning Postgres, backups,
-  monitoring, sécurité serveur) → `DEPLOY.md`.
+#### Creating a form from params
 
----
+If you want to create a form based on `handle_event` params:
 
-## Anti-cheat (léger)
+    def handle_event("submitted", params, socket) do
+      {:noreply, assign(socket, form: to_form(params))}
+    end
 
-`POST /api/exercise/generate` retourne uniquement l'énoncé (code point ou bytes),
-**pas la solution**. La validation se fait côté serveur via `AnswerValidator`.
+When you pass a map to `to_form/1`, it assumes said map contains the form params, which are expected to have string keys.
 
-Pour empêcher de modifier l'énoncé entre génération et validation :
-- L'exercice généré contient un `attemptId` (UUID) stocké en session HTTP
-- `POST /api/exercise/validate` doit fournir cet `attemptId`
-- Le serveur recalcule l'attendu depuis l'input stocké en session
-- Une fois validé, l'`attemptId` est consommé (un seul submit possible)
+You can also specify a name to nest the params:
 
----
+    def handle_event("submitted", %{"user" => user_params}, socket) do
+      {:noreply, assign(socket, form: to_form(user_params, as: :user))}
+    end
 
-## Non-objectifs (v1)
+#### Creating a form from changesets
 
-- Pas de leaderboard public
-- Pas de social (followers, profil public, partage)
-- Pas d'OAuth (Google/GitHub)
-- Pas de 2FA
-- Pas d'app mobile native — PWA éventuelle plus tard
-- Pas de paiement / premium
-- Pas de microservices ni de CQRS — monolithe Spring Boot
-- Pas de Server Components (on reste en pattern Nuxt classique SSR + client hydration)
-- Pas de cache Redis tant que pas nécessaire
-- Pas de `@ControllerAdvice` ni OpenAPI tant que le squelette n'est pas en place
+When using changesets, the underlying data, form params, and errors are retrieved from it. The `:as` option is automatically computed too. E.g. if you have a user schema:
+
+    defmodule MyApp.Users.User do
+      use Ecto.Schema
+      ...
+    end
+
+And then you create a changeset that you pass to `to_form`:
+
+    %MyApp.Users.User{}
+    |> Ecto.Changeset.change()
+    |> to_form()
+
+Once the form is submitted, the params will be available under `%{"user" => user_params}`.
+
+In the template, the form form assign can be passed to the `<.form>` function component:
+
+    <.form for={@form} id="todo-form" phx-change="validate" phx-submit="save">
+      <.input field={@form[:field]} type="text" />
+    </.form>
+
+Always give the form an explicit, unique DOM ID, like `id="todo-form"`.
+
+#### Avoiding form errors
+
+**Always** use a form assigned via `to_form/2` in the LiveView, and the `<.input>` component in the template. In the template **always access forms this**:
+
+    <%!-- ALWAYS do this (valid) --%>
+    <.form for={@form} id="my-form">
+      <.input field={@form[:field]} type="text" />
+    </.form>
+
+And **never** do this:
+
+    <%!-- NEVER do this (invalid) --%>
+    <.form for={@changeset} id="my-form">
+      <.input field={@changeset[:field]} type="text" />
+    </.form>
+
+- You are FORBIDDEN from accessing the changeset in the template as it will cause errors
+- **Never** use `<.form let={f} ...>` in the template, instead **always use `<.form for={@form} ...>`**, then drive all form references from the form assign as in `@form[:field]`. The UI should **always** be driven by a `to_form/2` assigned in the LiveView module that is derived from a changeset
+<!-- phoenix:liveview-end -->
+
+<!-- usage-rules-end -->

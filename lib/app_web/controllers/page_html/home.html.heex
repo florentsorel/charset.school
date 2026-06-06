@@ -1,0 +1,111 @@
+<Layouts.app flash={@flash} locale={@locale} alternate_path={@alternate_path}>
+  <main>
+    <%!-- Hero --%>
+    <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-20 pb-14">
+      <div class="hero-grid">
+        <div>
+          <p class="font-mono text-xs uppercase tracking-widest text-faint mb-5">
+            {gettext("teaching tool")}
+          </p>
+          <h1
+            class="font-medium leading-[1.05] tracking-tight mb-6"
+            style="font-size: clamp(2.5rem, 5vw, 3.5rem);"
+          >
+            <span>{gettext("Learn character encoding,")}</span>
+            <br />
+            <span class="text-mute">{gettext("one bit at a time.")}</span>
+          </h1>
+          <p class="text-base sm:text-lg leading-relaxed text-mute max-w-xl mb-7">
+            {gettext(
+              "Interactive exercises to take apart UTF-8, UTF-16 and UTF-32 - by hand, no calculator, step-by-step validation. For developers who actually want to understand the bit-level mechanics."
+            )}
+          </p>
+          <div class="flex items-center gap-3 flex-wrap">
+            <a href={localized_path(@locale, "/exercise/encode/utf-8")} class="btn btn-primary">
+              {gettext("Start an exercise")}
+            </a>
+            <a href={localized_path(@locale, "/sandbox")} class="btn btn-ghost">
+              {gettext("Try the sandbox")}
+            </a>
+          </div>
+        </div>
+        <%!-- Hidden on mobile/tablet to keep the hero focused on the headline.
+             Shown from lg+ where there's room to host the animation. --%>
+        <div class="hidden lg:block">
+          <.hero_demo />
+        </div>
+      </div>
+    </section>
+
+    <%!-- Aperçu: pitch + UTF-8 example card --%>
+    <section class="border-t border-b border-rule" style="background: var(--color-subtle);">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6 py-14">
+        <p class="font-mono text-xs uppercase tracking-widest text-faint mb-4">
+          {gettext("preview")}
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-[1fr_400px] gap-10 items-start">
+          <div>
+            <h2 class="text-2xl font-medium leading-tight tracking-tight mb-3">
+              <span>{gettext("Not just a sandbox.")}</span>
+              <br />
+              <span>{gettext("A coach that corrects you bit by bit.")}</span>
+            </h2>
+            <p class="text-md leading-relaxed text-mute mb-5 max-w-md">
+              {gettext(
+                "Each exercise is broken into steps. You encode or decode by hand, and the app tells you exactly where you got it wrong - in plain words."
+              )}
+            </p>
+            <ul class="text-sm text-mute leading-relaxed space-y-1.5">
+              <li :for={bullet <- bullets()} class="flex gap-3 items-baseline">
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 11 11"
+                  fill="none"
+                  stroke="var(--color-ok)"
+                  stroke-width="2"
+                  class="flex-shrink-0"
+                  style="margin-top: 4px;"
+                  aria-hidden="true"
+                >
+                  <path d="M2 6l2.2 2L9 3" />
+                </svg>
+                <span>{bullet}</span>
+              </li>
+            </ul>
+          </div>
+
+          <%!-- Coach feedback preview - illustrates the "A coach that corrects
+               you bit by bit" promise of this section. Distinct from the
+               hero's encoding demo: this one shows a *mistake* being caught
+               and explained. --%>
+          <.coach_preview />
+        </div>
+      </div>
+    </section>
+
+    <%!-- Modules grid --%>
+    <section class="mx-auto max-w-6xl px-4 sm:px-6 py-16">
+      <h2 class="font-mono text-sm uppercase tracking-widest text-mute mb-5">
+        {gettext("6 modules to practise with")}
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <a
+          :for={{module, idx} <- Enum.with_index(Layouts.exercise_modules())}
+          href={localized_path(@locale, module.path)}
+          class="block p-4 rounded-md border border-rule transition-colors hover:border-rule-strong"
+        >
+          <div class="font-mono text-xs uppercase tracking-widest text-faint mb-1">
+            {String.pad_leading(Integer.to_string(idx + 1), 2, "0")}
+          </div>
+          <div class="text-sm font-medium leading-tight">
+            {module.title}
+          </div>
+          <p class="text-xs text-mute mt-1">
+            {module.subtitle}
+          </p>
+        </a>
+      </div>
+    </section>
+  </main>
+</Layouts.app>

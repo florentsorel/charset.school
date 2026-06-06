@@ -1,23 +1,22 @@
 version: 2
 updates:
-  - package-ecosystem: gradle
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 100
-    commit-message:
-      prefix: chore
-      include: scope
-    groups:
-      kotlin:
-        patterns:
-          - "plugin.spring"
-          - "jvm"
   - package-ecosystem: github-actions
-    directory: "/"
+    directory: /
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 100
-    commit-message:
-      prefix: chore
-      include: scope
+      interval: weekly
+      day: monday
+      timezone: Europe/Paris
+
+  - package-ecosystem: mix
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Paris
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Paris

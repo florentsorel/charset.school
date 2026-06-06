@@ -1,47 +1,44 @@
-HELP.md
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+# The directory Mix will write compiled artifacts to.
+/_build/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+# If you run "mix test --cover", coverage assets end up here.
+/cover/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+# The directory Mix downloads your dependencies sources to.
+/deps/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+# Where 3rd-party dependencies like ExDoc output generated docs.
+/doc/
 
-### VS Code ###
-.vscode/
+# Ignore .fetch files in case you like to edit your project deps locally.
+/.fetch
 
-### Kotlin ###
-.kotlin
+# If the VM crashes, it generates a dump, let's ignore it too.
+erl_crash.dump
 
-theme/
+# Also ignore archive artifacts (built via "mix archive.build").
+*.ez
 
-### Env / secrets ###
-.env
-.env.*
-!.env.example
+# Temporary files, for example, from tests.
+/tmp/
+
+# Ignore package tarball (built via "mix hex.build").
+charset-*.tar
+
+# Ignore assets that are produced by build tools.
+/priv/static/assets/
+
+# Ignore digested assets cache.
+/priv/static/cache_manifest.json
+
+# In case you use Node.js/npm, you want to ignore these.
+npm-debug.log
+/assets/node_modules/
+
+# Database files
+*.db
+*.db-*
+
+
+# npm dependencies (package.json at the repo root)
+/node_modules/

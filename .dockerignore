@@ -1,50 +1,18 @@
-# Root .dockerignore — applies to the back image build context (repo root).
-# The front image uses its own context (./web) with web/.dockerignore.
-
-# VCS
 .git
-.gitignore
-.gitattributes
 .github
-
-# IDE / editor
-.idea
-.vscode
-*.iml
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Gradle outputs — the Dockerfile builds from source inside the container,
-# so we don't need any local `.gradle/` cache or pre-built `build/` outputs
-# in the context.
-.gradle
-build
-out
-
-# Tests / dev-only sources (not needed in the bootJar)
-src/test
-src/intTest
-
-# Front-end — built by its own Dockerfile / context
-web
-
-# Generated / temporary
-_archive
-theme
-docs
+.claude
+_build
+deps
 node_modules
-
-# Docs / repo metadata
-*.md
-LICENSE
-LICENSE.txt
-
-# Env files (secrets stay out of images)
-.env
-.env.*
-!.env.example
-
-# Logs
-*.log
+priv/static/assets
+*.db
+*.db-*
+AGENTS.md
+CLAUDE.md
+README.md
+test
+.formatter.exs
+.nvmrc
+compose*.yml
+Dockerfile
+.dockerignore
