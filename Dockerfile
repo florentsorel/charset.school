@@ -34,7 +34,7 @@ FROM alpine:3.23
 RUN apk add --no-cache libstdc++ openssl ncurses-libs ca-certificates
 
 # Litestream streams the SQLite WAL to object storage (continuous backup).
-COPY --from=litestream/litestream:0.3 /usr/local/bin/litestream /usr/local/bin/litestream
+COPY --from=litestream/litestream:0.5 /usr/local/bin/litestream /usr/local/bin/litestream
 
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
