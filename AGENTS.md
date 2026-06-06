@@ -19,8 +19,8 @@ ASCII, Latin-1, Windows-1252, UTF-8, UTF-16, UTF-32, endianness, BOM.
 
 Le projet est une réécriture Phoenix/LiveView (terminée le 2026-06-06) d'une stack
 Kotlin 2.x + Spring Boot 4 (API REST) + Nuxt 4 / Vue 3 (~18 000 lignes). L'ancienne
-implémentation reste consultable sur la branche **`legacy`**
-(`git show legacy:src/main/kotlin/...`, `git show legacy:web/app/...`) - elle fait foi
+implémentation reste consultable sur la branche **`kotlin-nuxt`**
+(`git show kotlin-nuxt:src/main/kotlin/...`, `git show kotlin-nuxt:web/app/...`) - elle fait foi
 uniquement comme archéologie, le code actuel est la référence.
 
 ## Workflow git
