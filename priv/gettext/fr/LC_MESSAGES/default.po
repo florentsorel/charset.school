@@ -26,8 +26,8 @@ msgstr "Un coach qui te corrige bit à bit."
 msgid "Actions"
 msgstr "Actions"
 
-#: lib/app_web/components/layouts.ex:433
 #: lib/app_web/components/layouts.ex:445
+#: lib/app_web/components/layouts.ex:457
 #, elixir-autogen, elixir-format
 msgid "Attempting to reconnect"
 msgstr "Tentative de reconnexion"
@@ -37,25 +37,25 @@ msgstr "Tentative de reconnexion"
 msgid "Code points drawn at random - no end"
 msgstr "Code points tirés au hasard - pas de fin"
 
-#: lib/app_web/components/layouts.ex:294
-#: lib/app_web/components/layouts.ex:378
+#: lib/app_web/components/layouts.ex:306
+#: lib/app_web/components/layouts.ex:390
 #, elixir-autogen, elixir-format
 msgid "Decode UTF-16"
 msgstr "Décoder UTF-16"
 
-#: lib/app_web/components/layouts.ex:295
-#: lib/app_web/components/layouts.ex:390
+#: lib/app_web/components/layouts.ex:307
+#: lib/app_web/components/layouts.ex:402
 #, elixir-autogen, elixir-format
 msgid "Decode UTF-32"
 msgstr "Décoder UTF-32"
 
-#: lib/app_web/components/layouts.ex:293
-#: lib/app_web/components/layouts.ex:366
+#: lib/app_web/components/layouts.ex:305
+#: lib/app_web/components/layouts.ex:378
 #, elixir-autogen, elixir-format
 msgid "Decode UTF-8"
 msgstr "Décoder UTF-8"
 
-#: lib/app_web/components/layouts.ex:188
+#: lib/app_web/components/layouts.ex:189
 #, elixir-autogen, elixir-format
 msgid "Developed by"
 msgstr "Développé par"
@@ -65,20 +65,20 @@ msgstr "Développé par"
 msgid "Each exercise is broken into steps. You encode or decode by hand, and the app tells you exactly where you got it wrong - in plain words."
 msgstr "Chaque exercice est découpé en étapes. Tu encodes ou décodes à la main, et l'app te dit exactement où tu t'es planté - en langage humain."
 
-#: lib/app_web/components/layouts.ex:284
-#: lib/app_web/components/layouts.ex:372
+#: lib/app_web/components/layouts.ex:296
+#: lib/app_web/components/layouts.ex:384
 #, elixir-autogen, elixir-format
 msgid "Encode UTF-16"
 msgstr "Encoder en UTF-16"
 
-#: lib/app_web/components/layouts.ex:285
-#: lib/app_web/components/layouts.ex:384
+#: lib/app_web/components/layouts.ex:297
+#: lib/app_web/components/layouts.ex:396
 #, elixir-autogen, elixir-format
 msgid "Encode UTF-32"
 msgstr "Encoder en UTF-32"
 
-#: lib/app_web/components/layouts.ex:283
-#: lib/app_web/components/layouts.ex:360
+#: lib/app_web/components/layouts.ex:295
+#: lib/app_web/components/layouts.ex:372
 #, elixir-autogen, elixir-format
 msgid "Encode UTF-8"
 msgstr "Encoder en UTF-8"
@@ -96,7 +96,7 @@ msgstr "Erreurs expliquées en français, pas en codes"
 msgid "Exercises"
 msgstr "Exercices"
 
-#: lib/app_web/components/layouts.ex:400
+#: lib/app_web/components/layouts.ex:412
 #, elixir-autogen, elixir-format
 msgid "Interactive exercises to learn character encoding - do the UTF-8, UTF-16 and UTF-32 conversions by hand, step by step, with instant feedback. Free, no account, no tracking."
 msgstr "Exercices interactifs pour apprendre l'encodage des caractères - fais les conversions UTF-8, UTF-16 et UTF-32 à la main, étape par étape, avec validation immédiate. Gratuit, sans compte, sans tracking."
@@ -106,8 +106,8 @@ msgstr "Exercices interactifs pour apprendre l'encodage des caractères - fais l
 msgid "Interactive exercises to take apart UTF-8, UTF-16 and UTF-32 - by hand, no calculator, step-by-step validation. For developers who actually want to understand the bit-level mechanics."
 msgstr "Exercices interactifs pour décortiquer UTF-8, UTF-16 et UTF-32 - à la main, sans calculatrice, avec validation pas à pas. Pour les développeurs qui veulent vraiment comprendre la mécanique des bits."
 
-#: lib/app_web/components/layouts.ex:343
-#: lib/app_web/components/layouts.ex:344
+#: lib/app_web/components/layouts.ex:355
+#: lib/app_web/components/layouts.ex:356
 #, elixir-autogen, elixir-format
 msgid "Language"
 msgstr "Langue"
@@ -134,13 +134,13 @@ msgstr "Pas juste un sandbox."
 
 #: lib/app_web/components/layouts.ex:83
 #: lib/app_web/components/layouts.ex:167
-#: lib/app_web/components/layouts.ex:254
-#: lib/app_web/components/layouts.ex:306
+#: lib/app_web/components/layouts.ex:266
+#: lib/app_web/components/layouts.ex:318
 #, elixir-autogen, elixir-format
 msgid "Sandbox"
 msgstr "Sandbox"
 
-#: lib/app_web/components/layouts.ex:440
+#: lib/app_web/components/layouts.ex:452
 #, elixir-autogen, elixir-format
 msgid "Something went wrong!"
 msgstr "Quelque chose s'est mal passé !"
@@ -165,8 +165,8 @@ msgstr "Outil pédagogique. Pas de tracking, pas de pub."
 msgid "The markers (110, 10) are fixed - you only fill the payload. Right size, wrong bits: recheck how you split the code point."
 msgstr "Les marqueurs (110, 10) sont fixes - tu ne remplis que le payload. Bonne taille, mauvais bits : revois ton découpage du code point."
 
-#: lib/app_web/components/layouts.ex:321
-#: lib/app_web/components/layouts.ex:322
+#: lib/app_web/components/layouts.ex:333
+#: lib/app_web/components/layouts.ex:334
 #, elixir-autogen, elixir-format
 msgid "Theme"
 msgstr "Thème"
@@ -181,17 +181,17 @@ msgstr "Essayer le sandbox"
 msgid "UTF-8, UTF-16, UTF-32 - encode and decode, with graded levels"
 msgstr "UTF-8, UTF-16, UTF-32 - encodage et décodage, avec niveaux gradués"
 
-#: lib/app_web/components/layouts.ex:428
+#: lib/app_web/components/layouts.ex:440
 #, elixir-autogen, elixir-format
 msgid "We can't find the internet"
 msgstr "On ne trouve plus internet"
 
-#: lib/app_web/components/layouts.ex:367
+#: lib/app_web/components/layouts.ex:379
 #, elixir-autogen, elixir-format
 msgid "bytes → code point"
 msgstr "octets → code point"
 
-#: lib/app_web/components/layouts.ex:406
+#: lib/app_web/components/layouts.ex:418
 #, elixir-autogen, elixir-format
 msgid "charset.school - learn character encoding by hand"
 msgstr "charset.school - apprendre l'encodage des caractères à la main"
@@ -201,7 +201,7 @@ msgstr "charset.school - apprendre l'encodage des caractères à la main"
 msgid "close"
 msgstr "fermer"
 
-#: lib/app_web/components/layouts.ex:361
+#: lib/app_web/components/layouts.ex:373
 #, elixir-autogen, elixir-format
 msgid "code point → bytes"
 msgstr "code point → octets"
@@ -211,7 +211,7 @@ msgstr "code point → octets"
 msgid "encode UTF-8 · split the useful bits"
 msgstr "encoder UTF-8 · découper les bits utiles"
 
-#: lib/app_web/components/layouts.ex:373
+#: lib/app_web/components/layouts.ex:385
 #, elixir-autogen, elixir-format
 msgid "endianness + BOM"
 msgstr "endianness + BOM"
@@ -221,12 +221,12 @@ msgstr "endianness + BOM"
 msgid "example · encode UTF-8"
 msgstr "exemple · encoder UTF-8"
 
-#: lib/app_web/components/layouts.ex:391
+#: lib/app_web/components/layouts.ex:403
 #, elixir-autogen, elixir-format
 msgid "explicit endianness, 4 bytes → code point"
 msgstr "endianness explicite, 4 octets → code point"
 
-#: lib/app_web/components/layouts.ex:385
+#: lib/app_web/components/layouts.ex:397
 #, elixir-autogen, elixir-format
 msgid "fixed 4 bytes, padding"
 msgstr "4 octets fixes, padding"
@@ -241,7 +241,7 @@ msgstr "un bit à la fois."
 msgid "preview"
 msgstr "aperçu"
 
-#: lib/app_web/components/layouts.ex:379
+#: lib/app_web/components/layouts.ex:391
 #, elixir-autogen, elixir-format
 msgid "surrogate pairs included"
 msgstr "surrogate pairs inclus"
@@ -311,7 +311,7 @@ msgstr "Accepte U+XXXX, 0xXX, décimal, ou un caractère unique."
 msgid "Binary"
 msgstr "Binaire"
 
-#: lib/app_web/live/exercise_live.ex:577
+#: lib/app_web/live/exercise_live.ex:582
 #: lib/app_web/live/sandbox/utf16_decode.ex:134
 #: lib/app_web/live/sandbox/utf16_decode.ex:159
 #: lib/app_web/live/sandbox/utf32_decode.ex:115
@@ -327,7 +327,7 @@ msgstr "Octets"
 msgid "C3 A9, 0xC3 0xA9, or C3A9"
 msgstr "C3 A9, 0xC3 0xA9, ou C3A9"
 
-#: lib/app_web/live/exercise_live.ex:557
+#: lib/app_web/live/exercise_live.ex:560
 #: lib/app_web/live/sandbox/latin1_encode.ex:100
 #: lib/app_web/live/sandbox/utf16_encode.ex:128
 #: lib/app_web/live/sandbox/utf32_encode.ex:101
@@ -397,17 +397,17 @@ msgstr "Convertir en hexadécimal"
 msgid "Decimal"
 msgstr "Décimal"
 
-#: lib/app_web/components/layouts.ex:296
+#: lib/app_web/components/layouts.ex:308
 #, elixir-autogen, elixir-format
 msgid "Decode Latin-1"
 msgstr "Décoder Latin-1"
 
-#: lib/app_web/components/layouts.ex:297
+#: lib/app_web/components/layouts.ex:309
 #, elixir-autogen, elixir-format
 msgid "Decode Windows-1252"
 msgstr "Décoder Windows-1252"
 
-#: lib/app_web/components/layouts.ex:291
+#: lib/app_web/components/layouts.ex:303
 #, elixir-autogen, elixir-format
 msgid "Decoding"
 msgstr "Décodage"
@@ -422,17 +422,17 @@ msgstr "Chaque octet binaire devient sa valeur hex sur `%{count}` chiffres."
 msgid "Each binary byte becomes its hex value on `1` digit."
 msgstr "Chaque octet binaire devient sa valeur hex sur `1` chiffre."
 
-#: lib/app_web/components/layouts.ex:286
+#: lib/app_web/components/layouts.ex:298
 #, elixir-autogen, elixir-format
 msgid "Encode in Latin-1"
 msgstr "Encoder en Latin-1"
 
-#: lib/app_web/components/layouts.ex:287
+#: lib/app_web/components/layouts.ex:299
 #, elixir-autogen, elixir-format
 msgid "Encode in Windows-1252"
 msgstr "Encoder en Windows-1252"
 
-#: lib/app_web/components/layouts.ex:281
+#: lib/app_web/components/layouts.ex:293
 #, elixir-autogen, elixir-format
 msgid "Encoding"
 msgstr "Encodage"
@@ -1170,8 +1170,8 @@ msgstr "Assembler la valeur 20 bits"
 msgid "Big-endian · BE"
 msgstr "Big-endian · BE"
 
-#: lib/app_web/components/exercise_components.ex:107
-#: lib/app_web/components/exercise_components.ex:171
+#: lib/app_web/components/exercise_components.ex:109
+#: lib/app_web/components/exercise_components.ex:173
 #, elixir-autogen, elixir-format
 msgid "Bit %{n}"
 msgstr "Bit %{n}"
@@ -1181,13 +1181,13 @@ msgstr "Bit %{n}"
 msgid "Breadcrumb"
 msgstr "Fil d'Ariane"
 
-#: lib/app_web/components/exercise_components.ex:209
+#: lib/app_web/components/exercise_components.ex:211
 #, elixir-autogen, elixir-format
 msgid "Byte %{n}"
 msgstr "Octet %{n}"
 
-#: lib/app_web/live/exercise_live.ex:568
-#: lib/app_web/live/exercise_live.ex:585
+#: lib/app_web/live/exercise_live.ex:573
+#: lib/app_web/live/exercise_live.ex:590
 #, elixir-autogen, elixir-format
 msgid "Byte order"
 msgstr "Ordre des octets"
@@ -1222,7 +1222,7 @@ msgstr "Charset Playground - Encoder UTF-32"
 msgid "Charset Playground - Encode UTF-8"
 msgstr "Charset Playground - Encoder UTF-8"
 
-#: lib/app_web/live/exercise_live.ex:543
+#: lib/app_web/live/exercise_live.ex:546
 #, elixir-autogen, elixir-format
 msgid "Continue"
 msgstr "Reprendre"
@@ -1263,27 +1263,27 @@ msgstr "Encode ce code point en UTF-32."
 msgid "Encode this code point in UTF-8."
 msgstr "Encode ce code point en UTF-8."
 
-#: lib/app_web/components/exercise_components.ex:236
+#: lib/app_web/components/exercise_components.ex:238
 #, elixir-autogen, elixir-format
 msgid "Enter the code point in hex"
 msgstr "Saisis le code point en hexadécimal"
 
-#: lib/app_web/components/exercise_components.ex:262
+#: lib/app_web/components/exercise_components.ex:264
 #, elixir-autogen, elixir-format
 msgid "Enter the value in hex"
 msgstr "Saisis la valeur en hexadécimal"
 
-#: lib/app_web/live/exercise_live.ex:552
+#: lib/app_web/live/exercise_live.ex:555
 #, elixir-autogen, elixir-format
 msgid "Exercise"
 msgstr "Exercice"
 
-#: lib/app_web/live/exercise_live.ex:690
+#: lib/app_web/live/exercise_live.ex:701
 #, elixir-autogen, elixir-format
 msgid "Exercise done with help. Try again without revealing to solve it on your own!"
 msgstr "Exercice terminé avec de l'aide. Réessaie sans révéler pour le compléter en autonomie !"
 
-#: lib/app_web/live/exercise_live.ex:526
+#: lib/app_web/live/exercise_live.ex:529
 #, elixir-autogen, elixir-format
 msgid "Exercise in progress"
 msgstr "Exercice en cours"
@@ -1328,22 +1328,22 @@ msgstr "Niveau %{n} · maîtrise"
 msgid "Little-endian · LE"
 msgstr "Little-endian · LE"
 
-#: lib/app_web/live/exercise_live.ex:546
+#: lib/app_web/live/exercise_live.ex:549
 #, elixir-autogen, elixir-format
 msgid "New exercise"
 msgstr "Nouvel exercice"
 
-#: lib/app_web/live/exercise_live.ex:697
+#: lib/app_web/live/exercise_live.ex:708
 #, elixir-autogen, elixir-format
 msgid "Next exercise"
 msgstr "Exercice suivant"
 
-#: lib/app_web/live/exercise_live.ex:688
+#: lib/app_web/live/exercise_live.ex:699
 #, elixir-autogen, elixir-format
 msgid "Nice! Exercise solved unaided."
 msgstr "Bien joué ! Exercice complété sans aide."
 
-#: lib/app_web/components/exercise_components.ex:329
+#: lib/app_web/components/exercise_components.ex:331
 #, elixir-autogen, elixir-format
 msgid "Not quite right. Try again."
 msgstr "La réponse n'est pas correcte. Réessaie."
@@ -1353,12 +1353,12 @@ msgstr "La réponse n'est pas correcte. Réessaie."
 msgid "Pick the format"
 msgstr "Choisir le format"
 
-#: lib/app_web/live/exercise_live.ex:669
+#: lib/app_web/live/exercise_live.ex:680
 #, elixir-autogen, elixir-format
 msgid "Revealed"
 msgstr "Révélée"
 
-#: lib/app_web/components/exercise_components.ex:317
+#: lib/app_web/components/exercise_components.ex:319
 #, elixir-autogen, elixir-format
 msgid "Show me the answer"
 msgstr "Donne-moi la réponse"
@@ -1368,7 +1368,7 @@ msgstr "Donne-moi la réponse"
 msgid "Skip"
 msgstr "Passer"
 
-#: lib/app_web/live/exercise_live.ex:669
+#: lib/app_web/live/exercise_live.ex:680
 #, elixir-autogen, elixir-format
 msgid "Solved"
 msgstr "Validée"
@@ -1378,7 +1378,7 @@ msgstr "Validée"
 msgid "Split the useful bits (MSB / LSB)"
 msgstr "Découper les bits utiles (MSB / LSB)"
 
-#: lib/app_web/live/exercise_live.ex:658
+#: lib/app_web/live/exercise_live.ex:669
 #, elixir-autogen, elixir-format
 msgid "Submit"
 msgstr "Soumettre"
@@ -1388,28 +1388,33 @@ msgstr "Soumettre"
 msgid "Subtract 0x10000"
 msgstr "Soustraire 0x10000"
 
-#: lib/app_web/components/exercise_components.ex:309
+#: lib/app_web/components/exercise_components.ex:311
 #, elixir-autogen, elixir-format
 msgid "Try %{n}/%{threshold}"
 msgstr "Essai %{n}/%{threshold}"
 
-#: lib/app_web/components/exercise_components.ex:287
+#: lib/app_web/components/exercise_components.ex:289
 #, elixir-autogen, elixir-format
 msgid "Useful bit count"
 msgstr "Nombre de bits utiles"
 
-#: lib/app_web/live/exercise_live.ex:534
+#: lib/app_web/live/exercise_live.ex:537
 #, elixir-autogen, elixir-format
 msgid "You have an exercise in progress - level %{level}, step %{done}/%{total}."
 msgstr "Tu as un exercice en cours - niveau %{level}, étape %{done}/%{total}."
 
-#: lib/app_web/live/exercise_live.ex:530
+#: lib/app_web/live/exercise_live.ex:533
 #, elixir-autogen, elixir-format
 msgid "You have an exercise in progress - level %{level}."
 msgstr "Tu as un exercice en cours - niveau %{level}."
 
-#: lib/app_web/components/exercise_components.ex:289
-#: lib/app_web/live/exercise_live.ex:802
+#: lib/app_web/components/exercise_components.ex:291
+#: lib/app_web/live/exercise_live.ex:818
 #, elixir-autogen, elixir-format
 msgid "useful bits"
 msgstr "bits utiles"
+
+#: lib/app_web/components/layouts.ex:206
+#, elixir-autogen, elixir-format
+msgid "Source code on GitHub"
+msgstr "Code source sur GitHub"
