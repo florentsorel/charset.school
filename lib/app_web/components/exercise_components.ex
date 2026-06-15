@@ -96,8 +96,7 @@ defmodule AppWeb.ExerciseComponents do
           <span
             :if={@boundary_every > 0 and cell_pos > 0 and rem(cell_pos, @boundary_every) == 0}
             class="bit-sep-mid"
-          >
-          </span>
+          ></span>
           <input
             class={["bit bit-input", index < @locked_prefix && "bit-input-locked"]}
             type="text"
@@ -369,8 +368,7 @@ defmodule AppWeb.ExerciseComponents do
           <span
             :if={@boundary_every > 0 and cell_pos > 0 and rem(index, @boundary_every) == 0}
             class="bit-sep-mid"
-          >
-          </span><span class={["bit", role && "bit-#{role}"]}>{char}</span>
+          ></span><span class={["bit", role && "bit-#{role}"]}>{char}</span>
         <% end %>
       </span>
     </span>

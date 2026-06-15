@@ -629,8 +629,7 @@ defmodule AppWeb.ExerciseLive do
                     "step-connector",
                     step_state(assigns, index) == :done && "step-connector-done"
                   ]}
-                >
-                </span>
+                ></span>
               </div>
 
               <div class="exercise-step-content">
