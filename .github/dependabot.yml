@@ -6,6 +6,20 @@ updates:
       interval: weekly
       day: monday
       timezone: Europe/Paris
+    open-pull-requests-limit: 20
+    cooldown:
+      default-days: 3
+    # Actions are pinned to major tags (e.g. actions/checkout@v6).
+    # Without this ignore, Dependabot would propose pinning the exact version (v6 -> v6.0.2).
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: mix
     directory: /
@@ -13,6 +27,23 @@ updates:
       interval: weekly
       day: monday
       timezone: Europe/Paris
+    open-pull-requests-limit: 20
+    cooldown:
+      default-days: 3
+    groups:
+      mix-minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      mix-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+      mix-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
 
   - package-ecosystem: npm
     directory: /
@@ -20,3 +51,21 @@ updates:
       interval: weekly
       day: monday
       timezone: Europe/Paris
+    open-pull-requests-limit: 20
+    versioning-strategy: increase
+    cooldown:
+      default-days: 3
+    groups:
+      npm-minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      npm-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+      npm-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
