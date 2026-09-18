@@ -1,0 +1,15 @@
+services:
+  charset:
+    image: ghcr.io/florentsorel/charset.school:latest
+    container_name: charset
+    ports:
+      - "${PORT:-4000}:4000"
+    volumes:
+      - appdata:/data
+    environment:
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?SECRET_KEY_BASE is required}
+      PHX_HOST: ${PHX_HOST:?PHX_HOST is required}
+    restart: unless-stopped
+
+volumes:
+  appdata:

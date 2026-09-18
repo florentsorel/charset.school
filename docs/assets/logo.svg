@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" fill="none">
+  <style>
+    .bit-marker  { fill: #A8650A; }
+    .bit-cont    { fill: #5C6B7E; }
+    .bit-payload { fill: #0F3D6B; }
+    .bit-rule    { fill: #CFCBBF; }
+    @media (prefers-color-scheme: dark) {
+      .bit-marker  { fill: #D4A067; }
+      .bit-cont    { fill: #9AA7BA; }
+      .bit-payload { fill: #8DBBE0; }
+      .bit-rule    { fill: #3D4148; }
+    }
+  </style>
+  <rect class="bit-marker"  x="2"  y="6.5"  width="4" height="4" rx="1"/>
+  <rect class="bit-payload" x="7"  y="6.5"  width="4" height="4" rx="1"/>
+  <rect class="bit-payload" x="12" y="6.5"  width="4" height="4" rx="1"/>
+  <rect class="bit-cont"    x="2"  y="11.5" width="4" height="4" rx="1"/>
+  <rect class="bit-payload" x="7"  y="11.5" width="4" height="4" rx="1"/>
+  <rect class="bit-payload" x="12" y="11.5" width="4" height="4" rx="1"/>
+  <rect class="bit-rule"    x="17" y="11.5" width="3" height="4" rx="1"/>
+</svg>
