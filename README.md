@@ -17,12 +17,12 @@
 
 ## Overview
 
-Charset is an interactive teaching tool for character encoding: take apart UTF-8, UTF-16,
+charset.school is an interactive teaching tool for character encoding: take apart UTF-8, UTF-16,
 UTF-32, Latin-1, and Windows-1252 by hand, no calculator, with step-by-step validation. It's
 built for developers who actually want to understand bit-level mechanics, not just call a
 library function.
 
-Available online at [charset.school](https://charset.school) or self-hosted via Docker. No accounts —
+Available online at [charset.school](https://charset.school) or self-hosted via Docker. No accounts -
 progress is tracked through an anonymous token, nothing to sign up for.
 
 <p align="center">
@@ -34,17 +34,17 @@ progress is tracked through an anonymous token, nothing to sign up for.
 
 ## Features
 
-- **Interactive Sandbox** — 10 pages (encode/decode × UTF-8, UTF-16, UTF-32, Latin-1, Windows-1252)
+- **Interactive Sandbox** - 10 pages (encode/decode × UTF-8, UTF-16, UTF-32, Latin-1, Windows-1252)
   where you type a character or raw bytes and watch the bit-by-bit conversion broken down with
   immediate feedback.
-- **Guided Exercises** — 6 playable modules (encode/decode × UTF-8, UTF-16, UTF-32) where you
+- **Guided Exercises** - 6 playable modules (encode/decode × UTF-8, UTF-16, UTF-32) where you
   perform conversions by hand, step by step, with server-side validation, targeted hints tailored to
   your mistake, and an answer reveal after 3 attempts.
-- **Progression** — levels auto-advance on a streak of 5 consecutive correct answers.
-- **No accounts** — everything is keyed by an anonymous, opaque token stored in an HttpOnly
+- **Progression** - levels auto-advance on a streak of 5 consecutive correct answers.
+- **No accounts** - everything is keyed by an anonymous, opaque token stored in an HttpOnly
   cookie. Nothing to sign up for, nothing to lose access to.
-- **i18n** — available in English (default) and French (`/fr`).
-- **Self-hosted & lightweight** — single-container Docker image with embedded SQLite, minimal
+- **i18n** - available in English (default) and French (`/fr`).
+- **Self-hosted & lightweight** - single-container Docker image with embedded SQLite, minimal
   resource usage, and instant startup.
 
 ---
@@ -90,7 +90,7 @@ docker compose up -d
 
 Open [http://localhost:4000](http://localhost:4000) in your browser.
 
-> **Pinning a version** — replace `:latest` with a specific release tag (e.g.
+> **Pinning a version** - replace `:latest` with a specific release tag (e.g.
 > `ghcr.io/florentsorel/charset.school:1.2.3`) to avoid unexpected changes on container restart.
 > Available tags are listed on the
 > [container registry](https://github.com/florentsorel/charset.school/pkgs/container/charset.school).
@@ -125,7 +125,7 @@ Application logs (startup, HTTP requests, errors) are written to **stdout**.
 
 ### Log rotation
 
-Since logs go to stdout rather than a file in the volume, rotate them via Docker's logging driver —
+Since logs go to stdout rather than a file in the volume, rotate them via Docker's logging driver -
 add this to your `compose.yml`:
 
 ```yaml
